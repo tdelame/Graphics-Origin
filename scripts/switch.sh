@@ -21,7 +21,7 @@ function switch {
   make strap -j4
   rm -f $projectdir/bin/products $projectdir/bin/tutorial $projectdir/bin/lib
   ln -s $projectdir/bin/$name                 $projectdir/bin/products
-  ln -s $projectdir/bin/products/tutorial $projectdir/bin/tutorial
+  ln -s $projectdir/bin/products/tutorial/bin $projectdir/bin/tutorial
   ln -s $projectdir/bin/products/lib          $projectdir/bin/lib
   cd $here
 }
