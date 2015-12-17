@@ -33,7 +33,7 @@ namespace tools
    * when an exception has been caught, just before exiting the application.
    */
   extern void
-  flush();
+  flush_log();
 }
 
 # define LOG(level,msg)                                                       \

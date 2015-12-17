@@ -29,7 +29,7 @@ namespace tools
     boost::log::add_common_attributes();
   }
   void
-  flush()
+  flush_log()
   {
     boost::log::core::get()->flush();
   }
