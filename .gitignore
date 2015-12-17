@@ -3,6 +3,9 @@
 *.lo
 *.o
 *.obj
+moc_*
+qtmakefile.mk
+*.pri
 
 # Precompiled Headers
 *.gch
@@ -13,16 +16,21 @@
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-
 # Compiled Static libraries
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
 *.out
 *.app
+
+# Directories
+bin/
+
+# Various
+.cproject
+.project
+*.directory
+
