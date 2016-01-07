@@ -6,34 +6,34 @@
 # include <boost/filesystem.hpp>
 BEGIN_GO_NAMESPACE namespace tools {
 std::string
-get_basename(const std::string& file)
+get_basename(const std::string& filename)
 {
-  return (boost::filesystem::path(file).filename().string());
+  return (boost::filesystem::path(filename).filename().string());
 }
 
 std::string
-get_stem(const std::string& file )
+get_stem(const std::string& filename )
 {
-  return( boost::filesystem::path(file).stem().string());
+  return( boost::filesystem::path(filename).stem().string());
 }
 
 std::string
-get_extension(const std::string& file)
+get_extension(const std::string& filename )
 {
-  return (boost::filesystem::path(file).extension().string());
+  return (boost::filesystem::path(filename).extension().string());
 }
 
 std::string
-get_directory_name(const std::string& file)
+get_directory_name(const std::string& filename)
 {
-  return (boost::filesystem::path(file).parent_path().string());
+  return (boost::filesystem::path(filename).parent_path().string());
 }
 
 std::string
-change_extension(const std::string& file, const std::string& newExtension)
+change_extension(const std::string& filename, const std::string& new_extension)
 {
-  return (boost::filesystem::change_extension(boost::filesystem::path(file),
-      newExtension).string());
+  return (boost::filesystem::change_extension(boost::filesystem::path(filename),
+      new_extension).string());
 }
 
 bool

@@ -34,27 +34,39 @@ namespace tools
    */
   extern void
   flush_log();
+
+  /**
+   * Log an entry with a specific #severity_level. For levels above
+   * severity_level::warning, the location (file and line) of the code that
+   * request to log that entry is automatically included in the entry. The
+   * message can be build by concatening strings and values with the stream
+   * operator:
+   * \code{.cpp}
+   * vec3 p{1,2,3};
+   * LOG( debug, "the 3D point is at {" << p << "}");
+   * \endcode
+   */
+
+  # define LOG(level,msg)                                                       \
+    {                                                                           \
+      if( tools::severity_level::level > tools::severity_level::warning )       \
+      {                                                                         \
+        BOOST_LOG_STREAM_SEV(tools::logger::get(), tools::severity_level::level)\
+        <<msg<<" (in "<<tools::get_basename(__FILE__)<<":"<< __LINE__ <<")";    \
+      }                                                                         \
+      else                                                                      \
+      {                                                                         \
+        BOOST_LOG_STREAM_SEV(tools::logger::get(),tools::severity_level::level) \
+        << msg;                                                                 \
+      }                                                                         \
+    }
+
+  # define LOG_WITH_LINE_FILE(level,msg,line,file)                              \
+    {                                                                           \
+        BOOST_LOG_STREAM_SEV(tools::logger::get(), tools::severity_level::level)\
+        <<msg<<" (in "<<tools::get_basename( file )<<":"<< line <<")";          \
+    }
 }
-
-# define LOG(level,msg)                                                       \
-  {                                                                           \
-    if( tools::severity_level::level > tools::severity_level::warning )       \
-    {                                                                         \
-      BOOST_LOG_STREAM_SEV(tools::logger::get(), tools::severity_level::level)\
-      <<msg<<" (in "<<tools::get_basename(__FILE__)<<":"<< __LINE__ <<")";    \
-    }                                                                         \
-    else                                                                      \
-    {                                                                         \
-      BOOST_LOG_STREAM_SEV(tools::logger::get(),tools::severity_level::level) \
-      << msg;                                                                 \
-    }                                                                         \
-  }
-
-# define LOG_WITH_LINE_FILE(level,msg,line,file)                              \
-  {                                                                           \
-      BOOST_LOG_STREAM_SEV(tools::logger::get(), tools::severity_level::level)\
-      <<msg<<" (in "<<tools::get_basename( file )<<":"<< line <<")";          \
-  }
 
 END_GO_NAMESPACE
 

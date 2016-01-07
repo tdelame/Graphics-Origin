@@ -59,8 +59,7 @@ namespace tools {
   template<class archive>
   void any::save(archive & ar, const unsigned int version) const
   {
-    static const std::string empty_string = "empty";
-    (void)version;
+    static const std::string empty_string = "_empty_";
     if( empty() )
       {
         ar & boost::serialization::make_nvp( "type_name", empty_string );
