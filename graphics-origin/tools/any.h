@@ -5,7 +5,7 @@
 # ifndef GRAPHICS_ORIGIN_ANY_H_
 # define GRAPHICS_ORIGIN_ANY_H_
 /** @file */
-# include <graphics_origin.h>
+# include "../graphics_origin.h"
 #   ifdef __CUDACC__
 BEGIN_GO_NAMESPACE namespace tools {
   typedef void* any;
@@ -177,6 +177,6 @@ BEGIN_GO_NAMESPACE namespace tools {
 }
 END_GO_NAMESPACE
 
-# include <tools/detail/any.tcc>
+# include "./detail/any.tcc"
 # endif
 # endif

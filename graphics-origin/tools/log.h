@@ -5,8 +5,8 @@
 # ifndef GRAPHICS_ORIGIN_LOG_H_
 # define GRAPHICS_ORIGIN_LOG_H_
 
-# include <graphics_origin.h>
-# include <tools/filesystem.h>
+# include "../graphics_origin.h"
+# include "./filesystem.h"
 
 # include <string>
 

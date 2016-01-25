@@ -4,7 +4,7 @@
 # ifndef GRAPHICS_ORIGIN_HASH_TUPLE_H_
 # define GRAPHICS_ORIGIN_HASH_TUPLE_H_
 
-# include <graphics_origin.h>
+# include "../graphics_origin.h"
 
 /**
  * These structures are helpful to use unordered_map or unordered_set on tuples.

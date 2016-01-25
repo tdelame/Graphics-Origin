@@ -1,7 +1,7 @@
 /* Created on: Dec 17, 2015
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include <tools/log.h>
+# include <graphics-origin/tools/log.h>
 
 # include <boost/date_time/posix_time/posix_time_types.hpp>
 # include <boost/log/trivial.hpp>

@@ -1,4 +1,4 @@
-# include <tools/log.h>
+# include "../log.h"
 BEGIN_GO_NAMESPACE
 namespace tools {
   namespace detail {

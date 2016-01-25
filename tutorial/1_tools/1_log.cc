@@ -1,7 +1,7 @@
 /* Created on: Dec 17, 2015
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include <tools/log.h>
+# include <graphics-origin/tools/log.h>
 # include <omp.h>
 # include <exception>
 BEGIN_GO_NAMESPACE

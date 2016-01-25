@@ -2,7 +2,8 @@
  *      Author: T.Delame (tdelame@gmail.com)
  */
 
-# include <tools/filesystem.h>
+# include <graphics-origin/tools/filesystem.h>
+
 # include <boost/filesystem.hpp>
 BEGIN_GO_NAMESPACE namespace tools {
 std::string

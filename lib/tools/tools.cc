@@ -2,8 +2,9 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 
-# include <graphics_origin.h>
-# include <tools/any.h>
+# include <graphics-origin/graphics_origin.h>
+# include <graphics-origin/tools/any.h>
+
 # include <string>
 # include <boost/locale.hpp>
 

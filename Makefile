@@ -2,7 +2,7 @@
 # 1. Directories
 ################################################################################
 # sources
-INC_DIR				= include
+INC_DIR				= ./
 LIB_SRC_DIR		= lib
 TUT_SRC_DIR		= tutorial
 TEST_SRC_DIR	= test
@@ -84,6 +84,10 @@ QT_INC			 = -isystem /usr/include/qt -isystem /usr/include/qt/QtQuick \
 							 -isystem /usr/include/qt/QtNetwork -isystem /usr/include/qt/QtCore \
 							 -I/usr/lib/qt/mkspecs/linux-g++
 QT_LD				 = -lQt5Quick -lQt4Gui -lQt5Qml -lQt5Network -lQt5Core
+
+# cuda
+CUDA_INC     = -isystem /opt/cuda/include 
+CUDA_LD      = -L /opt/cuda/lib64 -lcudart -lcuda
 
 #
 # 5. Compilation flags
