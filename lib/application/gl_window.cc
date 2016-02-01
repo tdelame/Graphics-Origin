@@ -2,6 +2,14 @@
  *     Author: T.Delame (tdelame@gmail.com)
  */
 # include <graphics-origin/application/gl_window.h>
+# include <graphics-origin/application/gl_window_renderer.h>
+# include <graphics-origin/application/gl_texture_node.h>
+# include <graphics-origin/application/camera.h>
+
+# include <QtQuick/QQuickWindow>
+# include <QtGui/QOpenGLContext>
+# include <QtGui/QOffscreenSurface>
+
 BEGIN_GO_NAMESPACE
 namespace application {
 
@@ -23,15 +31,15 @@ namespace application {
   gl_window::~gl_window()
   {
     cleanup();
-    windows.removeOne( this );
+    g_gl_windows.removeOne( this );
   }
 
   void
   gl_window::ready()
   {
-    m_renderer->surface = new QOffscreenSurface();
-    m_renderer->surface->setFormat( m_renderer->context->format() );
-    m_renderer->surface->create();
+    m_renderer->m_surface = new QOffscreenSurface();
+    m_renderer->m_surface->setFormat( m_renderer->m_context->format() );
+    m_renderer->m_surface->create();
     m_renderer->moveToThread( m_renderer );
     m_renderer->start();
     update();
@@ -49,7 +57,7 @@ namespace application {
     if( m_renderer )
       {
         m_renderer->resume();
-        QMetaObject::invokeMetho( m_renderer, "shut_down", Qt::QueuedConnection );
+        QMetaObject::invokeMethod( m_renderer, "shut_down", Qt::QueuedConnection );
         while( m_renderer->isRunning() )
           {
             ///TODO: can we do that in a more nice manner? Like wait( !isRunning() )
@@ -62,13 +70,19 @@ namespace application {
   QObject*
   gl_window::get_camera() const
   {
-    return dynamic_cast<QObject*>(m_renderer->cam);
+    return dynamic_cast<QObject*>(m_renderer->m_camera);
   }
 
   void
   gl_window::set_camera(QObject* cam )
   {
-    m_renderer->cam = dynamic_cast<camera*>( cam );
+    m_renderer->m_camera = dynamic_cast<camera*>( cam );
+  }
+
+  void
+  gl_window::add_renderable( renderable* r )
+  {
+    m_renderer->add( r );
   }
 
   /* Called on the render thread when it is time to sync the state of the item
@@ -159,6 +173,23 @@ namespace application {
       }
     node->setRect( boundingRect() );
     return node;
+  }
+
+  void
+  gl_window::handle_size_changed()
+  {
+    m_renderer->set_size( std::max( qreal{5}, width() ), std::max( qreal{5}, height() ) );
+  }
+
+  void
+  gl_window::handle_window_changed( QQuickWindow* win )
+  {
+    if( win )
+      {
+        connect( win, SIGNAL(beforeSynchronizing()), this, SLOT(sync()), Qt::DirectConnection);
+        connect( win, SIGNAL(sceneGraphInvalidated()), this, SLOT(cleanup()), Qt::DirectConnection);
+        win->setClearBeforeRendering(false); // otherwise, QML will always clear what we draw
+      }
   }
 
 }

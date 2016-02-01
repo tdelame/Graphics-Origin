@@ -3,13 +3,16 @@
  */
 # include <graphics-origin/application/gl_helper.h>
 # include <graphics-origin/application/shader_program.h>
+# include <graphics-origin/tools/log.h>
+
+# include <fstream>
 
 # include <GL/glew.h>
 
 BEGIN_GO_NAMESPACE
 namespace application {
 
-  static const shader_program::identifier
+  const shader_program::identifier
   shader_program::null_identifier = shader_program::identifier(-1);
 
   shader_program::shader_program( const std::list< std::string >& shader_sources )
@@ -36,7 +39,7 @@ namespace application {
     m_loaded = false;
   }
 
-  static void
+  void
   shader_program::unbind()
   {
     glcheck(glUseProgram(0));
@@ -235,7 +238,7 @@ namespace application {
           {
             glcheck(glLinkProgram( m_program_id ));
             GLint status;
-            glcheck(lGetProgramiv( m_program_id, GL_LINK_STATUS, &status ));
+            glcheck(glGetProgramiv( m_program_id, GL_LINK_STATUS, &status ));
             if( GL_FALSE == status )
               {
                 LOG( error, "failed to link shader program " << m_program_id );

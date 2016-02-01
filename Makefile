@@ -64,7 +64,8 @@ CXXFLAGS += -ggdb -Wall -Wextra -Wctor-dtor-privacy -Wwrite-strings -fno-inline 
 NVCCFLAGS+= -O0 --debug -Xlinker -ggdb -Xlinker -O0 -G -g -Xcompiler -fno-inline \
             -Xcompiler -fno-inline-functions -Xcompiler -fno-inline-small-functions            
 endif					
-
+QMAKECXXFLAGS = $(CXXFLAGS)
+QMAKELFLAGS   = $(LDFLAGS)
 #
 # 4. External libraries
 ################################################################################
@@ -102,6 +103,7 @@ CPPFLAGS          += -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG
 else
 CPPFLAGS          += -DDEBUG -O0 
 endif
+QMAKECXXFLAGS += $(CPPFLAGS)
 
 #
 # 6. Shortcuts

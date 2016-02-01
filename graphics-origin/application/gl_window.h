@@ -10,6 +10,7 @@
 BEGIN_GO_NAMESPACE
 namespace application {
   class gl_window_renderer;
+  class renderable;
   /**
    *
    *
@@ -36,6 +37,7 @@ namespace application {
 
     QObject* get_camera() const;
     void set_Camera(QObject* cam);
+    void add_renderable( renderable* r );
 
   protected:
     QSGNode* updatePaintNode( QSGNode*, UpdatePaintNodeData* ) override;
