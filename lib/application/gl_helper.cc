@@ -29,5 +29,22 @@ namespace application {
           << call << ": " << gluErrorString(error), line, file );
       }
   }
+
+  void initialize_glew_for_current_context()
+  {
+    glewExperimental = GL_TRUE;
+    GLenum err = glewInit();
+    glGetError();//glewInit generate an invalid gl enum...
+    if (err != GLEW_OK )
+     {
+       LOG( fatal,"[graphics] Failed to initialize GLEW (" << glewGetErrorString(err) <<")")
+       exit ( EXIT_FAILURE );
+     }
+     LOG(info, "GL INFO for current context:")
+     LOG(info, "  + GL version = " << glGetString( GL_VERSION))
+     LOG(info, "  + GLSL version = " << glGetString(GL_SHADING_LANGUAGE_VERSION) )
+     LOG(info, "  + Vendor = " << glGetString(GL_VENDOR) )
+     LOG(info, "  + Renderer = " << glGetString(GL_RENDERER) )
+  }
 }
 END_GO_NAMESPACE

@@ -84,7 +84,7 @@ QT_INC			 = -isystem /usr/include/qt -isystem /usr/include/qt/QtQuick \
 							 -isystem /usr/include/qt/QtGui -isystem /usr/include/qt/QtQml \
 							 -isystem /usr/include/qt/QtNetwork -isystem /usr/include/qt/QtCore \
 							 -I/usr/lib/qt/mkspecs/linux-g++
-QT_LD				 = -lQt5Quick -lQt4Gui -lQt5Qml -lQt5Network -lQt5Core
+QT_LD				 = -lQt5Quick -lQt5Qml -lQt5Network -lQt5Core
 
 # cuda
 CUDA_INC     = -isystem /opt/cuda/include 

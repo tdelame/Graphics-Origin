@@ -7,7 +7,7 @@
 
 # include <QQuickItem>
 
-BEGIN_GO_NAMESPACE
+namespace graphics_origin {
 namespace application {
   class gl_window_renderer;
   class renderable;
@@ -36,7 +36,7 @@ namespace application {
     Q_INVOKABLE void resume();
 
     QObject* get_camera() const;
-    void set_Camera(QObject* cam);
+    void set_camera(QObject* cam);
     void add_renderable( renderable* r );
 
   protected:

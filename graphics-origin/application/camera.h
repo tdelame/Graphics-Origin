@@ -11,7 +11,7 @@
 # include <QtCore/QObject>
 # include <QtGui/QVector3D>
 
-BEGIN_GO_NAMESPACE 
+namespace graphics_origin {
 namespace application {
 
   class camera
@@ -131,7 +131,7 @@ namespace application {
      * Get the field of view of the camera, also known as the camera angle.
      * @return The camera fov.
      */
-    gpu_real fov() const;
+    gpu_real get_fov() const;
 
     /**@brief Get the camera ratio.
      *
@@ -141,7 +141,7 @@ namespace application {
      *
      * @return The length ratio of the image taken by this camera.
      */
-    gpu_real ratio() const;
+    gpu_real get_ratio() const;
 
     /**@brief Get the near clipping plane.
      *
@@ -150,7 +150,7 @@ namespace application {
      *
      * @return The near clipping plane distance.
      */
-    gpu_real znear() const;
+    gpu_real get_znear() const;
 
     /**@brief Get the far clipping plane.
      *
@@ -159,7 +159,7 @@ namespace application {
      *
      * @return The far clipping plane distance.
      */
-    gpu_real zfar() const;
+    gpu_real get_zfar() const;
 
     /**@brief Define the field of view.
      *

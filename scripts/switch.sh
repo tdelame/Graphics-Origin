@@ -19,7 +19,7 @@ function switch {
   here=$(pwd)
   cd $projectdir
   make strap -j4
-  rm -f $projectdir/bin/products $projectdir/bin/tutorial $projectdir/bin/lib
+  rm -rf $projectdir/bin/products $projectdir/bin/tutorial $projectdir/bin/lib
   ln -s $projectdir/bin/$name                 $projectdir/bin/products
   ln -s $projectdir/bin/products/tutorial/bin $projectdir/bin/tutorial
   ln -s $projectdir/bin/products/lib          $projectdir/bin/lib

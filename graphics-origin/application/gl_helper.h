@@ -71,6 +71,12 @@ void check_gl_error( const char* call, const char* file, const int line );
 #   define glcheck( call ) call;
 # endif
 
+/**
+ *
+ */
+extern
+void initialize_glew_for_current_context();
+
 }
 END_GO_NAMESPACE
 

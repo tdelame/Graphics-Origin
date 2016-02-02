@@ -4,13 +4,14 @@
 # include <graphics-origin/application/gl_window.h>
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_texture_node.h>
+# include <graphics-origin/application/gl_helper.h>
 # include <graphics-origin/application/camera.h>
 
 # include <QtQuick/QQuickWindow>
 # include <QtGui/QOpenGLContext>
 # include <QtGui/QOffscreenSurface>
 
-BEGIN_GO_NAMESPACE
+namespace graphics_origin {
 namespace application {
 
   QList< gl_window* > gl_window::g_gl_windows;
@@ -124,7 +125,7 @@ namespace application {
    * information. */
   QSGNode* gl_window::updatePaintNode( QSGNode* old_node, UpdatePaintNodeData* )
   {
-    if( !m_renderer->context )
+    if( !m_renderer->m_context )
       {
         QOpenGLContext* current = window()->openglContext();
         // Some GL implementations requires that the currently bound context is
@@ -132,11 +133,11 @@ namespace application {
         // and makeCurrent down below while setting up our own context.
         current->doneCurrent();
 
-        m_renderer->context = new QOpenGLContext();
-        m_renderer->context->setFormat(current->format());
-        m_renderer->context->setShareContext(current);
-        m_renderer->context->create();
-        m_renderer->context->moveToThread(m_renderer);
+        m_renderer->m_context = new QOpenGLContext();
+        m_renderer->m_context->setFormat(current->format());
+        m_renderer->m_context->setShareContext(current);
+        m_renderer->m_context->create();
+        m_renderer->m_context->moveToThread(m_renderer);
 
         current->makeCurrent(window());
         initialize_glew_for_current_context();
@@ -145,10 +146,10 @@ namespace application {
         return nullptr;
       }
 
-    opengl_texture_node* node = static_cast< opengl_texture_node* >( old_node );
+    gl_texture_node* node = static_cast< gl_texture_node* >( old_node );
     if( !node )
       {
-        node = new opengl_texture_node( window() );
+        node = new gl_texture_node( window() );
         /* Set up connections to get the production of FBO textures in sync with vsync on the
          * rendering thread.
          *

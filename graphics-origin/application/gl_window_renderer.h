@@ -18,7 +18,7 @@ class QOffscreenSurface;
 class QOpenGLContext;
 class QOpenGLFramebufferObject;
 
-BEGIN_GO_NAMESPACE
+namespace graphics_origin {
 namespace application {
   class camera;
   class gl_window;
@@ -46,11 +46,15 @@ namespace application {
   private:
     friend gl_window;
 
+    virtual void do_add( renderable* r ) = 0;
+    virtual void do_render() = 0;
+
     QOffscreenSurface* m_surface;
     QOpenGLContext* m_context;
     QOpenGLFramebufferObject* m_render_fbo;
     QOpenGLFramebufferObject* m_display_fbo;
 
+    /**Note: the camera is not deleted in the destructor. */
     camera* m_camera;
     std::mutex m_lock;
     std::condition_variable m_cv;

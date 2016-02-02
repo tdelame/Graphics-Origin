@@ -21,7 +21,7 @@ typedef glm::tmat3x3< gpu_real, glm::highp> gpu_mat3;
 END_GO_NAMESPACE
 
 # include <boost/serialization/nvp.hpp>
-# include <geometry/vec.h>
+# include <graphics-origin/geometry/vec.h>
 namespace boost {
   namespace serialization {
     template< class Archive >
