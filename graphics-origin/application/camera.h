@@ -33,7 +33,7 @@ namespace application {
      * Allow a read-only access to the view matrix, i.e. where the camera looks.
      * @return The view matrix
      */
-    const gpu_mat4& view_matrix() const;
+    const gpu_mat4& get_view_matrix() const;
 
     /**@brief Read access to the camera world position.
      *
@@ -124,7 +124,7 @@ namespace application {
      *
      * @return The projection matrix.
      */
-    const gpu_mat4& projection_matrix() const;
+    const gpu_mat4& get_projection_matrix() const;
 
     /**@brief Get the camera field of view
      *
