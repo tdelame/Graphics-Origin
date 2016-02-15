@@ -98,5 +98,22 @@ namespace application {
      emit texture_ready( m_display_fbo->texture(), QSize(m_width,m_height));
   }
 
+  void
+  gl_window_renderer::shut_down()
+  {
+    do_shut_down();
+
+    this->quit();
+    m_context->makeCurrent( m_surface );
+    delete m_render_fbo;
+    delete m_display_fbo;
+
+    m_context->doneCurrent();
+    delete m_context;
+    m_context = nullptr;
+
+    m_surface->deleteLater();
+  }
+
 }
 END_GO_NAMESPACE

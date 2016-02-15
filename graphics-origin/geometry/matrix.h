@@ -4,7 +4,7 @@
 # ifndef GRAPHICS_ORIGIN_MATRIX_H_
 # define GRAPHICS_ORIGIN_MATRIX_H_
 
-# include <graphics-origin/graphics_origin.h>
+# include "../graphics_origin.h"
 
 # include <glm/glm.hpp>
 # include <glm/gtc/matrix_transform.hpp>
@@ -21,7 +21,7 @@ typedef glm::tmat3x3< gpu_real, glm::highp> gpu_mat3;
 END_GO_NAMESPACE
 
 # include <boost/serialization/nvp.hpp>
-# include <graphics-origin/geometry/vec.h>
+# include "vec.h"
 namespace boost {
   namespace serialization {
     template< class Archive >

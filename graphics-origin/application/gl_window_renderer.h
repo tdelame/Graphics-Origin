@@ -4,7 +4,7 @@
 
 # ifndef GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
 # define GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
-# include <graphics-origin/graphics_origin.h>
+# include "../graphics_origin.h"
 
 # include <atomic>
 # include <list>
@@ -43,11 +43,12 @@ namespace application {
 
   private slots:
     void shut_down();
-  private:
+  protected:
     friend gl_window;
 
     virtual void do_add( renderable* r ) = 0;
     virtual void do_render() = 0;
+    virtual void do_shut_down() = 0;
 
     QOffscreenSurface* m_surface;
     QOpenGLContext* m_context;

@@ -4,9 +4,9 @@
 
 # ifndef GRAPHICS_ORIGIN_CAMERA_H_
 # define GRAPHICS_ORIGIN_CAMERA_H_
-# include <graphics-origin/graphics_origin.h>
-# include <graphics-origin/geometry/vec.h>
-# include <graphics-origin/geometry/matrix.h>
+# include "../graphics_origin.h"
+# include "../geometry/vec.h"
+# include "../geometry/matrix.h"
 
 # include <QtCore/QObject>
 # include <QtGui/QVector3D>
@@ -20,6 +20,7 @@ namespace application {
     Q_PROPERTY( gpu_real fov READ get_fov WRITE set_fov )
     Q_PROPERTY( gpu_real znear READ get_znear WRITE set_znear )
     Q_PROPERTY( gpu_real zfar READ get_zfar WRITE set_zfar )
+    Q_PROPERTY( gpu_real ratio READ get_ratio WRITE set_ratio )
 
     Q_PROPERTY( QVector3D position READ qml_get_position WRITE qml_set_position )
     Q_PROPERTY( QVector3D forward READ qml_get_forward WRITE qml_set_forward )

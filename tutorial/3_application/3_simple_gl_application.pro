@@ -1,12 +1,13 @@
-DESTDIR = ../../bin/products/lib
-OBJECTS_DIR = ../../bin/products/obj/application
-MOC_DIR = ../../bin/products/obj/application
+DESTDIR = ../../bin/products/tutorial
+OBJECTS_DIR = ../../bin/products/tutorial/obj/3_application
+MOC_DIR = ../../bin/products/tutorial/obj/3_application
 QT       += quick
 QT       -= gui
+
 CONFIG += c++14
 
-TARGET   = application
-TEMPLATE = lib
+TARGET   = 3_simple_gl_application
+TEMPLATE = app
 
 LIBS += -L../../bin/lib 
 INCLUDEPATH += ../../
@@ -27,4 +28,4 @@ unix {
     target.path = /usr/lib
     INSTALLS += target
 }
-include(./application.pri)
+include(./3_simple_gl_application.pri)

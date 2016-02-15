@@ -6,6 +6,7 @@
 # define GRAPHICS_ORIGIN_SHADER_PROGRAM_H_
 # include "../graphics_origin.h"
 
+# include <memory>
 # include <list>
 # include <string>
 # include <unordered_map>
@@ -132,6 +133,8 @@ namespace application {
     unsigned int m_program_id;
     bool m_loaded;
   };
+
+  typedef std::shared_ptr< shader_program > shader_program_ptr;
 }
 END_GO_NAMESPACE
 # endif

@@ -2,7 +2,6 @@
  *     Author: T.Delame (tdelame@gmail.com)
  */
 # include <graphics-origin/geometry/matrix.h>
-# include <graphics-origin/geometry/vec.h>
 # include <iostream>
 namespace std {
 

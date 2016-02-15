@@ -6,6 +6,7 @@
 # include <graphics-origin/application/gl_texture_node.h>
 # include <graphics-origin/application/gl_helper.h>
 # include <graphics-origin/application/camera.h>
+# include <graphics-origin/tools/log.h>
 
 # include <QtQuick/QQuickWindow>
 # include <QtGui/QOpenGLContext>
@@ -16,8 +17,8 @@ namespace application {
 
   QList< gl_window* > gl_window::g_gl_windows;
 
-  gl_window::gl_window( gl_window_renderer* renderer, QQuickItem* parent )
-  : QQuickItem{ parent }, m_renderer{ renderer }
+  gl_window::gl_window( QQuickItem* parent )
+  : QQuickItem{ parent }, m_renderer{ nullptr }
   {
     setFlag( ItemHasContents, true );
     connect( this, SIGNAL(windowChanged(QQuickWindow*)),
@@ -27,6 +28,14 @@ namespace application {
     connect( this, SIGNAL(widthChanged()),
              this, SLOT(handle_size_changed()));
     g_gl_windows << this;
+  }
+
+  void
+  gl_window::initialize_renderer( gl_window_renderer* renderer )
+  {
+    cleanup();
+    m_renderer = renderer;
+    LOG( info, "GL Window " << this << " initialized its renderer to " << m_renderer )
   }
 
   gl_window::~gl_window()
@@ -50,6 +59,18 @@ namespace application {
   gl_window::sync()
   {
     m_renderer->set_size( width(), height() );
+  }
+
+  void
+  gl_window::pause()
+  {
+    m_renderer->pause();
+  }
+
+  void
+  gl_window::resume()
+  {
+    m_renderer->resume();
   }
 
   void

@@ -15,7 +15,7 @@ ifeq ($(BUILD_CONF),"")
 BUILD_CONF 	= release
 else 
 ifneq ($(BUILD_CONF),release)
-BUILD_CONF  = debug 
+BUILD_CONF  = debug
 endif
 endif 
 
@@ -84,11 +84,15 @@ QT_INC			 = -isystem /usr/include/qt -isystem /usr/include/qt/QtQuick \
 							 -isystem /usr/include/qt/QtGui -isystem /usr/include/qt/QtQml \
 							 -isystem /usr/include/qt/QtNetwork -isystem /usr/include/qt/QtCore \
 							 -I/usr/lib/qt/mkspecs/linux-g++
-QT_LD				 = -lQt5Quick -lQt5Qml -lQt5Network -lQt5Core
+QT_LD				 = -lQt5Quick -lQt5Gui -lQt5Qml -lQt5Network -lQt5Core
 
 # cuda
 CUDA_INC     = -isystem /opt/cuda/include 
 CUDA_LD      = -L /opt/cuda/lib64 -lcudart -lcuda
+
+# OpenGL
+GL_INC       =
+GL_LD        = -lGL -lGLEW -lGLU
 
 #
 # 5. Compilation flags

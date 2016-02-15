@@ -22,8 +22,11 @@ namespace application {
     Q_OBJECT
     Q_PROPERTY( QObject* camera READ get_camera WRITE set_camera )
   public:
-    gl_window( gl_window_renderer* renderer, QQuickItem* parent = nullptr );
+    gl_window( QQuickItem* parent = nullptr );
     ~gl_window();
+
+    Q_INVOKABLE
+    void initialize_renderer( gl_window_renderer* renderer );
 
     static QList< gl_window* > g_gl_windows;
 
@@ -41,10 +44,11 @@ namespace application {
 
   protected:
     QSGNode* updatePaintNode( QSGNode*, UpdatePaintNodeData* ) override;
+  private slots:
     void handle_size_changed();
     void handle_window_changed( QQuickWindow* win );
 
-  private:
+  protected:
     gl_window_renderer* m_renderer;
   };
 
