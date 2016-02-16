@@ -5,6 +5,7 @@
 # define GRAPHICS_ORIGIN_VEC_H_
 # include "../graphics_origin.h"
 # include <glm/glm.hpp>
+# include <glm/gtc/type_ptr.hpp>
 
 BEGIN_GO_NAMESPACE
 

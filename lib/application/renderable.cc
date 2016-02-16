@@ -21,7 +21,7 @@ namespace application {
         update_gpu_data();
         m_dirty = false;
       }
-    render();
+    do_render();
   }
 
   shader_program_ptr renderable::get_shader_program() const

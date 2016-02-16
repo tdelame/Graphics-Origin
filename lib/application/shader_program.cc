@@ -261,6 +261,7 @@ namespace application {
             m_program_id = 0;
           }
 
+        variables_introspection();
         m_loaded = true;
       }
 

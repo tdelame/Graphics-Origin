@@ -6,6 +6,9 @@
 # include "../../graphics-origin/application/camera.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/gl_window.h"
+# include "../../graphics-origin/application/renderable.h"
+# include "../../graphics-origin/application/shader_program.h"
+# include "../../graphics-origin/tools/log.h"
 # include "3_simple_gl_application.h"
 
 # include <QGuiApplication>
@@ -16,6 +19,83 @@
 
 namespace graphics_origin {
 namespace application {
+
+  static shader_program_ptr flat_program = std::make_shared<shader_program>( std::list<std::string>{ "shaders/flat.vert", "shaders/flat.frag"});
+
+  static gpu_vec3 positions[] = {
+      gpu_vec3{ -1, 0, 0 },
+      gpu_vec3{  1, 0, 0 },
+      gpu_vec3{  0, 1, 0 }
+  };
+
+  static gpu_vec3 colors[] = {
+      gpu_vec3{ 1, 0, 0 },
+      gpu_vec3{ 0, 1, 0 },
+      gpu_vec3{ 0, 0, 1 }
+  };
+
+  class triangle_renderable
+    : public renderable {
+  public:
+    triangle_renderable()
+//      : m_program{ flat_program }
+    {
+      m_program = flat_program;
+    }
+
+
+  private:
+    void update_gpu_data() override
+    {
+      if( !m_buffer[POSITIONS] )
+        {
+          glcheck(glGenBuffers( NB_BUFFERS, m_buffer ));
+        }
+      glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_buffer[POSITIONS] ));
+      glcheck(glBufferData( GL_ARRAY_BUFFER, 3 * sizeof(gpu_vec3), positions, GL_STATIC_DRAW ));
+
+      glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_buffer[COLORS] ));
+      glcheck(glBufferData( GL_ARRAY_BUFFER, 3 * sizeof(gpu_vec3), colors, GL_STATIC_DRAW ));
+    }
+
+    void do_render() override
+    {
+      int model = m_program->get_uniform_location("model");
+      glcheck(glUniformMatrix4fv( model, 1, GL_FALSE, glm::value_ptr(m_model)));
+
+      int position = m_program->get_attribute_location( "position");
+      int color = m_program->get_attribute_location( "color");
+
+      if( position == shader_program::null_identifier )
+        {
+          LOG( debug, "position not found on the shader sources");
+        }
+
+      glcheck(glEnableVertexAttribArray( position ));
+      glcheck(glEnableVertexAttribArray( color ));
+
+      glcheck(glBindBuffer(GL_ARRAY_BUFFER, m_buffer[POSITIONS]));
+      glcheck(glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 0, 0 ));
+
+      glcheck(glBindBuffer(GL_ARRAY_BUFFER, m_buffer[COLORS]));
+      glcheck(glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 0, 0 ));
+
+      glcheck(glDrawArrays(GL_TRIANGLES, 0, 3 ));
+
+      glcheck(glDisableVertexAttribArray( position ));
+      glcheck(glDisableVertexAttribArray( color ));
+    }
+
+    void remove_gpu_data() override
+    {
+      glcheck(glDeleteBuffers( NB_BUFFERS, m_buffer));
+      m_buffer[ POSITIONS ] = (unsigned int)0;
+    }
+
+    enum{ POSITIONS, COLORS, NB_BUFFERS };
+    unsigned int m_buffer[ NB_BUFFERS ];
+  };
+
 
   simple_gl_renderer::~simple_gl_renderer()
   {}
@@ -58,6 +138,8 @@ namespace application {
       : gl_window( parent )
     {
       m_renderer = new simple_gl_renderer;
+
+      add_renderable( new triangle_renderable() );
     }
 
   };
