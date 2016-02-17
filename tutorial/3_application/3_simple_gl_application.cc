@@ -23,9 +23,9 @@ namespace application {
   static shader_program_ptr flat_program = std::make_shared<shader_program>( std::list<std::string>{ "shaders/flat.vert", "shaders/flat.frag"});
 
   static gpu_vec3 positions[] = {
-      gpu_vec3{ -1, 0, 0 },
-      gpu_vec3{  1, 0, 0 },
-      gpu_vec3{  0, 1, 0 }
+      gpu_vec3{ 0, -0.1, 0 },
+      gpu_vec3{ 0,  0.1, 0 },
+      gpu_vec3{ 0,  0, 1 }
   };
 
   static gpu_vec3 colors[] = {
@@ -38,9 +38,9 @@ namespace application {
     : public renderable {
   public:
     triangle_renderable()
-//      : m_program{ flat_program }
     {
       m_program = flat_program;
+      m_model = gpu_mat4(1.0);
     }
 
 
@@ -65,11 +65,6 @@ namespace application {
 
       int position = m_program->get_attribute_location( "position");
       int color = m_program->get_attribute_location( "color");
-
-      if( position == shader_program::null_identifier )
-        {
-          LOG( debug, "position not found on the shader sources");
-        }
 
       glcheck(glEnableVertexAttribArray( position ));
       glcheck(glEnableVertexAttribArray( color ));
@@ -110,13 +105,13 @@ namespace application {
     for( auto& r : m_renderables )
       {
         auto program = r->get_shader_program();
+        program->bind();
         glcheck(glUniformMatrix4fv(
             program->get_uniform_location( "view" ), 1,
             GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
         glcheck(glUniformMatrix4fv(
             program->get_uniform_location( "projection" ), 1,
             GL_FALSE, glm::value_ptr(m_camera->get_projection_matrix())));
-        program->bind();
         r->render();
       }
   }

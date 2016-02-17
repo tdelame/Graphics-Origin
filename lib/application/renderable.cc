@@ -24,6 +24,11 @@ namespace application {
     do_render();
   }
 
+  const gpu_mat4& renderable::get_model_matrix() const
+  {
+    return m_model;
+  }
+
   shader_program_ptr renderable::get_shader_program() const
   {
     return m_program;

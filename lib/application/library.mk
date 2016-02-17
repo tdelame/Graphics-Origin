@@ -12,9 +12,9 @@ LIB_RULES += $(application_rules)
 LIB_RES   += libapplication.so
 
 # define variable to use this library
-APPLICATION_COMPILATION_LD = $(TOOLS_LD) $(QT_LD) $(GL_LD) $(BOOST_LD)
+APPLICATION_COMPILATION_LD = $(TOOLS_LD) $(GEOMETRY_LD) $(QT_LD) $(GL_LD) $(BOOST_LD)
 APPLICATION_LD  = -L$(LIB_RES_DIR) -lapplication $(APPLICATION_COMPILATION_LD) $(GL_LD)
-APPLICATION_INC = -I$(INC_DIR) $(BOOST_INC) $(TOOLS_INC) $(QT_INC) $(GL_INC)
+APPLICATION_INC = -I$(INC_DIR) $(BOOST_INC) $(TOOLS_INC) $(GEOMETRY_INC) $(QT_INC) $(GL_INC)
 
 
 $(LIB_SRC_DIR)/application/qtmakefile.mk: $(LIB_SRC_DIR)/application/library.mk $(LIB_SRC_DIR)/application/application.pro $(BIN_DIR)/build_conf.mk $(application_sources) $(application_headers) 

@@ -7,9 +7,9 @@ namespace application {
 
   camera::camera( QObject* parent )
     : QObject{ parent },
-      m_fov{}, m_ratio{}, m_znear{}, m_zfar{},
-      m_view{},
-      m_projection{}
+      m_fov{1.04}, m_ratio{1.0}, m_znear{0.05}, m_zfar{ 15},
+      m_view{ glm::lookAt( gpu_vec3{3,0,0}, gpu_vec3{}, gpu_vec3{0,0,1})},
+      m_projection{ glm::perspective( m_fov, m_ratio, m_znear, m_zfar ) }
   {}
 
   const gpu_mat4&
@@ -140,48 +140,48 @@ namespace application {
     return m_projection;
   }
 
-  gpu_real camera::get_fov() const
+  qreal camera::get_fov() const
   {
     return m_fov;
   }
 
-  gpu_real camera::get_ratio() const
+  qreal camera::get_ratio() const
   {
     return m_ratio;
   }
 
-  gpu_real camera::get_znear() const
+  qreal camera::get_znear() const
   {
     return m_znear;
   }
 
-  gpu_real camera::get_zfar() const
+  qreal camera::get_zfar() const
   {
     return m_zfar;
   }
 
-  void camera::set_fov( const gpu_real& v )
+  void camera::set_fov( const qreal& v )
   {
     m_fov = v;
-    m_projection = glm::perspective( m_fov, m_ratio, m_znear, m_zfar );
+    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
   }
 
-  void camera::set_ratio( const gpu_real& v )
+  void camera::set_ratio( const qreal& v )
   {
     m_ratio = v;
-    m_projection = glm::perspective( m_fov, m_ratio, m_znear, m_zfar );
+    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
   }
 
-  void camera::set_zfar( const gpu_real& v )
+  void camera::set_zfar( const qreal& v )
   {
     m_zfar = v;
-    m_projection = glm::perspective( m_fov, m_ratio, m_znear, m_zfar );
+    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
   }
 
-  void camera::set_znear( const gpu_real& v )
+  void camera::set_znear( const qreal& v )
   {
     m_znear = v;
-    m_projection = glm::perspective( m_fov, m_ratio, m_znear, m_zfar );
+    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
   }
 
 }

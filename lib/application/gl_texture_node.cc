@@ -16,6 +16,7 @@ namespace application {
     m_texture->bind();
     setTexture(m_texture);
     setFiltering(QSGTexture::Linear);
+    setTextureCoordinatesTransform( QSGSimpleTextureNode::MirrorVertically );
   }
 
   gl_texture_node::~gl_texture_node()

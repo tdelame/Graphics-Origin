@@ -12,6 +12,9 @@ Rectangle {
   GLCamera {
 	  id: cam1
 	  ratio: glwindow.height > 0 ? glwindow.width / glwindow.height : 1
+	  Component.onCompleted: {
+	  	console.log("ratio is set to " + ratio )
+	  }
 	}
   
   GLWindow {

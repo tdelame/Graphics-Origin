@@ -37,6 +37,7 @@ namespace application {
     void render();
 
     shader_program_ptr get_shader_program() const;
+    const gpu_mat4& get_model_matrix() const;
   private:
     /** Update the data on the gpu.
      *

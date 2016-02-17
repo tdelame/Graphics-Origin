@@ -17,10 +17,10 @@ namespace application {
   class camera
     : public QObject {
     Q_OBJECT
-    Q_PROPERTY( gpu_real fov READ get_fov WRITE set_fov )
-    Q_PROPERTY( gpu_real znear READ get_znear WRITE set_znear )
-    Q_PROPERTY( gpu_real zfar READ get_zfar WRITE set_zfar )
-    Q_PROPERTY( gpu_real ratio READ get_ratio WRITE set_ratio )
+    Q_PROPERTY( qreal fov READ get_fov WRITE set_fov )
+    Q_PROPERTY( qreal znear READ get_znear WRITE set_znear )
+    Q_PROPERTY( qreal zfar READ get_zfar WRITE set_zfar )
+    Q_PROPERTY( qreal ratio READ get_ratio WRITE set_ratio )
 
     Q_PROPERTY( QVector3D position READ qml_get_position WRITE qml_set_position )
     Q_PROPERTY( QVector3D forward READ qml_get_forward WRITE qml_set_forward )
@@ -132,7 +132,7 @@ namespace application {
      * Get the field of view of the camera, also known as the camera angle.
      * @return The camera fov.
      */
-    gpu_real get_fov() const;
+    qreal get_fov() const;
 
     /**@brief Get the camera ratio.
      *
@@ -142,7 +142,7 @@ namespace application {
      *
      * @return The length ratio of the image taken by this camera.
      */
-    gpu_real get_ratio() const;
+    qreal get_ratio() const;
 
     /**@brief Get the near clipping plane.
      *
@@ -151,7 +151,7 @@ namespace application {
      *
      * @return The near clipping plane distance.
      */
-    gpu_real get_znear() const;
+    qreal get_znear() const;
 
     /**@brief Get the far clipping plane.
      *
@@ -160,7 +160,7 @@ namespace application {
      *
      * @return The far clipping plane distance.
      */
-    gpu_real get_zfar() const;
+    qreal get_zfar() const;
 
     /**@brief Define the field of view.
      *
@@ -168,7 +168,7 @@ namespace application {
      * custom fov.
      * @param v The new field of view.
      */
-    void set_fov( const gpu_real& v );
+    void set_fov( const qreal& v );
 
     /**@brief Define the aspect ratio.
      *
@@ -177,28 +177,28 @@ namespace application {
      * resized.
      * @param v The new aspect ratio (width / height)
      */
-    void set_ratio( const gpu_real& v );
+    void set_ratio( const qreal& v );
 
     /**@brief Define the far clipping plane.
      *
      * Set the far clipping plane at the specified distance.
      * @param v The far clipping plane distance.
      */
-    void set_zfar( const gpu_real& v );
+    void set_zfar( const qreal& v );
 
     /**@brief Define the near clipping plane.
      *
      * Set the near clipping plane at the specified distance.
      * @param v The near clipping plane distance.
      */
-    void set_znear( const gpu_real& v );
+    void set_znear( const qreal& v );
     ///@}
 
   private:
-    gpu_real m_fov;
-    gpu_real m_ratio;
-    gpu_real m_znear;
-    gpu_real m_zfar;
+    qreal m_fov;
+    qreal m_ratio;
+    qreal m_znear;
+    qreal m_zfar;
     gpu_mat4 m_view;
     gpu_mat4 m_projection;
   };

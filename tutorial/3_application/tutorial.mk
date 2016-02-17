@@ -49,7 +49,7 @@ APPLICATION_TUT_INC = $(APPLICATION_INC)
 	
 3_application: application 3_simple_gl_application	
 	
-3_simple_gl_application: $(TUT_RES_DIR)/3_simple_gl_application
+3_simple_gl_application: $(TUT_RES_DIR)/3_simple_gl_application tools geometry application
 
 $(TUT_SRC_DIR)/3_application/3_simple_gl_application_qtmakefile.mk: $(TUT_SRC_DIR)/3_application/tutorial.mk $(BIN_DIR)/build_conf.mk $(TUT_SRC_DIR)/3_application/3_simple_gl_application.cc $(TUT_SRC_DIR)/3_application/3_simple_gl_application.h $(TUT_SRC_DIR)/3_application/3_simple_gl_application.pro
 	@echo -e "\033[1;30m[: > host recipe test ] \033[0mqt makefile"
