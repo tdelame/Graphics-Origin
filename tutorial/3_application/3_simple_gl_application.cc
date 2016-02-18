@@ -142,7 +142,6 @@ namespace application {
   test_application::test_application( QWindow* parent )
     : QQuickView( parent )
   {
-    qmlRegisterType<simple_gl_renderer>( "GraphicsOrigin", 1, 0, "GLRenderer" );
     qmlRegisterType<simple_gl_window>( "GraphicsOrigin", 1, 0, "GLWindow" );
     qmlRegisterType<camera>( "GraphicsOrigin", 1, 0, "GLCamera" );
 
