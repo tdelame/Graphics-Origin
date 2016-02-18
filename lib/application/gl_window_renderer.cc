@@ -45,6 +45,7 @@ namespace application {
   gl_window_renderer::resume()
   {
     m_is_running = 1;
+    m_cv.notify_all();
   }
 
   const QOpenGLFramebufferObjectFormat&
@@ -102,7 +103,6 @@ namespace application {
   gl_window_renderer::shut_down()
   {
     do_shut_down();
-
     this->quit();
     m_context->makeCurrent( m_surface );
     delete m_render_fbo;

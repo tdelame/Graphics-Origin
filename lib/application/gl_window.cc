@@ -78,7 +78,7 @@ namespace application {
   {
     if( m_renderer )
       {
-        m_renderer->resume();
+        resume();
         QMetaObject::invokeMethod( m_renderer, "shut_down", Qt::QueuedConnection );
         while( m_renderer->isRunning() )
           {
