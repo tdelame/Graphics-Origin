@@ -47,7 +47,7 @@ namespace application {
   gpu_vec3
   camera::get_up() const
   {
-    return gpu_vec3{ m_view[1][0], m_view[1][1], m_view[2][1] };
+    return gpu_vec3{ m_view[0][1], m_view[1][1], m_view[2][1] };
   }
 
   QVector3D
@@ -60,7 +60,7 @@ namespace application {
   gpu_vec3
   camera::get_forward() const
   {
-    return gpu_vec3{ -m_view[2][0], -m_view[1][2], -m_view[2][2] };
+    return gpu_vec3{ -m_view[0][2], -m_view[1][2], -m_view[2][2] };
   }
 
   QVector3D

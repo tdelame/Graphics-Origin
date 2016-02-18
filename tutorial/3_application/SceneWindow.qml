@@ -223,9 +223,25 @@ Item {
     GLWindow {
   	  id: glwindow
       width: parent.width - parent.border.width
-	    height: parent.height - parent.border.width
-	    anchors.centerIn: parent
-	    camera: cam1
+      height: parent.height - parent.border.width
+      anchors.centerIn: parent
+      camera: cam1
+      focus: true
+      Keys.onPressed: {
+      	if( event.key == Qt.Key_Q ) {
+      	  cam1.position = cam1.position.plus(cam1.right.times(-0.05))
+      	  event.accepted = true;
+      	} else if( event.key == Qt.Key_D ) {
+      	  cam1.position = cam1.position.plus(cam1.right.times(0.05))
+		  event.accepted = true;
+      	} else if( event.key == Qt.Key_Z ) {
+      	  cam1.position = cam1.position.plus(cam1.forward.times(0.05))
+      	  event.accepted = true;
+      	} else if( event.key == Qt.Key_S ) {
+      	  cam1.position = cam1.position.plus(cam1.forward.times(-0.05))
+      	  event.accepted = true
+  	    }
+      }
   	}
-	}
+  }
 }

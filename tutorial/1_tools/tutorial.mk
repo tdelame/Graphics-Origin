@@ -47,9 +47,9 @@ $(TUT_OBJ_DIR)/1_tools/%.o: $(TUT_SRC_DIR)/1_tools/%.cu $(TUT_RULES_DIR)/1_tools
 	@mkdir -p $(TUT_OBJ_DIR)/1_tools
 	@$(DEVICECOMPILER) $(TOOLS_TUT_INC) -o $@ $< 
 	
-1_log: $(TUT_RES_DIR)/1_log tools
+1_log: $(TUT_RES_DIR)/1_log 
 
-$(TUT_RES_DIR)/1_log: $(TUT_OBJ_DIR)/1_tools/1_log.o
+$(TUT_RES_DIR)/1_log: $(TUT_OBJ_DIR)/1_tools/1_log.o tools
 	@echo -e "\033[1;38m[: > building tutorial ] \033[0m1_log"
 	@$(LINKER) $(TUT_OBJ_DIR)/1_tools/1_log.o $(TOOLS_LD) -o 1_log
 	@mkdir -p $(TUT_RES_DIR)

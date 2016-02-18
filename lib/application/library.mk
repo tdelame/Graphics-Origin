@@ -24,7 +24,7 @@ $(LIB_SRC_DIR)/application/qtmakefile.mk: $(LIB_SRC_DIR)/application/library.mk 
 ifeq ($(BUILD_CONF),debug)
 	@echo "CONFIG  += debug" >> $(LIB_SRC_DIR)/application/application.pri
 else
-	@echo -e "QMAKE_CXXFLAGS_RELEASE -= -O1\nQMAKE_CXXFLAGS_RELEASE -= -O2\nQMAKE_CXXFLAGS_RELEASE *= -O3" > $(LIB_SRC_DIR)/application/application.pri
+	@echo -e "QMAKE_CXXFLAGS_RELEASE -= -O1\nQMAKE_CXXFLAGS_RELEASE -= -O2\nQMAKE_CXXFLAGS_RELEASE *= -O3" >> $(LIB_SRC_DIR)/application/application.pri
 	@echo -e "QMAKE_LFLAGS_RELEASE -= -Wl,-O1\nQMAKE_LFLAGS_RELEASE -= -Wl,-O2" >> $(LIB_SRC_DIR)/application/application.pri
 endif
 	@echo -n "SOURCES += " >> $(LIB_SRC_DIR)/application/application.pri

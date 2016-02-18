@@ -9,6 +9,8 @@
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/tools/log.h"
+
+# include "../../graphics-origin/tools/tight_buffer_manager.h"
 # include "3_simple_gl_application.h"
 
 # include <QGuiApplication>
@@ -177,7 +179,6 @@ int main( int argc, char* argv[] )
   QGuiApplication qgui( argc, argv );
   graphics_origin::application::test_application app;
   app.setSource(QUrl::fromLocalFile("tutorial/3_application/3_simple_gl_application.qml"));
-  app.resize( 800, 800 );
   app.show();
   app.raise();
   return qgui.exec();

@@ -1,4 +1,4 @@
-DESTDIR = ../../bin/products/tutorial
+DESTDIR = ../../bin/products/tutorial/bin
 OBJECTS_DIR = ../../bin/products/tutorial/obj/3_application
 MOC_DIR = ../../bin/products/tutorial/obj/3_application
 QT       += quick
