@@ -205,12 +205,12 @@ Item {
           var dx = 0;
           var dy = 0;
           if( prevX > -1 ) {
-            dx = mouse.x - prevX
+            dx = 0.01 * (mouse.x - prevX)
           }
           if( prevY > -1 ) {
-            dy = mouse.y - prevY
+            dy = 0.01 * (mouse.y - prevY)
           }
-          cam1.update( dx, dy )
+          cam1.arcball_rotate( dx, dy )
           prevX = mouse.x
           prevY = mouse.y
           

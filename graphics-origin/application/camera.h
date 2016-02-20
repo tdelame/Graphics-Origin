@@ -22,10 +22,10 @@ namespace application {
     Q_PROPERTY( qreal zfar READ get_zfar WRITE set_zfar )
     Q_PROPERTY( qreal ratio READ get_ratio WRITE set_ratio )
 
-    Q_PROPERTY( QVector3D position READ qml_get_position WRITE qml_set_position )
-    Q_PROPERTY( QVector3D forward READ qml_get_forward WRITE qml_set_forward )
-    Q_PROPERTY( QVector3D right READ qml_get_right WRITE qml_set_right )
-    Q_PROPERTY( QVector3D up READ qml_get_up WRITE qml_set_up )
+    Q_PROPERTY( QVector3D position READ qml_get_position WRITE qml_set_position NOTIFY position_changed )
+    Q_PROPERTY( QVector3D forward READ qml_get_forward WRITE qml_set_forward NOTIFY forward_changed )
+    Q_PROPERTY( QVector3D right READ qml_get_right WRITE qml_set_right NOTIFY right_changed )
+    Q_PROPERTY( QVector3D up READ qml_get_up WRITE qml_set_up NOTIFY up_changed )
   public:
     explicit camera( QObject* parent = nullptr );
 
@@ -108,6 +108,12 @@ namespace application {
      */
     void set_forward( const gpu_vec3& forward );
     void qml_set_forward( const QVector3D& forward );
+
+    Q_INVOKABLE
+    void arcball_rotate( qreal mouse_dx, qreal mouse_dy );
+
+    Q_INVOKABLE
+    void spaceship_rotate( qreal mouse_dx, qreal mouse_dy );
     ///@}
 
 
@@ -193,6 +199,12 @@ namespace application {
      */
     void set_znear( const qreal& v );
     ///@}
+
+  signals:
+    void position_changed();
+    void forward_changed();
+    void right_changed();
+    void up_changed();
 
   private:
     qreal m_fov;

@@ -15,8 +15,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * This exception is thrown when the maximal capacity of a tight buffer
    * manager is reached during the creation of an element. This maximal
    * capacity is fixed by the number of bits used to store the index of
-   * an element in a handle.
-   */
+   * an element in a handle. */
   struct tight_buffer_manager_buffer_overflow
       : public std::runtime_error
   {
@@ -34,8 +33,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * (meaning the element pointed by the handle has already been deleted and another
    * element is pointed by an handle with the same index has been created)
    * - there is no allocated memory pointed by such handle (meaning the element
-   * pointed by the handle has been deleted)
-   */
+   * pointed by the handle has been deleted). */
   struct tight_buffer_manager_invalid_handle
       : public std::runtime_error
   {
@@ -49,8 +47,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    *
    * Such an exception occurs when the memory pointed by a pointer is outside
    * of the element buffer or if it is not correctly aligned inside the memory
-   * of the element buffer.
-   */
+   * of the element buffer. */
   struct tight_buffer_manager_invalid_element_pointer
       : public std::runtime_error
   {
@@ -63,8 +60,7 @@ BEGIN_GO_NAMESPACE namespace tools {
   /**@brief An invalid element index was passed to a tight buffer manager.
    *
    * Such an exception occurs when an index i does not correspond to a valid element
-   * element_buffer[i] of the element buffer.
-   */
+   * element_buffer[i] of the element buffer. */
   struct tight_buffer_manager_invalid_element_index
       : public std::runtime_error
   {
@@ -86,8 +82,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * a tight buffer. It should be default constructible and move assignable.
    *
    * The \a handle_type specifies the integral type that will be used to store
-   * the index and the counter of an handle. Thus, it must integral and unsigned.
-   */
+   * the index and the counter of an handle. Thus, it must integral and unsigned. */
   template< class element, typename handle_type, uint8_t index_bits>
   class tight_buffer_manager {
     static_assert(
@@ -109,9 +104,9 @@ BEGIN_GO_NAMESPACE namespace tools {
         index_bits > 0,
         "you should have at least one bit to represent an index, otherwise you cannot store any element");
 
-    static constexpr uint8_t handle_bits;
-    static constexpr size_t max_index;
-    static constexpr size_t max_counter;
+    static constexpr uint8_t handle_bits = sizeof(handle_type) << 3;
+    static constexpr size_t max_index = (1 << index_bits) - 1;
+    static constexpr size_t max_counter =  (1 << (handle_bits - index_bits - 2)) - 1;
 
   public:
     /**@brief An handle to designate an element.
@@ -121,8 +116,7 @@ BEGIN_GO_NAMESPACE namespace tools {
      * element buffer
      * - counter, that tells the 'version' of the element at that index
      * in the tight buffer (how many time an element had been allocated
-     * at this index).
-     */
+     * at this index). */
     struct handle {
       handle_type index  : index_bits;
       handle_type counter: handle_bits - index_bits;
@@ -146,6 +140,11 @@ BEGIN_GO_NAMESPACE namespace tools {
       }
     };
 
+    /**@brief Instance construction.
+     *
+     * Create a tight buffer with enough memory to handle up to number_of_elements
+     * elements. If more memory is required, there will be resizing.
+     * @param number_of_elements Maximal number of elements before resizing. */
     tight_buffer_manager( size_t number_of_elements = 0 )
       : m_capacity{ 0 }, m_size{ 0 }, m_next_free_handle_slot{ 0 },
         m_element_buffer{ nullptr }, m_element_to_handle{ nullptr },
@@ -155,6 +154,9 @@ BEGIN_GO_NAMESPACE namespace tools {
         grow( number_of_elements );
     }
 
+    /**@brief Instance destruction.
+     *
+     * Destroy this tight buffer manager. */
     ~tight_buffer_manager()
     {
       delete[] m_element_buffer;
@@ -162,21 +164,46 @@ BEGIN_GO_NAMESPACE namespace tools {
       delete[] m_handle_buffer;
     }
 
+    /**@brief Get the tight buffer size.
+     *
+     * Get the number of elements currently in the tight buffer.
+     * @return The number of elements in the buffer. */
     size_t get_size() const noexcept
     {
       return m_size;
     }
 
+    /**@brief Get the tight buffer capacity.
+     *
+     * Get the maximal number of elements that could fit in the element buffer
+     * without having to resize it.
+     * @return The capacity of the tight buffer. */
     size_t get_capacity() const noexcept
     {
       return m_capacity;
     }
 
-    size_t get_max_capacity() const noexcept
+    /**@brief Get the maximal capacity of this tight buffer.
+     *
+     * Get the maximal number of elements that could be managed by this tight
+     * buffer. This number is defined by the total available bits in the handle
+     * type and the number of bits used to represent an handle index.
+     * @return The maximal capacity of this tight buffer. */
+    static size_t get_max_capacity() noexcept
     {
       return max_index;
     }
 
+    /**@brief Create a new element in the tight buffer.
+     *
+     * Create another element in the tight buffer and returns a reference to
+     * it with its handle. The reference is returned such that further initialization
+     * could be performed on the element. It is *not* advised to store the reference
+     * somewhere since the pointed memory is not guaranteed to be always
+     * representing this element.
+     * @return A pair of the handle of new the element and a reference to this new
+     * element.
+     * @note An exception could be thrown if the maximal capacity is reached. */
     std::pair<handle, element&> create()
     {
       if( m_size == m_capacity )
@@ -208,6 +235,14 @@ BEGIN_GO_NAMESPACE namespace tools {
       return result;
     }
 
+    /**@brief Remove an element thanks to its handle.
+     *
+     * Remove the element pointed by an handle and destroy it. Keep in
+     * mind the destructor should leave the memory in such a state that
+     * any call to the constructor (or other methods) would work after
+     * creation of another element at the same memory.
+     * @param h The handle of the element to remove.
+     * @note An exception is thrown if the handle is invalid. */
     void remove( handle h )
     {
       if ( h.index >= m_capacity )
@@ -219,6 +254,9 @@ BEGIN_GO_NAMESPACE namespace tools {
       entry->next_free_index = m_next_free_handle_slot;
       entry->status = STATUS_FREE;
 
+      auto& e= m_element_buffer[ entry->index ];
+      e.~element();
+
       m_next_free_handle_slot = h.index;
       if( --m_size && entry->index != m_size )
         {
@@ -227,6 +265,14 @@ BEGIN_GO_NAMESPACE namespace tools {
         }
     }
 
+    /**@brief Remove an element thanks to a pointer to it.
+     *
+     * Remove the element thanks to a pointer to it and destroy it. Keep in
+     * mind the destructor should leave the memory in such a state that
+     * any call to the constructor (or other methods) would work after
+     * creation of another element at the same memory.
+     * @param e A pointer to the element to remove.
+     * @note An exception is thrown if the memory pointed to by e is invalid. */
     void remove( element* e )
     {
       if( e < m_element_buffer || e >= m_element_buffer + m_size )
@@ -242,6 +288,7 @@ BEGIN_GO_NAMESPACE namespace tools {
 
       entry->next_free_index = m_next_free_handle_slot;
       entry->status = STATUS_FREE;
+      e->~element();
 
       m_next_free_handle_slot = entry_index;
       if( --m_size && entry->index != m_size )
@@ -251,6 +298,11 @@ BEGIN_GO_NAMESPACE namespace tools {
         }
     }
 
+    /**@brief Get an element by its handle.
+     *
+     * Access to an element thanks to its handle.
+     * @param h The handle to the element.
+     * @note An exception is thrown if the handle is invalid. */
     element& get( handle h )
     {
       if( h.index >= m_capacity )
@@ -261,6 +313,11 @@ BEGIN_GO_NAMESPACE namespace tools {
       return m_element_buffer[ entry->index ];
     }
 
+    /**@brief Get an element by its index.
+     *
+     * Access to an element thanks to its index in the element buffer.
+     * @param index Index of the element in the element buffer.
+     * @note An exception is thrown if the index is invalid. */
     element& get_by_index( size_t index )
     {
       if( index >= m_size )
@@ -268,6 +325,10 @@ BEGIN_GO_NAMESPACE namespace tools {
       return m_element_buffer[ index ];
     }
 
+    /**@brief Get the handle of an element designated by its index.
+     *
+     * Access to the handle of an element known by its index.
+     * @param index Index of the element in the element buffer. */
     handle get_handle( size_t index )
     {
       if( index >= m_size )
@@ -337,16 +398,6 @@ BEGIN_GO_NAMESPACE namespace tools {
     handle_entry* m_handle_buffer;
 
   };
-
-  template< class element, typename handle_type, uint8_t index_bits >
-  constexpr uint8_t tight_buffer_manager< element, handle_type, index_bits>::handle_bits = sizeof(handle_type) << 3;
-
-  template< class element, typename handle_type, uint8_t index_bits >
-  constexpr size_t tight_buffer_manager< element, handle_type, index_bits>::max_index = (1 << index_bits) - 1;
-
-  template< class element, typename handle_type, uint8_t index_bits >
-  constexpr size_t tight_buffer_manager< element, handle_type, index_bits>::max_counter =
-      (1 << (tight_buffer_manager<element, handle_type, index_bits>::handle_bits - index_bits - 2)) - 1;
 
 } END_GO_NAMESPACE
 # endif 

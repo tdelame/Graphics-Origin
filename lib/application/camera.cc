@@ -184,6 +184,52 @@ namespace application {
     m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
   }
 
+  void camera::arcball_rotate( qreal mouse_dx, qreal mouse_dy )
+  {
+    gpu_mat4 rotation = glm::rotate( gpu_mat4( gpu_mat3( m_view ) ), gpu_real(mouse_dx), get_up() );
+    rotation = glm::rotate( rotation, gpu_real(mouse_dy), get_right() );
+
+    m_view[0] = rotation[0];
+    m_view[1] = rotation[1];
+    m_view[2] = rotation[2];
+
+    set_position( - gpu_vec3( m_view[3] ) * gpu_mat3( rotation ) );
+
+    emit position_changed();
+    emit forward_changed();
+    emit right_changed();
+    emit up_changed();
+  }
+
+  void camera::spaceship_rotate( qreal mouse_dx, qreal mouse_dy )
+  {
+    const auto cx = std::cos( mouse_dx );
+    const auto sx = std::sin( mouse_dx );
+    const auto cy = std::cos( mouse_dy );
+    const auto sy = std::sin( mouse_dy );
+
+    gpu_mat3 rotation = gpu_mat3( m_view );
+    gpu_vec3 minus_pos = gpu_vec3( m_view[3] ) * rotation;
+    // build a rotation matrix to apply to the current rotation:
+    //
+    rotation = glm::mat3(
+                glm::vec3( cx, sx*sy,-sx*cy),
+                glm::vec3(  0,    cy,    sy),
+                glm::vec3( sx,-cx*sy, cx*cy) ) *rotation;
+    for( int col = 0; col < 3; ++ col )
+        for( int lin = 0; lin < 3; ++ lin )
+        {
+            m_view[col][lin] = rotation[col][lin];
+        }
+
+    set_position( -minus_pos );
+
+    emit position_changed();
+    emit forward_changed();
+    emit right_changed();
+    emit up_changed();
+  }
+
 }
 
 }
