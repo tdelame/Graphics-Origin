@@ -9,7 +9,7 @@ tools_cu_rules     = $(tools_cu_stems:%.cu=$(LIB_RULES_DIR)/tools/%.d)
 LIB_NAMES += tools
 LIB_OBJ   += $(tools_objects) $(tools_cu_objects)
 LIB_RULES += $(tools_rules) $(tools_cu_rules)
-LIB_RES   += libtools.so
+LIB_RES   += $(LIB_RES_DIR)/libtools.so
 
 # define variable to use this library
 TOOLS_LD  = -L$(LIB_RES_DIR) -ltools $(BOOST_LD)

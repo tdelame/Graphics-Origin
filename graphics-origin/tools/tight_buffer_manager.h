@@ -217,16 +217,16 @@ BEGIN_GO_NAMESPACE namespace tools {
       ++entry->counter;
       if( entry->counter > max_counter )
         entry->counter = 0;
-      entry->index = m_size;
+      entry->element_index = m_size;
       entry->next_free_index = 0;
       entry->status = STATUS_ALLOCATED;
 
       // map the element to the handle entry
-      m_element_to_handle[ entry->index ] = handle_index;
+      m_element_to_handle[ entry->element_index ] = handle_index;
 
-      std::pair<handle, element&> result = std::make_pair(
+      std::pair<handle, element&> result = {
           handle( handle_index, entry->counter ),
-          m_element_buffer[m_size] );
+          m_element_buffer[m_size] };
 
       // update this
       m_next_free_handle_slot = entry->next_free_index;
@@ -254,14 +254,14 @@ BEGIN_GO_NAMESPACE namespace tools {
       entry->next_free_index = m_next_free_handle_slot;
       entry->status = STATUS_FREE;
 
-      auto& e= m_element_buffer[ entry->index ];
+      auto& e= m_element_buffer[ entry->element_index ];
       e.~element();
 
       m_next_free_handle_slot = h.index;
-      if( --m_size && entry->index != m_size )
+      if( --m_size && entry->element_index != m_size )
         {
-          m_element_buffer[ entry->index ] = std::move( m_element_buffer[ m_size ] );
-          m_handle_buffer[ m_element_to_handle[ entry->index ] ].index = entry->index;
+          m_element_buffer[ entry->element_index ] = std::move( m_element_buffer[ m_size ] );
+          m_handle_buffer[ m_element_to_handle[ entry->element_index ] ].element_index = entry->element_index;
         }
     }
 
@@ -310,7 +310,7 @@ BEGIN_GO_NAMESPACE namespace tools {
       const auto entry = m_handle_buffer + h.index;
       if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
         throw tight_buffer_manager_invalid_handle( __FILE__, __LINE__ );
-      return m_element_buffer[ entry->index ];
+      return m_element_buffer[ entry->element_index ];
     }
 
     /**@brief Get an element by its index.
@@ -335,6 +335,11 @@ BEGIN_GO_NAMESPACE namespace tools {
         throw tight_buffer_manager_invalid_element_index( __FILE__, __LINE__ );
       auto handle_index = m_element_to_handle[ index ];
       return handle( handle_index, m_handle_buffer[ handle_index ].counter );
+    }
+
+    element* data()
+    {
+      return m_element_buffer;
     }
 
   private:
@@ -398,6 +403,15 @@ BEGIN_GO_NAMESPACE namespace tools {
     handle_entry* m_handle_buffer;
 
   };
+
+  template< class element, typename handle_type, uint8_t index_bits>
+  constexpr uint8_t tight_buffer_manager<element,handle_type,index_bits>::handle_bits;
+
+  template< class element, typename handle_type, uint8_t index_bits>
+  constexpr size_t tight_buffer_manager<element,handle_type,index_bits>::max_index;
+
+  template< class element, typename handle_type, uint8_t index_bits>
+  constexpr size_t tight_buffer_manager<element,handle_type,index_bits>::max_counter;
 
 } END_GO_NAMESPACE
 # endif 

@@ -9,11 +9,11 @@ geometry_cu_rules     = $(geometry_cu_stems:%.cu=$(LIB_RULES_DIR)/geometry/%.d)
 LIB_NAMES += geometry
 LIB_OBJ   += $(geometry_objects) $(geometry_cu_objects)
 LIB_RULES += $(geometry_rules) $(geometry_cu_rules)
-LIB_RES   += libgeometry.so
+LIB_RES   += $(LIB_RES_DIR)/libgeometry.so
 
 # define variable to use this library
-GEOMETRY_LD  = -L$(LIB_RES_DIR) -lgeometry $(BOOST_LD) $(TOOLS_LD) $(CUDA_LD)
-GEOMETRY_INC = -I$(INC_DIR) $(BOOST_INC) $(TOOLS_INC) $(CUDA_INC)
+GEOMETRY_LD  = -L$(LIB_RES_DIR) -lgeometry $(TOOLS_LD) $(CUDA_LD) #$(BOOST_LD)
+GEOMETRY_INC = -I$(INC_DIR) $(TOOLS_INC) $(CUDA_INC) #$(BOOST_INC)
 
 # rules to generate dependencies 
 $(LIB_RULES_DIR)/geometry/%.d: $(LIB_SRC_DIR)/geometry/%.cc

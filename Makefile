@@ -8,14 +8,14 @@ TUT_SRC_DIR		= tutorial
 TEST_SRC_DIR	= test
 
 # build type configuration
-BIN_DIR				= bin
+BIN_DIR         = bin
 BUILD_CONF		= ""
 -include $(BIN_DIR)/build_conf.mk
 ifeq ($(BUILD_CONF),"")
-BUILD_CONF 	= release
+BUILD_CONF 	    = release
 else 
 ifneq ($(BUILD_CONF),release)
-BUILD_CONF  = debug
+BUILD_CONF      = debug
 endif
 endif 
 
@@ -43,7 +43,7 @@ LD		= $(CXX)
 NVCC	= nvcc
 QMAKE	= qmake
 ifeq ($(BUILD_CONF), debug)
-STRIP = touch
+STRIP   = touch
 else
 STRIP	= strip --strip-debug --strip-unneeded
 endif
@@ -59,10 +59,8 @@ ifeq ($(BUILD_CONF),release)
 CXXFLAGS += -O3 -msse2
 NVCCFLAGS+= -Xcompiler -O3 --optimize 3
 else
-CXXFLAGS += -ggdb -Wall -Wextra -Wctor-dtor-privacy -Wwrite-strings -fno-inline \
-            -fno-inline-functions -fno-inline-small-functions
-NVCCFLAGS+= -O0 --debug -Xlinker -ggdb -Xlinker -O0 -G -g -Xcompiler -fno-inline \
-            -Xcompiler -fno-inline-functions -Xcompiler -fno-inline-small-functions            
+CXXFLAGS += -ggdb -Wall -Wextra 
+NVCCFLAGS+= -O0 --debug -Xlinker -ggdb -Xlinker -O0 -G -g             
 endif					
 QMAKECXXFLAGS = $(CXXFLAGS)
 QMAKELFLAGS   = $(LDFLAGS)
@@ -97,10 +95,9 @@ GL_LD        = -lGL -lGLEW -lGLU
 #
 # 5. Compilation flags
 ################################################################################
-CPPFLAGS = $(CUDA_INCLUDES) \
-           -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK \
-				   -DCGAL_DISABLE_ROUNDING_MATH_CHECK \
-				   -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS  -DGLM_PRECISION_HIGHP_FLOAT
+CPPFLAGS = -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK \
+		   -DCGAL_DISABLE_ROUNDING_MATH_CHECK \
+		   -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS  -DGLM_PRECISION_HIGHP_FLOAT
 
 ifeq ($(BUILD_CONF), release)
 CPPFLAGS          += -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG
@@ -144,6 +141,8 @@ TEST_RES   =
 TEST_NAMES =
 TEST_MK    = $(wildcard $(TEST_SRC_DIR)/*/test.mk)
 
+TEMP_FILES = 
+
 #
 # 8. Rules
 ################################################################################
@@ -172,3 +171,5 @@ strap:
 	
 clean:
 	@echo "To clean, remove bin/ manually"
+	@echo "Files to delete:"
+	@echo "rm $(LIB_OBJ) $(TUT_OBJ) $(TEST_OBJ) $(LIB_RULES) $(TUT_RULES) $(TEST_RULES ) $(LIB_RES) $(TUT_RES) $(TEST_RES) $(TEMP_FILES)"

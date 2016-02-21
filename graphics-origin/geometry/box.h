@@ -26,6 +26,7 @@ public:
   aabox( const vec3& center, const vec3& half_sides );
 
   aabox( const aabox& other );
+  aabox( aabox&& other );
 
   aabox&
   operator=( const aabox& other );

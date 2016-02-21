@@ -4,6 +4,7 @@
 # include <graphics-origin/geometry/ball.h>
 # include <graphics-origin/geometry/box.h>
 
+# include <utility>
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
@@ -17,6 +18,11 @@ aabox::aabox( const vec3& center, const vec3& half_sides )
 
 aabox::aabox( const aabox& other )
     : center{ other.center }, half_sides{ other.half_sides }
+{}
+
+aabox::aabox( aabox&& other )
+  : center{ std::move( other.center ) },
+    half_sides{ std::move( other.half_sides ) }
 {}
 
 aabox&

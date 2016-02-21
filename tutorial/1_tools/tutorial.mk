@@ -9,7 +9,7 @@ tools_tut_cu_rules     = $(tools_tut_cu_stems:%.cu=$(TUT_RULES_DIR)/tools/%.d)
 TUT_NAMES += 1_log
 TUT_OBJ   += $(tools_tut_objects) $(tools_tut_cu_objects)
 TUT_RULES += $(tools_tut_rules) $(tools_tut_cu_rules)
-TUT_RES   += 1_log
+TUT_RES   += $(TUT_RES_DIR)/1_log
 
 # define variable to use this library
 TOOLS_TUT_LD  = $(TOOLS_LD)
