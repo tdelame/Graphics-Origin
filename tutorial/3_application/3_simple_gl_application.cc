@@ -124,12 +124,12 @@ namespace application {
       {
         auto program = r->get_shader_program();
         program->bind();
-        glcheck(glUniformMatrix4fv(
-            program->get_uniform_location( "view" ), 1,
-            GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
-        glcheck(glUniformMatrix4fv(
-            program->get_uniform_location( "projection" ), 1,
-            GL_FALSE, glm::value_ptr(m_camera->get_projection_matrix())));
+        int location = program->get_uniform_location( "view" );
+        if( location != shader_program::null_identifier )
+          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
+        location = program->get_uniform_location( "projection" );
+        if( location != shader_program::null_identifier )
+          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_projection_matrix())));
         r->render();
       }
   }
@@ -155,10 +155,10 @@ namespace application {
 
       auto boxes = new aaboxes_renderable( box_program, 4 );
 
-      boxes->add( geometry::aabox( vec3{}, vec3{0.1, 0.1, 0.1 }));
-      boxes->add( geometry::aabox( vec3{1,0,0}, vec3{0.2, 0.1, 0.1 }));
-      boxes->add( geometry::aabox( vec3{0,1,0}, vec3{0.1, 0.2, 0.1 }));
-      boxes->add( geometry::aabox( vec3{0,0,1}, vec3{0.1, 0.1, 0.2 }));
+      boxes->add( geometry::aabox( vec3{}, vec3{1, 1, 1 }));
+      boxes->add( geometry::aabox( vec3{1,0,0}, vec3{2, 1, 1 }));
+      boxes->add( geometry::aabox( vec3{0,1,0}, vec3{1, 2, 1 }));
+      boxes->add( geometry::aabox( vec3{0,0,1}, vec3{1, 1, 2 }));
 
       add_renderable( new triangle_renderable() );
       add_renderable( boxes );

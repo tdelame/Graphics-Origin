@@ -1,40 +1,40 @@
 #version 440
 mat4 projection, view, model;
+ 
+const vec4 cube_vertices[8] = vec4[8](
+  vec4(-0.5, -0.5, -0.5, 1),
+  vec4( 0.5, -0.5, -0.5, 1),
+  vec4( 0.5,  0.5, -0.5, 1),
+  vec4(-0.5,  0.5, -0.5, 1),
+  vec4(-0.5, -0.5,  0.5, 1),
+  vec4( 0.5, -0.5,  0.5, 1),
+  vec4( 0.5,  0.5,  0.5, 1),
+  vec4(-0.5,  0.5,  0.5, 1) 
+); 
+
 
 layout( points ) in;
-in vec3 geom_center[];
-in vec3 geom_half_sides[];
+in vec3 scale[];
 
-layout( line_strip, max_vertices = 4 ) out;
+layout( points, max_vertices = 4 ) out;
 
 void main()
 {
-  mat4 MVP = projection * view * model;
-  vec3 c = geom_center[0];
-  gl_Position = MVP * vec4( vec3( 
-  		c.x - geom_half_sides[0].x, 
-  		c.y - geom_half_sides[0].y, 
-  		c.z - geom_half_sides[0].z), 1 );
+  mat4 mvp = projection * view * model;
+  
+  vec4 scale = vec4( scale[0], 0.0 );
+  
+  gl_Position = mvp * ( gl_in[0].gl_Position + cube_vertices[0] * scale );
   EmitVertex();
   
-  gl_Position = MVP * vec4( vec3( 
-  		c.x + geom_half_sides[0].x, 
-  		c.y - geom_half_sides[0].y, 
-  		c.z - geom_half_sides[0].z), 1 );
+  gl_Position = mvp * ( gl_in[0].gl_Position + cube_vertices[1] * scale );
   EmitVertex();
   
-  gl_Position = MVP * vec4( vec3( 
-  		c.x + geom_half_sides[0].x, 
-  		c.y + geom_half_sides[0].y, 
-  		c.z - geom_half_sides[0].z), 1 );
+  gl_Position = mvp * ( gl_in[0].gl_Position + cube_vertices[2] * scale );
   EmitVertex();
   
-  gl_Position = MVP * vec4( vec3( 
-  		c.x - geom_half_sides[0].x, 
-  		c.y + geom_half_sides[0].y, 
-  		c.z - geom_half_sides[0].z), 1 );
+  gl_Position = mvp * ( gl_in[0].gl_Position + cube_vertices[3] * scale );
   EmitVertex();
-
+  
   EndPrimitive();
-
 }

@@ -3,9 +3,28 @@
  */
 # include <graphics-origin/application/aaboxes_renderable.h>
 # include <graphics-origin/application/gl_helper.h>
+
+# include <graphics-origin/tools/log.h>
 # include <GL/glew.h>
 
 namespace graphics_origin { namespace application {
+
+  aaboxes_renderable::storage::storage( const gpu_vec3& c, const gpu_vec3& h )
+    : center{ c }, hsides{ h }
+  {}
+
+  aaboxes_renderable::storage::storage()
+    : center{}, hsides{}
+  {}
+
+  aaboxes_renderable::storage&
+  aaboxes_renderable::storage::operator=( storage&& other )
+  {
+    center = other.center;
+    hsides = other.hsides;
+    return *this;
+  }
+
 
   aaboxes_renderable::aaboxes_renderable(
       shader_program_ptr program,
@@ -14,6 +33,7 @@ namespace graphics_origin { namespace application {
       m_boxes_vbo{ 0 }
   {
     m_program = program;
+    m_model = gpu_mat4(1.0);
   }
 
   aaboxes_renderable::boxes_buffer::handle
@@ -21,7 +41,13 @@ namespace graphics_origin { namespace application {
   {
     m_dirty = true;
     auto pair = m_boxes.create();
-    pair.second = std::move( box );
+    pair.second.center = box.get_center();
+    pair.second.hsides = box.get_half_sides();
+
+
+    centers.push_back( box.get_center() );
+    hsides.push_back( box.get_half_sides() );
+
     return pair.first;
   }
 
@@ -31,21 +57,37 @@ namespace graphics_origin { namespace application {
     m_boxes.remove( handle );
   }
 
-  geometry::aabox&
-  aaboxes_renderable::get( boxes_buffer::handle handle )
-  {
-    return m_boxes.get( handle );
-  }
-
   void
   aaboxes_renderable::update_gpu_data()
   {
     if( !m_boxes_vbo )
       {
         glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
+
+        glcheck(glGenBuffers( 1, &center_vbo ) );
+        glcheck(glGenBuffers( 1, &hsides_vbo ) );
       }
+
+    glcheck(glBindBuffer( GL_ARRAY_BUFFER, center_vbo ));
+    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec3) * centers.size(), centers.data(), GL_STATIC_DRAW ));
+
+    glcheck(glBindBuffer( GL_ARRAY_BUFFER, hsides_vbo ));
+    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec3) * hsides.size(), hsides.data(), GL_STATIC_DRAW ));
+
     glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
-    glcheck(glBufferData( GL_ARRAY_BUFFER, 3 * sizeof(geometry::aabox), m_boxes.data(), GL_STATIC_DRAW ));
+    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_boxes.get_size(), m_boxes.data(), GL_STATIC_DRAW ));
+
+    {
+      const auto size = m_boxes.get_size();
+      for( size_t i = 0; i < size; ++ i )
+        {
+          auto& b = m_boxes.get_by_index( i );
+          LOG( debug, "box #" << i << ": " << b.center << " " << b.hsides );
+        }
+      LOG( debug, "sizeof a box  = " << sizeof(storage));
+      LOG( debug, "sizeof a vec3 = " << sizeof(gpu_vec3));
+
+    }
   }
 
   void
@@ -60,11 +102,20 @@ namespace graphics_origin { namespace application {
     glcheck(glEnableVertexAttribArray( center ));
     glcheck(glEnableVertexAttribArray( half_sides ));
 
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
-    glcheck(glVertexAttribPointer( center, 3, GL_DOUBLE, GL_FALSE, sizeof(geometry::aabox),0));
-    glcheck(glVertexAttribPointer( half_sides, 3, GL_DOUBLE, GL_FALSE, sizeof(geometry::aabox),
-       reinterpret_cast<void*>(sizeof(vec3))));
 
+    glcheck(glBindBuffer( GL_ARRAY_BUFFER, center_vbo ));
+    glcheck(glVertexAttribPointer( center, 3, GL_FLOAT, GL_FALSE, sizeof(gpu_vec3), 0 ));
+
+    glcheck(glBindBuffer( GL_ARRAY_BUFFER, hsides_vbo ));
+    glcheck(glVertexAttribPointer( half_sides, 3, GL_FLOAT, GL_FALSE, sizeof(gpu_vec3), 0 ));
+//
+//    glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
+//    glcheck(glVertexAttribPointer( center, 3, GL_FLOAT, GL_FALSE, sizeof(storage),reinterpret_cast<void*>(offsetof(storage,center))));
+//    glcheck(glVertexAttribPointer( half_sides, 3, GL_FLOAT, GL_FALSE, sizeof(storage),
+//       reinterpret_cast<void*>(offsetof(storage,hsides))));
+
+    glcheck(glLineWidth( 4.0 ));
+    glcheck(glPointSize( 4.0 ));
     glcheck(glDrawArrays(GL_POINTS, 0, m_boxes.get_size()));
   }
 

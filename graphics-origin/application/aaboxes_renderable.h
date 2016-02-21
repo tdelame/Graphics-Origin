@@ -9,12 +9,24 @@
 # include "../tools/tight_buffer_manager.h"
 # include "../geometry/box.h"
 
+# include <vector>
+
 namespace graphics_origin {
   namespace application {
     class aaboxes_renderable
       : public renderable {
+
+      struct storage {
+        gpu_vec3 center;
+        gpu_vec3 hsides;
+        storage( const gpu_vec3& c, const gpu_vec3& h );
+
+        storage& operator=( storage && other );
+        storage();
+      };
+
       typedef tools::tight_buffer_manager<
-          geometry::aabox,
+          storage,
           uint32_t,
           22 > boxes_buffer;
     public:
@@ -24,18 +36,19 @@ namespace graphics_origin {
       ~aaboxes_renderable();
       boxes_buffer::handle add( geometry::aabox&& box );
       void remove( boxes_buffer::handle handle );
-      geometry::aabox& get( boxes_buffer::handle handle );
     private:
       void update_gpu_data() override;
       void do_render() override;
       void remove_gpu_data() override;
 
-      tools::tight_buffer_manager<
-        geometry::aabox,
-        uint32_t,
-        22 > m_boxes;
-
+      boxes_buffer m_boxes;
       unsigned int m_boxes_vbo;
+
+      unsigned int center_vbo;
+      unsigned int hsides_vbo;
+
+      std::vector< gpu_vec3 > centers;
+      std::vector< gpu_vec3 > hsides;
     };
   }
 }
