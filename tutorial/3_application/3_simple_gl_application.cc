@@ -26,15 +26,6 @@ namespace application {
   static shader_program_ptr flat_program =
       std::make_shared<shader_program>( std::list<std::string>{ "shaders/flat.vert", "shaders/flat.frag"});
 
-  static shader_program_ptr box_program =
-      std::make_shared<shader_program>(
-          std::list<std::string>{
-            "shaders/aabox.vert",
-            "shaders/aabox.geom",
-            "shaders/aabox.frag"
-          }
-      );
-
   static gpu_vec3 positions[] = {
       gpu_vec3{ 0, -0.1, 0 },
       gpu_vec3{ 0,  0.1, 0 },
@@ -122,14 +113,14 @@ namespace application {
   {
     for( auto& r : m_renderables )
       {
-        auto program = r->get_shader_program();
-        program->bind();
-        int location = program->get_uniform_location( "view" );
-        if( location != shader_program::null_identifier )
-          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
-        location = program->get_uniform_location( "projection" );
-        if( location != shader_program::null_identifier )
-          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_projection_matrix())));
+//        auto program = r->get_shader_program();
+//        program->bind();
+//        int location = program->get_uniform_location( "view" );
+//        if( location != shader_program::null_identifier )
+//          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
+//        location = program->get_uniform_location( "projection" );
+//        if( location != shader_program::null_identifier )
+//          glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_projection_matrix())));
         r->render();
       }
   }
@@ -150,17 +141,15 @@ namespace application {
     simple_gl_window( QQuickItem* parent = nullptr )
       : gl_window( parent )
     {
-      m_renderer = new simple_gl_renderer;
-
-
-      auto boxes = new aaboxes_renderable( box_program, 4 );
+      initialize_renderer( new simple_gl_renderer );
+      auto boxes = new aaboxes_renderable( 4 );
 
       boxes->add( geometry::aabox( vec3{}, vec3{1, 1, 1 }));
       boxes->add( geometry::aabox( vec3{1,0,0}, vec3{2, 1, 1 }));
       boxes->add( geometry::aabox( vec3{0,1,0}, vec3{1, 2, 1 }));
       boxes->add( geometry::aabox( vec3{0,0,1}, vec3{1, 1, 2 }));
 
-      add_renderable( new triangle_renderable() );
+//      add_renderable( new triangle_renderable() );
       add_renderable( boxes );
     }
 

@@ -77,6 +77,13 @@ namespace application {
   void
   shader_program::variables_introspection()
   {
+    LOG( info, "variable introspection of shader program " << m_program_id );
+    LOG( info, "this shader program was compiled from the following shaders:");
+    for( auto& file : m_source_filenames )
+      {
+        LOG( info, "  - " << file );
+      }
+
     //Clean the maps
     m_uniforms.clear();
     m_attributes.clear();
@@ -85,28 +92,36 @@ namespace application {
 
     GLint num_uniforms = 0;
     glcheck(glGetProgramInterfaceiv( m_program_id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &num_uniforms));
+    LOG( info, "  * " << num_uniforms << " uniform(s)");
     for(int unif = 0; unif < num_uniforms; ++unif)
     {
       glcheck(glGetProgramResourceiv( m_program_id, GL_UNIFORM, unif, 3, uniform_properties, 3, NULL, values));
 
       //Skip any uniforms that are in a block.
       if(values[0] != -1)
-        continue;
+        {
+          LOG( info, "    - uniform #" << unif << " is in a block");
+          continue;
+        }
 
       char* name = new char[values[1]];
       glcheck(glGetProgramResourceName(m_program_id, GL_UNIFORM, unif, values[1], NULL, &name[0]));
       m_uniforms.insert( {{name, values[2]}});
+
+      LOG( info, "    - uniform #" << unif << ": " << name );
       delete[] name;
     }
 
     GLint num_attributes = 0;
     glcheck(glGetProgramInterfaceiv( m_program_id, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &num_attributes ));
+    LOG( info, "  * " << num_attributes << " attribute(s)");
     for( int att = 0; att < num_attributes; ++ att )
       {
         glcheck(glGetProgramResourceiv( m_program_id, GL_PROGRAM_INPUT, att, 2, attribute_properties, 2, NULL, values ));
         char* name = new char[values[0]];
         glcheck(glGetProgramResourceName(m_program_id, GL_PROGRAM_INPUT, att, values[0], NULL, &name[0]));
         m_attributes.insert( {{name, values[1] }} );
+        LOG( info, "    - attribute #" << att << ": " << name );
         delete[]name;
       }
   }
@@ -202,6 +217,8 @@ namespace application {
   {
     if( !m_loaded )
       {
+        m_loaded = true;
+
         if( m_program_id )
           glcheck(glDeleteShader(m_program_id));
 
@@ -255,16 +272,14 @@ namespace application {
                 valid = false;
               }
           }
-        if( !valid )
+        if( valid )
+          variables_introspection();
+        else
           {
             glcheck(glDeleteProgram( m_program_id ));
             m_program_id = 0;
           }
-
-        variables_introspection();
-        m_loaded = true;
       }
-
     glcheck(glUseProgram( m_program_id ));
   }
 

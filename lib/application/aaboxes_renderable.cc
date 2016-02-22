@@ -9,6 +9,21 @@
 
 namespace graphics_origin { namespace application {
 
+  static
+  shader_program_ptr get_program()
+  {
+    static auto instance = std::make_shared<shader_program>(
+        std::list<std::string>{
+          "shaders/aabox.vert",
+          "shaders/aabox.geom",
+          "shaders/aabox.frag"
+        }
+    );
+    return instance;
+  }
+
+
+
   aaboxes_renderable::storage::storage( const gpu_vec3& c, const gpu_vec3& h )
     : center{ c }, hsides{ h }
   {}
@@ -27,12 +42,10 @@ namespace graphics_origin { namespace application {
 
 
   aaboxes_renderable::aaboxes_renderable(
-      shader_program_ptr program,
       size_t expected_number_of_boxes )
     : m_boxes{ expected_number_of_boxes },
-      m_boxes_vbo{ 0 }
+      m_vao{ 0 }, m_boxes_vbo{ 0 }
   {
-    m_program = program;
     m_model = gpu_mat4(1.0);
   }
 
@@ -43,11 +56,6 @@ namespace graphics_origin { namespace application {
     auto pair = m_boxes.create();
     pair.second.center = box.get_center();
     pair.second.hsides = box.get_half_sides();
-
-
-    centers.push_back( box.get_center() );
-    hsides.push_back( box.get_half_sides() );
-
     return pair.first;
   }
 
@@ -60,22 +68,38 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::update_gpu_data()
   {
-    if( !m_boxes_vbo )
-      {
-        glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
+    m_program = get_program();
+    m_program->bind();
 
-        glcheck(glGenBuffers( 1, &center_vbo ) );
-        glcheck(glGenBuffers( 1, &hsides_vbo ) );
+    if( !m_vao )
+      {
+        glcheck(glGenVertexArrays( 1, &m_vao ));
+        glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
       }
 
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, center_vbo ));
-    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec3) * centers.size(), centers.data(), GL_STATIC_DRAW ));
+    int center_location = m_program->get_attribute_location( "center" );
+    int hsides_location = m_program->get_attribute_location( "hsides" );
 
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, hsides_vbo ));
-    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec3) * hsides.size(), hsides.data(), GL_STATIC_DRAW ));
+    LOG( debug, "center location = " << center_location );
+    LOG( debug, "hsides location = " << hsides_location );
 
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
-    glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_boxes.get_size(), m_boxes.data(), GL_STATIC_DRAW ));
+    glcheck(glBindVertexArray( m_vao ));
+      glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
+      glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_boxes.get_size(), m_boxes.data(), GL_STATIC_DRAW ));
+      glcheck(glEnableVertexAttribArray( center_location ));
+      glcheck(glVertexAttribPointer( center_location,        // format of center:
+        3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+        sizeof(storage),                                     // each attribute has the size of storage
+        reinterpret_cast<void*>(offsetof(storage,center)))); // offset of the center inside an attribute
+      glcheck(glVertexAttribDivisor( center_location, 1 ));
+
+      glcheck(glEnableVertexAttribArray( hsides_location ));
+      glcheck(glVertexAttribPointer( hsides_location,        // format of hsides:
+        3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+        sizeof(storage),                                     // each attribute has the size of storage
+        reinterpret_cast<void*>(offsetof(storage,hsides)))); // offset of the hsides inside an attribute
+      glcheck(glVertexAttribDivisor( hsides_location, 1 ));
+    glcheck(glBindVertexArray( 0 ));
 
     {
       const auto size = m_boxes.get_size();
@@ -84,39 +108,25 @@ namespace graphics_origin { namespace application {
           auto& b = m_boxes.get_by_index( i );
           LOG( debug, "box #" << i << ": " << b.center << " " << b.hsides );
         }
-      LOG( debug, "sizeof a box  = " << sizeof(storage));
-      LOG( debug, "sizeof a vec3 = " << sizeof(gpu_vec3));
-
     }
   }
 
   void
   aaboxes_renderable::do_render()
   {
-    int model = m_program->get_uniform_location("model");
-    glcheck(glUniformMatrix4fv( model, 1, GL_FALSE, glm::value_ptr(m_model)));
-
-    int center = m_program->get_attribute_location("center");
-    int half_sides = m_program->get_attribute_location("half_sides");
-
-    glcheck(glEnableVertexAttribArray( center ));
-    glcheck(glEnableVertexAttribArray( half_sides ));
+    m_program->bind();
+    int location = m_program->get_uniform_location( "view" );
+    if( location != shader_program::null_identifier )
+      glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
+    location = m_program->get_uniform_location( "projection" );
+    if( location != shader_program::null_identifier )
 
 
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, center_vbo ));
-    glcheck(glVertexAttribPointer( center, 3, GL_FLOAT, GL_FALSE, sizeof(gpu_vec3), 0 ));
-
-    glcheck(glBindBuffer( GL_ARRAY_BUFFER, hsides_vbo ));
-    glcheck(glVertexAttribPointer( half_sides, 3, GL_FLOAT, GL_FALSE, sizeof(gpu_vec3), 0 ));
-//
-//    glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
-//    glcheck(glVertexAttribPointer( center, 3, GL_FLOAT, GL_FALSE, sizeof(storage),reinterpret_cast<void*>(offsetof(storage,center))));
-//    glcheck(glVertexAttribPointer( half_sides, 3, GL_FLOAT, GL_FALSE, sizeof(storage),
-//       reinterpret_cast<void*>(offsetof(storage,hsides))));
 
     glcheck(glLineWidth( 4.0 ));
     glcheck(glPointSize( 4.0 ));
-    glcheck(glDrawArrays(GL_POINTS, 0, m_boxes.get_size()));
+    glBindVertexArray( m_vao );
+    glcheck(glDrawArraysInstanced( GL_POINTS, 0, m_boxes.get_size(), m_boxes.get_size() ));
   }
 
   void
