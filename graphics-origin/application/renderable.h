@@ -10,6 +10,8 @@
 BEGIN_GO_NAMESPACE
 namespace application {
 
+  class gl_window_renderer;
+
   /** Interface class to render an object with OpenGL.
    *
    * OpenGL related operations should be done when the right context is bound
@@ -38,6 +40,8 @@ namespace application {
 
     shader_program_ptr get_shader_program() const;
     const gpu_mat4& get_model_matrix() const;
+
+    void set_renderer( gl_window_renderer* renderer );
   private:
     /** Update the data on the gpu.
      *
@@ -77,6 +81,14 @@ namespace application {
      * When set to false, the function update_gpu_data() is called at the next
      * rendering. */
     bool m_dirty;
+
+    /** Renderer.
+     *
+     * If non null, this points to the renderer that will render this renderable.
+     * It could be used to access to the camera of the renderer and to other
+     * functionalities.
+     */
+    gl_window_renderer* m_renderer;
   };
 
 }

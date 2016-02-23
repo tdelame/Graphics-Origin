@@ -7,11 +7,17 @@ BEGIN_GO_NAMESPACE
 namespace application {
 
   renderable::renderable()
-    : m_dirty{ true }
+    : m_dirty{ true }, m_renderer{ nullptr }
   {}
 
   renderable::~renderable()
   {}
+
+  void
+  renderable::set_renderer( gl_window_renderer* renderer )
+  {
+    m_renderer = renderer;
+  }
 
   void
   renderable::render()

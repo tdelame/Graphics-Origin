@@ -2,6 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include <graphics-origin/application/aaboxes_renderable.h>
+# include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_helper.h>
 
 # include <graphics-origin/tools/log.h>
@@ -80,9 +81,6 @@ namespace graphics_origin { namespace application {
     int center_location = m_program->get_attribute_location( "center" );
     int hsides_location = m_program->get_attribute_location( "hsides" );
 
-    LOG( debug, "center location = " << center_location );
-    LOG( debug, "hsides location = " << hsides_location );
-
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
       glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_boxes.get_size(), m_boxes.data(), GL_STATIC_DRAW ));
@@ -100,28 +98,15 @@ namespace graphics_origin { namespace application {
         reinterpret_cast<void*>(offsetof(storage,hsides)))); // offset of the hsides inside an attribute
       glcheck(glVertexAttribDivisor( hsides_location, 1 ));
     glcheck(glBindVertexArray( 0 ));
-
-    {
-      const auto size = m_boxes.get_size();
-      for( size_t i = 0; i < size; ++ i )
-        {
-          auto& b = m_boxes.get_by_index( i );
-          LOG( debug, "box #" << i << ": " << b.center << " " << b.hsides );
-        }
-    }
   }
 
   void
   aaboxes_renderable::do_render()
   {
     m_program->bind();
-    int location = m_program->get_uniform_location( "view" );
-    if( location != shader_program::null_identifier )
-      glcheck(glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m_camera->get_view_matrix())));
-    location = m_program->get_uniform_location( "projection" );
-    if( location != shader_program::null_identifier )
 
-
+    gpu_mat4 mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
+    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
 
     glcheck(glLineWidth( 4.0 ));
     glcheck(glPointSize( 4.0 ));

@@ -1,8 +1,10 @@
 /* Created on: Feb 2, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
+# include <graphics-origin/application/camera.h>
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_helper.h>
+# include <graphics-origin/application/renderable.h>
 
 # include <QtGui/QOpenGLContext>
 # include <QtGui/QOpenGLFramebufferObject>
@@ -26,6 +28,7 @@ namespace application {
   gl_window_renderer::add( renderable* r )
   {
     do_add( r );
+    r->set_renderer( this );
   }
 
   void
@@ -113,6 +116,18 @@ namespace application {
     m_context = nullptr;
 
     m_surface->deleteLater();
+  }
+
+  const gpu_mat4&
+  gl_window_renderer::get_view_matrix() const
+  {
+    return m_camera->get_view_matrix();
+  }
+
+  const gpu_mat4&
+  gl_window_renderer::get_projection_matrix() const
+  {
+    return m_camera->get_projection_matrix();
   }
 
 }

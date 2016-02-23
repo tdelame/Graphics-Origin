@@ -5,6 +5,7 @@
 # ifndef GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
 # define GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
 # include "../graphics_origin.h"
+# include "../geometry/matrix.h"
 
 # include <atomic>
 # include <list>
@@ -35,6 +36,12 @@ namespace application {
     void set_size( const real& width, const real& height );
     void pause();
     void resume();
+
+    const gpu_mat4&
+    get_view_matrix() const;
+
+    const gpu_mat4&
+    get_projection_matrix() const;
 
   public slots:
     void render_next();
