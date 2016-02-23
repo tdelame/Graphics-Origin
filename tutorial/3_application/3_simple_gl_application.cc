@@ -42,6 +42,7 @@ namespace application {
     : public renderable {
   public:
     triangle_renderable()
+      : m_buffer{ 0, 0 }
     {
       m_program = flat_program;
       m_model = gpu_mat4(1.0);
@@ -69,8 +70,9 @@ namespace application {
 
     void do_render() override
     {
-      int model = m_program->get_uniform_location("model");
-      glcheck(glUniformMatrix4fv( model, 1, GL_FALSE, glm::value_ptr(m_model)));
+      auto mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
+      int mvp_location = m_program->get_uniform_location("mvp");
+      glcheck(glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp)));
 
       int position = m_program->get_attribute_location( "position");
       int color = m_program->get_attribute_location( "color");
@@ -113,7 +115,7 @@ namespace application {
   {
     for( auto& r : m_renderables )
       {
-//        auto program = r->get_shader_program();
+        r->get_shader_program()->bind();
 //        program->bind();
 //        int location = program->get_uniform_location( "view" );
 //        if( location != shader_program::null_identifier )
@@ -145,11 +147,11 @@ namespace application {
       auto boxes = new aaboxes_renderable( 4 );
 
       boxes->add( geometry::aabox( vec3{}, vec3{1, 1, 1 }));
-      boxes->add( geometry::aabox( vec3{1,0,0}, vec3{2, 1, 1 }));
-      boxes->add( geometry::aabox( vec3{0,1,0}, vec3{1, 2, 1 }));
-      boxes->add( geometry::aabox( vec3{0,0,1}, vec3{1, 1, 2 }));
+      boxes->add( geometry::aabox( vec3{1,0,0}, vec3{2, 1, 1 }), gpu_vec3{1,0,0});
+      boxes->add( geometry::aabox( vec3{0,1,0}, vec3{1, 2, 1 }), gpu_vec3{0,1,0});
+      boxes->add( geometry::aabox( vec3{0,0,1}, vec3{1, 1, 2 }), gpu_vec3{0,0,1});
 
-//      add_renderable( new triangle_renderable() );
+      add_renderable( new triangle_renderable() );
       add_renderable( boxes );
     }
 

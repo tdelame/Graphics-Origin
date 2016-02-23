@@ -1,12 +1,15 @@
 #version 440
 in vec3 center;
 in vec3 hsides;
+in vec3 color;
 
-out vec3 position;
-out vec3 scale;
+out vec3 box_center;
+out vec3 box_scale;
+out vec3 box_color;
 
 void main()
 {
-  scale = hsides;
-  position = center;
+  box_scale  = hsides;
+  box_center = center;
+  box_color  = color ;
 }

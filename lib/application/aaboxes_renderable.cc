@@ -23,14 +23,12 @@ namespace graphics_origin { namespace application {
     return instance;
   }
 
-
-
-  aaboxes_renderable::storage::storage( const gpu_vec3& c, const gpu_vec3& h )
-    : center{ c }, hsides{ h }
+  aaboxes_renderable::storage::storage( const gpu_vec3& center, const gpu_vec3& hsides, const gpu_vec3& color )
+    : center{ center }, hsides{ hsides }, color{ color }
   {}
 
   aaboxes_renderable::storage::storage()
-    : center{}, hsides{}
+    : center{}, hsides{}, color{}
   {}
 
   aaboxes_renderable::storage&
@@ -38,6 +36,7 @@ namespace graphics_origin { namespace application {
   {
     center = other.center;
     hsides = other.hsides;
+    color  = other.color ;
     return *this;
   }
 
@@ -48,15 +47,17 @@ namespace graphics_origin { namespace application {
       m_vao{ 0 }, m_boxes_vbo{ 0 }
   {
     m_model = gpu_mat4(1.0);
+    m_program = get_program();
   }
 
   aaboxes_renderable::boxes_buffer::handle
-  aaboxes_renderable::add( geometry::aabox&& box )
+  aaboxes_renderable::add( geometry::aabox&& box, const gpu_vec3& color )
   {
     m_dirty = true;
     auto pair = m_boxes.create();
     pair.second.center = box.get_center();
     pair.second.hsides = box.get_half_sides();
+    pair.second.color  = color;
     return pair.first;
   }
 
@@ -69,9 +70,6 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::update_gpu_data()
   {
-    m_program = get_program();
-    m_program->bind();
-
     if( !m_vao )
       {
         glcheck(glGenVertexArrays( 1, &m_vao ));
@@ -80,6 +78,7 @@ namespace graphics_origin { namespace application {
 
     int center_location = m_program->get_attribute_location( "center" );
     int hsides_location = m_program->get_attribute_location( "hsides" );
+    int  color_location = m_program->get_attribute_location( "color"  );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
@@ -89,14 +88,18 @@ namespace graphics_origin { namespace application {
         3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
         sizeof(storage),                                     // each attribute has the size of storage
         reinterpret_cast<void*>(offsetof(storage,center)))); // offset of the center inside an attribute
-      glcheck(glVertexAttribDivisor( center_location, 1 ));
 
       glcheck(glEnableVertexAttribArray( hsides_location ));
       glcheck(glVertexAttribPointer( hsides_location,        // format of hsides:
         3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
         sizeof(storage),                                     // each attribute has the size of storage
         reinterpret_cast<void*>(offsetof(storage,hsides)))); // offset of the hsides inside an attribute
-      glcheck(glVertexAttribDivisor( hsides_location, 1 ));
+
+      glcheck(glEnableVertexAttribArray( color_location ));
+      glcheck(glVertexAttribPointer( color_location,         // format of hsides:
+        3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+        sizeof(storage),                                     // each attribute has the size of storage
+        reinterpret_cast<void*>(offsetof(storage,color)))); // offset of the hsides inside an attribute
     glcheck(glBindVertexArray( 0 ));
   }
 
@@ -108,10 +111,10 @@ namespace graphics_origin { namespace application {
     gpu_mat4 mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
 
-    glcheck(glLineWidth( 4.0 ));
-    glcheck(glPointSize( 4.0 ));
-    glBindVertexArray( m_vao );
-    glcheck(glDrawArraysInstanced( GL_POINTS, 0, m_boxes.get_size(), m_boxes.get_size() ));
+    glcheck(glLineWidth( 2.0 ));
+    glcheck(glBindVertexArray( m_vao ));
+    glcheck(glDrawArrays( GL_POINTS, 0, m_boxes.get_size()));
+    glcheck(glBindVertexArray( 0 ) );
   }
 
   void
