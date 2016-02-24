@@ -67,6 +67,13 @@ namespace geometry {
     }
   };
 
+  bool
+  box_bvh::is_leaf( uint32_t node_index ) const
+  {
+     return (node_index & LEAF_MASK );
+  }
+
+
 
   box_bvh::internal_node::internal_node()
     : parent_index{0}, left_index{0}, right_index{0}
@@ -331,6 +338,39 @@ namespace geometry {
     std::vector< std::atomic<int> > counters;
     std::vector< thread_variables > variables;
   };
+
+  const box_bvh::internal_node&
+  box_bvh::get_internal_node( uint32_t node_index ) const
+  {
+    assert( node_index + 1 < number_of_elements && "out of bound internal node index");
+    return internals[ node_index ];
+  }
+
+  const box_bvh::leaf_node&
+  box_bvh::get_leaf_node( uint32_t node_index ) const
+  {
+    assert( (node_index & LEAF_INDEX_MASK) < number_of_elements && "out of bound leaf node index");
+    return leaves[ node_index & LEAF_INDEX_MASK ];
+  }
+
+  size_t
+  box_bvh::get_number_of_nodes() const
+  {
+    return std::min( size_t{0}, size_t{(number_of_elements << 1) - 1});
+  }
+
+  size_t
+  box_bvh::get_number_of_internal_nodes() const
+  {
+    return std::min( size_t{number_of_elements - 1}, size_t{0} );
+
+  }
+
+  size_t
+  box_bvh::get_number_of_leaf_nodes() const
+  {
+    return number_of_elements;
+  }
 
   void
   box_bvh::set_internal_bounding_boxes()

@@ -16,6 +16,9 @@ namespace geometry {
 
   /** BVH with boxes as bounding volume.
    *
+   *TODO: put the element buffer in a temporary variable. Since after the construction,
+   *TODO: the buffer does not matter anymore.
+   *
    */
   class box_bvh {
   public:
@@ -44,6 +47,7 @@ namespace geometry {
       if( !number_of_elements )
         {
           LOG( error, "no elements to create a box bvh.");
+          return;
         }
       leaves.resize( number_of_elements );
       internals.resize( number_of_elements - 1 );
@@ -54,6 +58,18 @@ namespace geometry {
 
     const internal_node&
     get_root() const;
+
+    bool is_leaf( uint32_t node_index ) const;
+
+    const internal_node&
+    get_internal_node( uint32_t node_index ) const;
+
+    const leaf_node&
+    get_leaf_node( uint32_t node_index ) const;
+
+    size_t get_number_of_nodes() const;
+    size_t get_number_of_internal_nodes() const;
+    size_t get_number_of_leaf_nodes() const;
 
   private:
     void set_leaf_nodes();

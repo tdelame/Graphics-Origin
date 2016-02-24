@@ -10,8 +10,6 @@
 # include <QtGui/QOpenGLFramebufferObject>
 # include <QtGui/QOffscreenSurface>
 
-# include <graphics-origin/tools/log.h>
-
 namespace graphics_origin {
 namespace application {
 

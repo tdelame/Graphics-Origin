@@ -9,9 +9,10 @@
 # include "../tools/tight_buffer_manager.h"
 # include "../geometry/box.h"
 
-# include <vector>
-
 namespace graphics_origin {
+  namespace geometry {
+    class box_bvh;
+  }
   namespace application {
     class aaboxes_renderable
       : public renderable {
@@ -35,7 +36,7 @@ namespace graphics_origin {
           shader_program_ptr program,
           size_t expected_number_of_boxes = 0 );
       ~aaboxes_renderable();
-      boxes_buffer::handle add( geometry::aabox&& box, const gpu_vec3& color = gpu_vec3{0.1, 0.1, 0.1 } );
+      boxes_buffer::handle add( const geometry::aabox& box, const gpu_vec3& color = gpu_vec3{0.1, 0.1, 0.1 } );
       void remove( boxes_buffer::handle handle );
     private:
       void update_gpu_data() override;
@@ -46,6 +47,10 @@ namespace graphics_origin {
       unsigned int m_vao;
       unsigned int m_boxes_vbo;
     };
+
+    aaboxes_renderable*
+    aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::box_bvh& bvh );
+
   }
 }
 # endif

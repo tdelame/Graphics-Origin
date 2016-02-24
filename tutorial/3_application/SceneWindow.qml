@@ -210,7 +210,7 @@ Item {
           if( prevY > -1 ) {
             dy = 0.01 * (mouse.y - prevY)
           }
-          cam1.arcball_rotate( dx, dy )
+          cam1.spaceship_rotate( dx, dy )
           prevX = mouse.x
           prevY = mouse.y
           

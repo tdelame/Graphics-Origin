@@ -4,6 +4,7 @@
 # include <graphics-origin/application/aaboxes_renderable.h>
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_helper.h>
+# include <graphics-origin/geometry/bvh.h>
 
 # include <graphics-origin/tools/log.h>
 # include <GL/glew.h>
@@ -38,7 +39,7 @@ namespace graphics_origin { namespace application {
   }
 
   aaboxes_renderable::boxes_buffer::handle
-  aaboxes_renderable::add( geometry::aabox&& box, const gpu_vec3& color )
+  aaboxes_renderable::add( const geometry::aabox& box, const gpu_vec3& color )
   {
     m_dirty = true;
     auto pair = m_boxes.create();
@@ -52,6 +53,7 @@ namespace graphics_origin { namespace application {
   aaboxes_renderable::remove( boxes_buffer::handle handle )
   {
     m_boxes.remove( handle );
+    m_dirty = true;
   }
 
   void
@@ -93,8 +95,6 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::do_render()
   {
-    m_program->bind();
-
     gpu_mat4 mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
 
@@ -108,11 +108,61 @@ namespace graphics_origin { namespace application {
   aaboxes_renderable::remove_gpu_data()
   {
     glcheck(glDeleteBuffers( 1, &m_boxes_vbo ));
+    glcheck(glDeleteVertexArrays( 1, &m_vao ));
+
     m_boxes_vbo = (unsigned int)0;
+    m_vao = (unsigned int)0;
   }
 
   aaboxes_renderable::~aaboxes_renderable()
   {
     remove_gpu_data();
   }
+
+  aaboxes_renderable*
+  aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::box_bvh& bvh )
+  {
+    const auto nb_boxes = bvh.get_number_of_nodes();
+    auto result = new aaboxes_renderable( program, nb_boxes );
+
+    uint32_t max_level = 0;
+    {
+      std::list< std::pair<uint32_t,uint32_t> > indexes( 1, std::make_pair( uint32_t{0}, uint32_t{0}) );
+      while( !indexes.empty() )
+        {
+          auto current_index = indexes.front();
+          indexes.pop_front();
+          max_level = std::max( max_level, current_index.second );
+          if( !bvh.is_leaf( current_index.first ) )
+            {
+              const auto& node = bvh.get_internal_node( current_index.first );
+              indexes.push_back( std::make_pair( node.left_index, current_index.second + 1));
+              indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));
+            }
+        }
+    }
+
+
+    std::list< std::pair<uint32_t,uint32_t> > indexes( 1, std::make_pair( uint32_t{0}, uint32_t{0}) );
+    while( !indexes.empty() )
+      {
+        auto current_index = indexes.front();
+        indexes.pop_front();
+        if( bvh.is_leaf( current_index.first ) )
+          {
+            result->add( bvh.get_leaf_node( current_index.first ).bounding, get_color( current_index.second, 0, max_level ) );
+          }
+        else
+          {
+            const auto& node = bvh.get_internal_node( current_index.first );
+            result->add( node.bounding, get_color( current_index.second, 0, max_level ) );
+            indexes.push_back( std::make_pair( node.left_index, current_index.second + 1));
+            indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));
+          }
+      }
+    LOG( debug, "max depth = " << max_level );
+
+    return result;
+  }
+
 }}
