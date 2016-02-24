@@ -1,8 +1,10 @@
 #version 440
+uniform mat4 projection;
+uniform mat4 mv;
 
 layout( points ) in;
-in float ball_radius[];
-in vec3  ball_color [];
+in vec4 ball [];
+in vec3 color[];
 
 layout( triangle_strip, max_vertices = 4 ) out;
 smooth out vec2 texture_coordinate;
@@ -14,23 +16,26 @@ const float box_correction = 1.5;
 
 void main()
 {
-  center_in_camera = vec4(gl_in[0].gl_Position.xyz, ball_radius[0]);
-  diffuse_color = ball_color[0];
+  ball_in_camera = vec4( 
+  	(mv * vec4( ball[0].xyz, 1.0 )).xyz,
+  	 ball[0].w 
+  );
+  diffuse_color = color[0];
   
   texture_coordinate = box_correction * vec2( -1, -1 );
-  gl_Position = projection * ( vec4( texture_coordinate * ball_radius[0], 0, 0 ) + gl_in[0].gl_Position );
+  gl_Position = projection * vec4( vec3( texture_coordinate * ball_in_camera.w, 0 ) + ball_in_camera.xyz, 1.0 );
   EmitVertex();
   
-	texture_coordinate = box_correction * vec2( 1, -1 );
-  gl_Position = projection * ( vec4( texture_coordinate * ball_radius[0], 0, 0 ) + gl_in[0].gl_Position );
+  texture_coordinate = box_correction * vec2( 1, -1 );
+  gl_Position = projection * vec4( vec3( texture_coordinate * ball_in_camera.w, 0 ) + ball_in_camera.xyz, 1.0 );
   EmitVertex();
   
   texture_coordinate = box_correction * vec2( -1, 1 );
-  gl_Position = projection * ( vec4( texture_coordinate * ball_radius[0], 0, 0 ) + gl_in[0].gl_Position );
+  gl_Position = projection * vec4( vec3( texture_coordinate * ball_in_camera.w, 0 ) + ball_in_camera.xyz, 1.0 );
   EmitVertex();
   
-	texture_coordinate = box_correction * vec2( 1, 1 );
-  gl_Position = projection * ( vec4( texture_coordinate * ball_radius[0], 0, 0 ) + gl_in[0].gl_Position );
+  texture_coordinate = box_correction * vec2( 1, 1 );
+  gl_Position = projection * vec4( vec3( texture_coordinate * ball_in_camera.w, 0 ) + ball_in_camera.xyz, 1.0 );
   EmitVertex();  
    
   EndPrimitive();

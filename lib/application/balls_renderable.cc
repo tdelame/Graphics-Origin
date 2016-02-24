@@ -37,7 +37,7 @@ namespace graphics_origin { namespace application {
   }
 
   balls_renderable::balls_buffer::handle
-  balls_renderable::add( geometry::ball&& ball, const gpu_vec3& color )
+  balls_renderable::add( const geometry::ball& ball, const gpu_vec3& color )
   {
     m_dirty = true;
     auto pair = m_balls.create();
@@ -62,8 +62,8 @@ namespace graphics_origin { namespace application {
         glcheck(glGenBuffers( 1, &m_balls_vbo ) );
       }
 
-    int ball_location  = m_program->get_attribute_location( "ball" );
-    int color_location = m_program->get_attribute_location( "color"  );
+    int ball_location  = m_program->get_attribute_location(  "ball_attribute" );
+    int color_location = m_program->get_attribute_location( "color_attribute" );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_balls_vbo ));
@@ -85,8 +85,10 @@ namespace graphics_origin { namespace application {
   void
   balls_renderable::do_render()
   {
-    gpu_mat4 mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
+    gpu_mat4 temp = m_renderer->get_projection_matrix();
+    glcheck(glUniformMatrix4fv( m_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr(temp)));
+    temp = m_renderer->get_view_matrix() * m_model;
+    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(temp)));
 
     glcheck(glLineWidth( 2.0 ));
     glcheck(glBindVertexArray( m_vao ));
@@ -97,11 +99,13 @@ namespace graphics_origin { namespace application {
   void
   balls_renderable::remove_gpu_data()
   {
-    glcheck(glDeleteBuffers( 1, &m_balls_vbo ));
-    glcheck(glDeleteVertexArrays( 1, &m_vao ));
-
-    m_balls_vbo = (unsigned int)0;
-    m_vao = (unsigned int)0;
+    if( m_vao )
+      {
+        glcheck(glDeleteBuffers( 1, &m_balls_vbo ));
+        glcheck(glDeleteVertexArrays( 1, &m_vao ));
+        m_balls_vbo = (unsigned int)0;
+        m_vao = (unsigned int)0;
+      }
   }
 
   balls_renderable::~balls_renderable()

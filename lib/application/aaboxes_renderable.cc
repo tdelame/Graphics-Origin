@@ -107,11 +107,13 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::remove_gpu_data()
   {
-    glcheck(glDeleteBuffers( 1, &m_boxes_vbo ));
-    glcheck(glDeleteVertexArrays( 1, &m_vao ));
-
-    m_boxes_vbo = (unsigned int)0;
-    m_vao = (unsigned int)0;
+    if( m_vao )
+      {
+        glcheck(glDeleteBuffers( 1, &m_boxes_vbo ));
+        glcheck(glDeleteVertexArrays( 1, &m_vao ));
+        m_boxes_vbo = (unsigned int)0;
+        m_vao = (unsigned int)0;
+      }
   }
 
   aaboxes_renderable::~aaboxes_renderable()

@@ -16031,14 +16031,19 @@ static const geometry::ball balls[15868] = {
             "shaders/balls.frag"});
 
 
+      auto brenderable = new balls_renderable( balls_program, nb_balls );
+      for( size_t i = 0; i < nb_balls; ++ i )
+        brenderable->add( balls[i] );
+
+
       geometry::box_bvh bvh( balls, nb_balls );
 
-      auto balls = balls_renderable( balls_program, nb_balls );
-
-      auto boxes = aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh );
-
       add_renderable( new triangle_renderable( flat_program ) );
-      add_renderable( boxes );
+//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
+      add_renderable( brenderable );
+
+
+
     }
 
   };

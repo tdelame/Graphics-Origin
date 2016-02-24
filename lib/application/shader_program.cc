@@ -23,7 +23,8 @@ namespace application {
 
   shader_program::~shader_program()
   {
-    glcheck(glDeleteProgram( m_program_id ));
+    if( m_program_id )
+      glcheck(glDeleteProgram( m_program_id ));
   }
 
   void

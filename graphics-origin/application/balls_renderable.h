@@ -31,7 +31,7 @@ namespace graphics_origin {
           shader_program_ptr program,
           size_t expected_number_of_balls = 0 );
       ~balls_renderable();
-      balls_buffer::handle add( geometry::ball&& ball, const gpu_vec3& color = gpu_vec3{0.1, 0.1, 0.1 } );
+      balls_buffer::handle add( const geometry::ball& ball, const gpu_vec3& color = gpu_vec3{0.1, 0.9, 0.1 } );
       void remove( balls_buffer::handle handle );
     private:
       void update_gpu_data() override;
