@@ -10,19 +10,6 @@
 
 namespace graphics_origin { namespace application {
 
-  static
-  shader_program_ptr get_program()
-  {
-    static auto instance = std::make_shared<shader_program>(
-        std::list<std::string>{
-          "shaders/aabox.vert",
-          "shaders/aabox.geom",
-          "shaders/aabox.frag"
-        }
-    );
-    return instance;
-  }
-
   aaboxes_renderable::storage::storage( const gpu_vec3& center, const gpu_vec3& hsides, const gpu_vec3& color )
     : center{ center }, hsides{ hsides }, color{ color }
   {}
@@ -40,14 +27,14 @@ namespace graphics_origin { namespace application {
     return *this;
   }
 
-
   aaboxes_renderable::aaboxes_renderable(
+      shader_program_ptr program,
       size_t expected_number_of_boxes )
     : m_boxes{ expected_number_of_boxes },
       m_vao{ 0 }, m_boxes_vbo{ 0 }
   {
     m_model = gpu_mat4(1.0);
-    m_program = get_program();
+    m_program = program;
   }
 
   aaboxes_renderable::boxes_buffer::handle

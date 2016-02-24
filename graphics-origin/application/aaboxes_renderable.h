@@ -32,6 +32,7 @@ namespace graphics_origin {
           22 > boxes_buffer;
     public:
       aaboxes_renderable(
+          shader_program_ptr program,
           size_t expected_number_of_boxes = 0 );
       ~aaboxes_renderable();
       boxes_buffer::handle add( geometry::aabox&& box, const gpu_vec3& color = gpu_vec3{0.1, 0.1, 0.1 } );

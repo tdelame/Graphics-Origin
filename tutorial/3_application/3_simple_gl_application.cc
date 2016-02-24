@@ -23,8 +23,6 @@
 namespace graphics_origin {
 namespace application {
 
-  static shader_program_ptr flat_program =
-      std::make_shared<shader_program>( std::list<std::string>{ "shaders/flat.vert", "shaders/flat.frag"});
 
   static gpu_vec3 positions[] = {
       gpu_vec3{ 0, -0.1, 0 },
@@ -41,10 +39,10 @@ namespace application {
   class triangle_renderable
     : public renderable {
   public:
-    triangle_renderable()
+    triangle_renderable( shader_program_ptr program )
       : m_buffer{ 0, 0 }
     {
-      m_program = flat_program;
+      m_program = program;
       m_model = gpu_mat4(1.0);
     }
 
@@ -144,14 +142,27 @@ namespace application {
       : gl_window( parent )
     {
       initialize_renderer( new simple_gl_renderer );
-      auto boxes = new aaboxes_renderable( 4 );
+
+      shader_program_ptr flat_program =
+          std::make_shared<shader_program>( std::list<std::string>{
+            "shaders/flat.vert",
+            "shaders/flat.frag"});
+
+      shader_program_ptr box_wireframe_program =
+          std::make_shared<shader_program>( std::list<std::string>{
+            "shaders/aabox.vert",
+            "shaders/aabox.geom",
+            "shaders/aabox.frag"});
+
+
+      auto boxes = new aaboxes_renderable( box_wireframe_program, 4 );
 
       boxes->add( geometry::aabox( vec3{}, vec3{1, 1, 1 }));
       boxes->add( geometry::aabox( vec3{1,0,0}, vec3{2, 1, 1 }), gpu_vec3{1,0,0});
       boxes->add( geometry::aabox( vec3{0,1,0}, vec3{1, 2, 1 }), gpu_vec3{0,1,0});
       boxes->add( geometry::aabox( vec3{0,0,1}, vec3{1, 1, 2 }), gpu_vec3{0,0,1});
 
-      add_renderable( new triangle_renderable() );
+      add_renderable( new triangle_renderable( flat_program ) );
       add_renderable( boxes );
     }
 
