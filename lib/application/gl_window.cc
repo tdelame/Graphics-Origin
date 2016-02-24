@@ -208,9 +208,10 @@ namespace application {
   {
     if( win )
       {
-        connect( win, SIGNAL(beforeSynchronizing()), this, SLOT(sync()), Qt::DirectConnection);
-        connect( win, SIGNAL(sceneGraphInvalidated()), this, SLOT(cleanup()), Qt::DirectConnection);
-        win->setClearBeforeRendering(false); // otherwise, QML will always clear what we draw
+        ///TODO: not sure about that. I believe this should be done only one time and not at avery signal.
+//        connect( win, SIGNAL(beforeSynchronizing()), this, SLOT(sync()), Qt::DirectConnection);
+//        connect( win, SIGNAL(sceneGraphInvalidated()), this, SLOT(cleanup()), Qt::DirectConnection);
+//        win->setClearBeforeRendering(false); // otherwise, QML will always clear what we draw
       }
   }
 

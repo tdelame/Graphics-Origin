@@ -10,6 +10,8 @@
 # include <QtGui/QOpenGLFramebufferObject>
 # include <QtGui/QOffscreenSurface>
 
+# include <graphics-origin/tools/log.h>
+
 namespace graphics_origin {
 namespace application {
 
@@ -36,6 +38,7 @@ namespace application {
   {
     m_width = width;
     m_height = height;
+    m_size_changed = 1;
   }
 
   void
