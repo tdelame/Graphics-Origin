@@ -52,7 +52,7 @@ endif
 ################################################################################
 ARFLAGS		= rs
 CXXFLAGS	= -frounding-math -std=c++14 -fPIC -fopenmp
-LDFLAGS		= -L/usr/lib -L/usr/local/lib -L$(LIB_RES_DIR)
+LDFLAGS		= -L/usr/lib -L/usr/local/lib -L$(LIB_RES_DIR) -lgomp
 NVCCFLAGS = -Xcompiler -fopenmp -Xcompiler '-fPIC' --use_fast_math -m64 \
 						-arch sm_21 --ptxas-options="-v"
 ifeq ($(BUILD_CONF),release)

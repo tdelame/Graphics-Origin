@@ -230,6 +230,14 @@ namespace application {
     emit up_changed();
   }
 
+  void camera::update()
+  {
+    do_update();
+  }
+
+  void camera::do_update()
+  {}
+
 }
 
 }

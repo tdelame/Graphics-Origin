@@ -229,19 +229,35 @@ Item {
       focus: true
       Keys.onPressed: {
       	if( event.key == Qt.Key_Q ) {
-      	  cam1.position = cam1.position.plus(cam1.right.times(-0.05))
+      	  cam1.set_go_left( true );
       	  event.accepted = true;
       	} else if( event.key == Qt.Key_D ) {
-      	  cam1.position = cam1.position.plus(cam1.right.times(0.05))
+      	  cam1.set_go_right( true );
 		  event.accepted = true;
       	} else if( event.key == Qt.Key_Z ) {
-      	  cam1.position = cam1.position.plus(cam1.forward.times(0.05))
+      	  cam1.set_go_forward( true );
       	  event.accepted = true;
       	} else if( event.key == Qt.Key_S ) {
-      	  cam1.position = cam1.position.plus(cam1.forward.times(-0.05))
+      	  cam1.set_go_backward( true );
       	  event.accepted = true
   	    }
       }
+      
+      Keys.onReleased: {
+      	if( event.key == Qt.Key_Q ) {
+      	  cam1.set_go_left( false );
+      	  event.accepted = true;
+      	} else if( event.key == Qt.Key_D ) {
+      	  cam1.set_go_right( false );
+		  event.accepted = true;
+      	} else if( event.key == Qt.Key_Z ) {
+      	  cam1.set_go_forward( false );
+      	  event.accepted = true;
+      	} else if( event.key == Qt.Key_S ) {
+      	  cam1.set_go_backward( false );
+      	  event.accepted = true
+  	    }
+      }      
       
      Text {
       id: fps

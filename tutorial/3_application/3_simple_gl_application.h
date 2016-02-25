@@ -6,6 +6,7 @@
 
 # include "../../graphics-origin/application/gl_window_renderer.h"
 # include "../../graphics-origin/application/renderable.h"
+# include "../../graphics-origin/application/camera.h"
 
 # include <QtQuick/QQuickView>
 
@@ -32,5 +33,32 @@ namespace application {
     explicit test_application( QWindow* parent = nullptr );
     virtual ~test_application();
   };
+
+
+  class simple_camera
+    : public camera {
+    Q_OBJECT
+  public:
+    explicit simple_camera( QObject* parent = nullptr );
+
+    Q_INVOKABLE void set_go_left( bool left );
+    Q_INVOKABLE void set_go_right( bool right );
+    Q_INVOKABLE void set_go_forward( bool forward );
+    Q_INVOKABLE void set_go_backward( bool backward );
+
+  private:
+    void do_update();
+
+    gpu_vec3 m_direction;
+
+    real m_update_time;
+    bool m_forward;
+    bool m_left;
+    bool m_right;
+    bool m_backward;
+    bool m_up;
+    bool m_down;
+  };
+
 }}
 # endif 

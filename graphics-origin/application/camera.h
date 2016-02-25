@@ -200,13 +200,17 @@ namespace application {
     void set_znear( const qreal& v );
     ///@}
 
+    void update();
+
   signals:
     void position_changed();
     void forward_changed();
     void right_changed();
     void up_changed();
 
-  private:
+  protected:
+
+    virtual void do_update();
     qreal m_fov;
     qreal m_ratio;
     qreal m_znear;

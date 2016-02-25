@@ -18,6 +18,8 @@
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
 # include "3_simple_gl_application.h"
 
+# include <omp.h>
+
 # include <QGuiApplication>
 # include <QtGui/QSurfaceFormat>
 # include <QtCore/QThread>
@@ -27,8 +29,8 @@
 namespace graphics_origin {
 namespace application {
 
-static const size_t nb_balls = 15868;
-static const geometry::ball balls[15868] = {
+const size_t nb_balls = 15868;
+const geometry::ball balls[15868] = {
   geometry::ball{{-0.001304, 0.676092, 0.689932}, 0.061574},
   geometry::ball{{-0.000922, 0.666584, 0.685966}, 0.069000},
   geometry::ball{{-0.001184, 0.653005, 0.689694}, 0.069846},
@@ -15900,6 +15902,65 @@ static const geometry::ball balls[15868] = {
 };
 
 
+    simple_camera::simple_camera( QObject* parent )
+      : camera{ parent }, m_direction{}, m_update_time{ omp_get_wtime() },
+        m_forward{false}, m_left{false}, m_right{false},
+        m_backward{false}, m_up{false}, m_down{false}
+    {}
+
+    void simple_camera::set_go_left( bool left )
+    {
+      m_left = left;
+      if( m_left )
+        m_direction.x = 1.0;
+      else if( m_right )
+        m_direction.x = -1.0;
+      else m_direction.x = 0;
+    }
+    void simple_camera::set_go_right( bool right )
+    {
+      m_right = right;
+      if( m_right )
+        m_direction.x = -1.0;
+      else if( m_left )
+        m_direction.x = 1.0;
+      else m_direction.x = 0;
+    }
+     void simple_camera::set_go_forward( bool forward )
+    {
+      m_forward = forward;
+      if( m_forward )
+        m_direction.z = 1.0;
+      else if( m_backward )
+        m_direction.z = -1.0;
+      else m_direction.z = 0;
+    }
+    void simple_camera::set_go_backward( bool backward )
+    {
+      m_backward = backward;
+      if( m_backward )
+        m_direction.z = -1.0;
+      else if( m_forward )
+        m_direction.z = 1.0;
+      else m_direction.z = 0;
+    }
+
+    void simple_camera::do_update()
+    {
+      if( m_forward || m_left || m_right || m_backward )
+        {
+          real elapsed_time = omp_get_wtime() - m_update_time;
+
+          gpu_vec3 shift = glm::normalize(m_direction) * gpu_real(elapsed_time) * gpu_real(0.5);
+          m_view[3][0] += shift.x;
+          m_view[3][1] += shift.y;
+          m_view[3][2] += shift.z;
+
+          emit position_changed();
+        }
+      m_update_time = omp_get_wtime();
+    }
+
 
   static gpu_vec3 positions[] = {
       gpu_vec3{ 0, -0.1, 0 },
@@ -15988,6 +16049,7 @@ static const geometry::ball balls[15868] = {
 
   void simple_gl_renderer::do_render()
   {
+    m_camera->update();
     for( auto& r : m_renderables )
       {
         r->get_shader_program()->bind();
@@ -16049,7 +16111,7 @@ static const geometry::ball balls[15868] = {
     : QQuickView( parent )
   {
     qmlRegisterType<simple_gl_window>( "GraphicsOrigin", 1, 0, "GLWindow" );
-    qmlRegisterType<camera>( "GraphicsOrigin", 1, 0, "GLCamera" );
+    qmlRegisterType<simple_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
 
     QSurfaceFormat format;
     format.setMajorVersion( 4 );
