@@ -242,6 +242,18 @@ Item {
       	  event.accepted = true
   	    }
       }
+      
+     Text {
+      id: fps
+      anchors.top: parent.top;
+      anchors.right: parent.right;
+     }
+    
+     Timer {
+       interval: 2000; running: true; repeat: true
+       onTriggered: fps.text = "FPS: " + glwindow.get_fps().toFixed(2);
+     }
+      
   	}
   }
 }

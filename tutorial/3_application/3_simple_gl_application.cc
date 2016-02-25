@@ -16034,9 +16034,9 @@ static const geometry::ball balls[15868] = {
       for( size_t i = 0; i < nb_balls; ++ i )
         brenderable->add( balls[i] );
 
-      geometry::box_bvh bvh( balls, nb_balls );
+//      geometry::box_bvh bvh( balls, nb_balls );
 
-      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
+//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
       add_renderable( brenderable );
     }
 

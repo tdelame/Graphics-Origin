@@ -12,9 +12,6 @@ BEGIN_GO_NAMESPACE namespace tools {
       m_accumulated_fps{0}, m_fps(0.0f), m_nb_samples{0}
   {}
 
-  fps_counter::~fps_counter()
-  {}
-
   real fps_counter::get_fps()
   {
     auto current_time = omp_get_wtime();
