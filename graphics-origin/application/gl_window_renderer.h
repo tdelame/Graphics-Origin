@@ -1,11 +1,11 @@
 /*  Created on: Jan 29, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-
 # ifndef GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
 # define GRAPHICS_ORIGIN_GL_WINDOW_RENDERER_H_
 # include "../graphics_origin.h"
 # include "../geometry/matrix.h"
+# include "../tools/fps_counter.h"
 
 # include <atomic>
 # include <list>
@@ -43,6 +43,8 @@ namespace application {
     const gpu_mat4&
     get_projection_matrix() const;
 
+    real get_fps() const;
+
   public slots:
     void render_next();
   signals:
@@ -70,6 +72,8 @@ namespace application {
     unsigned char m_is_running;
     unsigned int m_width;
     unsigned int m_height;
+    tools::fps_counter m_fps_counter;
+    real m_cached_fps;
   };
 
 }

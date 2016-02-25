@@ -18,7 +18,9 @@ namespace application {
       m_render_fbo{ nullptr }, m_display_fbo{ nullptr },
 
       m_camera{ nullptr }, m_size_changed{ 0 },
-      m_is_running{ 1 }, m_width{ 0 }, m_height{ 0 }
+      m_is_running{ 1 }, m_width{ 0 }, m_height{ 0 },
+
+      m_fps_counter{ 2.0 }, m_cached_fps{ 0 }
   {}
 
   gl_window_renderer::~gl_window_renderer()
@@ -92,6 +94,7 @@ namespace application {
        }
 
      m_render_fbo->bind();
+     m_cached_fps = m_fps_counter.get_fps();
      glEnable(GL_DEPTH_TEST);
      glDepthFunc(GL_LESS);
      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -131,6 +134,12 @@ namespace application {
   gl_window_renderer::get_projection_matrix() const
   {
     return m_camera->get_projection_matrix();
+  }
+
+  real
+  gl_window_renderer::get_fps() const
+  {
+    return m_cached_fps;
   }
 
 }

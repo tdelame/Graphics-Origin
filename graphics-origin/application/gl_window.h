@@ -21,6 +21,7 @@ namespace application {
       public QQuickItem {
     Q_OBJECT
     Q_PROPERTY( QObject* camera READ get_camera WRITE set_camera )
+    Q_PROPERTY( qreal fps READ get_fps )
   public:
     gl_window( QQuickItem* parent = nullptr );
     ~gl_window();
@@ -41,6 +42,8 @@ namespace application {
     QObject* get_camera() const;
     void set_camera(QObject* cam);
     void add_renderable( renderable* r );
+
+    qreal get_fps() const;
 
   protected:
     QSGNode* updatePaintNode( QSGNode*, UpdatePaintNodeData* ) override;

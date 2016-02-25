@@ -214,5 +214,11 @@ namespace application {
       }
   }
 
+  qreal
+  gl_window::get_fps() const
+  {
+    return m_renderer->get_fps();
+  }
+
 }
 END_GO_NAMESPACE
