@@ -44,9 +44,9 @@ namespace geometry {
         number_of_elements{ number_of_elements },
         elements{ elements }
     {
-      if( !number_of_elements )
+      if( number_of_elements < 2 )
         {
-          LOG( error, "no elements to create a box bvh.");
+          LOG( error, "not enough elements to create a box bvh.");
           return;
         }
       leaves.resize( number_of_elements );

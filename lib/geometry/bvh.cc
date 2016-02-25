@@ -356,20 +356,19 @@ namespace geometry {
   size_t
   box_bvh::get_number_of_nodes() const
   {
-    return std::min( size_t{0}, size_t{(number_of_elements << 1) - 1});
+    return get_number_of_internal_nodes() + get_number_of_leaf_nodes();
   }
 
   size_t
   box_bvh::get_number_of_internal_nodes() const
   {
-    return std::min( size_t{number_of_elements - 1}, size_t{0} );
-
+    return internals.size();
   }
 
   size_t
   box_bvh::get_number_of_leaf_nodes() const
   {
-    return number_of_elements;
+    return leaves.size();
   }
 
   void

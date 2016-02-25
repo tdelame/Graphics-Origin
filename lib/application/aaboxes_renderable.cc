@@ -85,10 +85,10 @@ namespace graphics_origin { namespace application {
         reinterpret_cast<void*>(offsetof(storage,hsides)))); // offset of the hsides inside an attribute
 
       glcheck(glEnableVertexAttribArray( color_location ));
-      glcheck(glVertexAttribPointer( color_location,         // format of hsides:
+      glcheck(glVertexAttribPointer( color_location,         // format of colors:
         3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
         sizeof(storage),                                     // each attribute has the size of storage
-        reinterpret_cast<void*>(offsetof(storage,color)))); // offset of the hsides inside an attribute
+        reinterpret_cast<void*>(offsetof(storage,color))));  // offset of the color inside an attribute
     glcheck(glBindVertexArray( 0 ));
   }
 

@@ -92,6 +92,8 @@ namespace application {
        }
 
      m_render_fbo->bind();
+     glEnable(GL_DEPTH_TEST);
+     glDepthFunc(GL_LESS);
      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
      do_render();
      // We need to flush the contents to the FBO before posting the texture to the

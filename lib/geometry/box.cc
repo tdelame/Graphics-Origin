@@ -9,27 +9,27 @@ BEGIN_GO_NAMESPACE
 namespace geometry {
 
 aabox::aabox()
-  : center{}, half_sides{}
+  : m_center{}, m_half_sides{}
 {}
 
 aabox::aabox( const vec3& center, const vec3& half_sides )
-    : center{ center }, half_sides{ half_sides }
+    : m_center{ center }, m_half_sides{ half_sides }
 {}
 
 aabox::aabox( const aabox& other )
-    : center{ other.center }, half_sides{ other.half_sides }
+    : m_center{ other.m_center }, m_half_sides{ other.m_half_sides }
 {}
 
 aabox::aabox( aabox&& other )
-  : center{ std::move( other.center ) },
-    half_sides{ std::move( other.half_sides ) }
+  : m_center{ std::move( other.m_center ) },
+    m_half_sides{ std::move( other.m_half_sides ) }
 {}
 
 aabox&
 aabox::operator=( const aabox& other )
 {
-  center = other.center;
-  half_sides = other.half_sides;
+  m_center = other.m_center;
+  m_half_sides = other.m_half_sides;
   return *this;
 }
 
@@ -51,41 +51,41 @@ aabox::merge( const aabox& other ) noexcept
 const vec3&
 aabox::get_center() const
 {
-  return center;
+  return m_center;
 }
 
 const vec3&
 aabox::get_half_sides() const
 {
-  return half_sides;
+  return m_half_sides;
 }
 
 vec3
 aabox::get_min() const
 {
-  return center - half_sides;
+  return m_center - m_half_sides;
 }
 
 vec3
 aabox::get_max() const
 {
-  return center + half_sides;
+  return m_center + m_half_sides;
 }
 
 bool
 aabox::do_contain( const vec3& p ) const
 {
-  auto diff = p - center;
-  return std::abs (diff.x) <= half_sides.x
-      && std::abs (diff.y) <= half_sides.y
-      && std::abs (diff.z) <= half_sides.z;
+  auto diff = p - m_center;
+  return std::abs (diff.x) <= m_half_sides.x
+      && std::abs (diff.y) <= m_half_sides.y
+      && std::abs (diff.z) <= m_half_sides.z;
 }
 
 bool
 aabox::do_intersect( const ball& b ) const
 {
   auto ball_interiority = b.get_radius() * b.get_radius();
-  auto diff = glm::abs(center - b.get_center()) - half_sides;
+  auto diff = glm::abs(m_center - b.get_center()) - m_half_sides;
   for( int i = 0; i < 3; ++ i )
     if( diff[i] > 0 )
       {
@@ -98,6 +98,18 @@ void
 aabox::do_compute_bounding_box( aabox& b) const
 {
   b = *this;
+}
+
+void
+aabox::set_center( const vec3& center )
+{
+  m_center = center;
+}
+
+void
+aabox::set_half_sides( const vec3& hsides )
+{
+  m_half_sides = hsides;
 }
 
 }

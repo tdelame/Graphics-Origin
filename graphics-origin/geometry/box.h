@@ -39,6 +39,13 @@ public:
   const vec3&
   get_half_sides() const;
 
+
+  void
+  set_center( const vec3& center );
+
+  void
+  set_half_sides( const vec3& hsides );
+
   vec3
   get_min() const;
   vec3
@@ -62,8 +69,8 @@ private:
   void
   do_compute_bounding_box( aabox& b ) const override;
 
-  vec3 center;
-  vec3 half_sides;
+  vec3 m_center;
+  vec3 m_half_sides;
 };
 
 extern aabox

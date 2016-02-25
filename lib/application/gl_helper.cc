@@ -45,9 +45,6 @@ namespace application {
      LOG(info, "  + GLSL version = " << glGetString(GL_SHADING_LANGUAGE_VERSION) )
      LOG(info, "  + Vendor = " << glGetString(GL_VENDOR) )
      LOG(info, "  + Renderer = " << glGetString(GL_RENDERER) )
-     LOG(info, "  * DEPTH_TEST activated with GL_LESS" );
-     glEnable(GL_DEPTH_TEST);
-     glDepthFunc(GL_LESS);
   }
 }
 END_GO_NAMESPACE

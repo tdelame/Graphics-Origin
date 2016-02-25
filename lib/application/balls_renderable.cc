@@ -90,7 +90,6 @@ namespace graphics_origin { namespace application {
     temp = m_renderer->get_view_matrix() * m_model;
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(temp)));
 
-    glcheck(glLineWidth( 2.0 ));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawArrays( GL_POINTS, 0, m_balls.get_size()));
     glcheck(glBindVertexArray( 0 ) );
