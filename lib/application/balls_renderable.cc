@@ -8,6 +8,8 @@
 # include <graphics-origin/tools/log.h>
 # include <GL/glew.h>
 
+# include <thrust/sort.h>
+
 namespace graphics_origin { namespace application {
 
   balls_renderable::storage::storage( const gpu_vec4& ball, const gpu_vec3& color )
@@ -21,10 +23,22 @@ namespace graphics_origin { namespace application {
   balls_renderable::storage&
   balls_renderable::storage::operator=( storage&& other )
   {
-    ball = other.ball;
-    color  = other.color ;
+    ball  = other.ball ;
+    color = other.color;
     return *this;
   }
+
+  balls_renderable::storage&
+  balls_renderable::storage::operator=( const storage& other )
+  {
+    ball  = std::move(other.ball) ;
+    color = std::move(other.color);
+    return *this;
+  }
+
+  balls_renderable::storage::storage( const storage& other )
+    : ball{ other.ball }, color{ other.color }
+  {}
 
   balls_renderable::balls_renderable(
       shader_program_ptr program,
@@ -53,6 +67,23 @@ namespace graphics_origin { namespace application {
     m_dirty = true;
   }
 
+
+  struct ball_storage_sorter {
+
+    ball_storage_sorter( const gpu_vec4& indicator )
+      : m_indicator{ indicator }
+    {}
+
+    bool operator()( const balls_renderable::storage& a, const balls_renderable::storage& b ) const
+     {
+       return dot( m_indicator, gpu_vec4(a.ball.x, a.ball.y, a.ball.z, 1 ) ) + a.ball.w
+           < dot( m_indicator, gpu_vec4(b.ball.x, b.ball.y, b.ball.z, 1 ) ) + b.ball.w;
+     }
+
+    gpu_vec4 m_indicator;
+  };
+
+
   void
   balls_renderable::update_gpu_data()
   {
@@ -61,6 +92,10 @@ namespace graphics_origin { namespace application {
         glcheck(glGenVertexArrays( 1, &m_vao ));
         glcheck(glGenBuffers( 1, &m_balls_vbo ) );
       }
+
+//    auto mv = m_renderer->get_view_matrix() * m_model;
+//    thrust::sort( m_balls.begin(), m_balls.end(), ball_storage_sorter{gpu_vec4{ mv[0][2], mv[1][2], mv[2][2], mv[3][2] }} );
+
 
     int ball_location  = m_program->get_attribute_location(  "ball_attribute" );
     int color_location = m_program->get_attribute_location( "color_attribute" );

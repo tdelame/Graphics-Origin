@@ -107,7 +107,43 @@ BEGIN_GO_NAMESPACE namespace tools {
     static constexpr uint8_t handle_bits = sizeof(handle_type) << 3;
     static constexpr size_t max_index = (1 << index_bits) - 1;
     static constexpr size_t max_counter =  (1 << (handle_bits - index_bits - 2)) - 1;
+    template< typename type >
+    class tb_iterator :
+        public std::iterator<
+          std::random_access_iterator_tag,
+          type >
+    {
+    public:
+      using difference_type = typename std::iterator<std::random_access_iterator_tag, type>::difference_type;
 
+      tb_iterator() : _ptr(nullptr) {}
+      tb_iterator(type* rhs) : _ptr(rhs) {}
+      tb_iterator(const tb_iterator &rhs) : _ptr(rhs._ptr) {}
+      inline tb_iterator& operator+=(difference_type rhs) {_ptr += rhs; return *this;}
+      inline tb_iterator& operator-=(difference_type rhs) {_ptr -= rhs; return *this;}
+      inline type& operator*() const {return *_ptr;}
+      inline type* operator->() const {return _ptr;}
+      inline type& operator[](difference_type rhs) const {return _ptr[rhs];}
+
+      inline tb_iterator& operator++() {++_ptr; return *this;}
+      inline tb_iterator& operator--() {--_ptr; return *this;}
+      inline tb_iterator operator++(int) const {tb_iterator tmp(*this); ++_ptr; return tmp;}
+      inline tb_iterator operator--(int) const {tb_iterator tmp(*this); --_ptr; return tmp;}
+      inline difference_type operator-(const tb_iterator& rhs) const {return _ptr-rhs._ptr;}
+      inline tb_iterator operator+(difference_type rhs) const {return tb_iterator(_ptr+rhs);}
+      inline tb_iterator operator-(difference_type rhs) const {return tb_iterator(_ptr-rhs);}
+      friend inline tb_iterator operator+(difference_type lhs, const tb_iterator& rhs) {return tb_iterator(lhs+rhs._ptr);}
+      friend inline tb_iterator operator-(difference_type lhs, const tb_iterator& rhs) {return tb_iterator(lhs-rhs._ptr);}
+
+      inline bool operator==(const tb_iterator& rhs) const {return _ptr == rhs._ptr;}
+      inline bool operator!=(const tb_iterator& rhs) const {return _ptr != rhs._ptr;}
+      inline bool operator>(const tb_iterator& rhs) const {return _ptr > rhs._ptr;}
+      inline bool operator<(const tb_iterator& rhs) const {return _ptr < rhs._ptr;}
+      inline bool operator>=(const tb_iterator& rhs) const {return _ptr >= rhs._ptr;}
+      inline bool operator<=(const tb_iterator& rhs) const {return _ptr <= rhs._ptr;}
+  private:
+      type* _ptr;
+    };
   public:
     /**@brief An handle to designate an element.
      *
@@ -340,6 +376,29 @@ BEGIN_GO_NAMESPACE namespace tools {
     element* data()
     {
       return m_element_buffer;
+    }
+
+    typedef tb_iterator< element > iterator;
+    typedef tb_iterator< const element > const_iterator;
+
+    iterator begin()
+    {
+      return iterator( m_element_buffer );
+    }
+
+    const_iterator begin() const
+    {
+      return const_iterator( m_element_buffer );
+    }
+
+    iterator end()
+    {
+      return iterator( m_element_buffer + m_size );
+    }
+
+    const_iterator end() const
+    {
+      return const_iterator( m_element_buffer + m_size );
     }
 
   private:

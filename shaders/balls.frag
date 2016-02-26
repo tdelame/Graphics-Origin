@@ -6,6 +6,8 @@ in vec4 ball_in_camera;
 
 out vec4 final_color;
 
+layout (depth_less) out float gl_FragDepth;
+
 void main()
 {
   // position of the fragment: first on the quad then on the ball

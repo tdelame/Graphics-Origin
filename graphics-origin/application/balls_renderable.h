@@ -12,16 +12,19 @@ namespace graphics_origin {
   namespace application {
     class balls_renderable
       : public renderable {
-
+    public:
       struct storage {
         gpu_vec4 ball;
         gpu_vec3 color;
         storage( const gpu_vec4& ball, const gpu_vec3& color );
+        storage( const storage& other );
 
         storage& operator=( storage && other );
+        storage& operator=( const storage& other );
+
         storage();
       };
-
+    private:
       typedef tools::tight_buffer_manager<
           storage,
           uint32_t,
