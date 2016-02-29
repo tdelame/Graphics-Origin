@@ -46,6 +46,21 @@ void check_gl_error( const char* call, const char* file, const int line );
  * glcheck(glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer));
  * glcheck(glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, (void*)0));
  * glcheck(glDrawArrays(GL_TRIANGLES,0, m_vertices.size()));
+ * // or
+ * glcheck(uint i = glGetProgramResourceIndex( program, GL_SHADER_STORAGE_BLOCK, "data" ));
+ * \endcode
+ *
+ * If a GL command should be issued in a block, always use the brackets to delimit
+ * the block:
+ * \code{.cpp}
+ * // do
+ * if( something )
+ * {
+ *   glcheck( ...command... );
+ * }
+ * // don't (you will have weird errors)
+ * if( something )
+ *   glcheck( ...command...);
  * \endcode
  *
  * If an error occurred before the command wrapped in the glcheck() macro, it
@@ -62,11 +77,9 @@ void check_gl_error( const char* call, const char* file, const int line );
  */
 # ifdef DEBUG
 #   define glcheck( call )                   \
-{                                            \
   check_previous_gl_errors();                \
   call;                                      \
-  check_gl_error( #call, __FILE__,__LINE__ );\
-}
+  check_gl_error( #call, __FILE__,__LINE__ );
 # else
 #   define glcheck( call ) call;
 # endif
