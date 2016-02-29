@@ -5,7 +5,7 @@
 # define GRAPHICS_ORIGIN_PROJECT_H_
 
 # define GRAPHICS_ORIGIN_MAJOR @Graphics-Origin_VERSION_MAJOR@
-# define GRAPHICS_ORIGIN_MAJOR @Graphics-Origin_VERSION_MINOR@
+# define GRAPHICS_ORIGIN_MINOR @Graphics-Origin_VERSION_MINOR@
 
 # include <float.h>
 # define REAL_MIN DBL_MIN

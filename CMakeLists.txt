@@ -16,8 +16,8 @@ endif(NOT CMAKE_BUILD_TYPE)
 #****************************
 # directories configuration *
 #*******************************************************************************
-set( GO_INCLUDE_IN_DIR "${CMAKE_SOURCE_DIR}" )
-set( GO_LIBRARY_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
+set( GO_HEADERS_IN_DIR "${CMAKE_SOURCE_DIR}" )
+set( GO_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
 set( GO_TUTORIAL_IN_DIR "${CMAKE_SOURCE_DIR}/tutorial" )
 set( GO_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
 set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
@@ -56,6 +56,11 @@ option(
   it will be built if both BUILD_APPLICATION and USE_QT are set to ON"
   ON)
 
+option(
+  GO_BUILD_TOOLS_TUTORIAL
+  "Set to ON to build the tutorial for the tools library."
+  ON)
+
 if( NOT GO_USE_QT )
   set( GO_BUILD_APPLICATION OFF)
 else()
@@ -68,11 +73,11 @@ endif()
 # global flags *
 #*******************************************************************************
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp")
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -03 -msse2" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -00 -ggdb -Wall -Wextra" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra" )
 
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp")
-
+include_directories( "${GO_HEADERS_IN_DIR}" )
   
 #*********************
 # external libraries *
@@ -84,13 +89,6 @@ set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp")
 # qt
 
 # cuda
-
-# opengl glew
-
-
-set( GO_GLM_INCLUDE_DIR
-  "${GO_EXTLIBS_DIR}" ) 
-  
 if( GO_USE_CUDA )
   find_package( CUDA )
   if( NOT CUDA_FOUND )
@@ -101,9 +99,19 @@ if( GO_USE_CUDA )
   endif()
 endif() 
 
-find_package( OPENME
- 
+# opengl glew
 
+
+set( GO_GLM_INCLUDE_DIR
+  "${GO_EXTLIBS_DIR}" ) 
+  
+
+
+add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
+
+if( GO_BUILD_TOOLS_TUTORIAL )
+  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
+endif()
 
 
 #configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
