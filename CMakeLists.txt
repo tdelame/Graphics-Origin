@@ -24,7 +24,7 @@ set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
 
 set( GO_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
 set( GO_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
-set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial/bin" )
+set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial" )
 set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
 
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
@@ -72,9 +72,15 @@ endif()
 #***************
 # global flags *
 #*******************************************************************************
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp")
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra" )
+set( CMAKE_CXX_FLAGS 
+  "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+  CACHE STRING "C++ compiler flags" FORCE)
+set( CMAKE_CXX_FLAGS_RELEASE 
+  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
+  CACHE STRING "C++ compiler extra flags for release build type" FORCE)
+set( CMAKE_CXX_FLAGS_DEBUG 
+  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
+  CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
 
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp")
 include_directories( "${GO_HEADERS_IN_DIR}" )
@@ -92,7 +98,7 @@ find_package( Boost
   REQUIRED
   COMPONENTS serialization filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 
 # qt
 
@@ -102,29 +108,25 @@ if( GO_USE_CUDA )
   if( NOT CUDA_FOUND )
     set( GO_USE_CUDA OFF )
   else()
-    set( GO_CUDA_LIBRARIES "${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY}" )
-    set( GO_CUDA_INCLUDES "${CUDA_TOOLKIT_INCLUDE}" )
+    include_directories( ${CUDA_TOOLKIT_INCLUDE} )
+    set( CUDA_LIBRARIES 
+      "${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY}"
+      CACHE STRING "Libraries to link with if you want to use CUDA")
   endif()
 endif() 
 
 # opengl glew
 
 
-set( GO_GLM_INCLUDE_DIR
-  "${GO_EXTLIBS_DIR}" ) 
+set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
   
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
+add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
 
 if( GO_BUILD_TOOLS_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
 endif()
 
 #configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
-#install ( TARGETS geometry  DESTINATION bin)
-#install (  FILES truc.h   DESTINATION include)
-#include_directories( "${PROJECT_BINARY_DIR}" )
-#add_subdirectory()
-#add_library( geometry .cxx)
-#add_library( tools  ...)
