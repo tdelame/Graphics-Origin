@@ -45,6 +45,12 @@ namespace application {
 
     real get_fps() const;
 
+    ///TODO: temp
+    const camera* get_camera() const
+    {
+      return m_camera;
+    }
+
   public slots:
     void render_next();
   signals:
