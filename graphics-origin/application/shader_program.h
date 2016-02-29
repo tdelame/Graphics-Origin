@@ -122,6 +122,13 @@ namespace application {
      */
     identifier get_attribute_location( const std::string& name ) const;
 
+    /** Automatic conversion from this shader program to its openGL identifier.
+     * This allows to write command such as:
+     * \code{.cpp}
+     * shader_program program;
+     * glShaderStorageBlockBinding( program, block_index, binding_point );
+     * \endcode
+     */
     operator unsigned int() const;
 
   private:

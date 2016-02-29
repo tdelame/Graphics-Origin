@@ -213,6 +213,11 @@ namespace application {
      return shader;
   }
 
+  shader_program::operator unsigned int() const
+  {
+    return m_program_id;
+  }
+
   void
   shader_program::bind()
   {
