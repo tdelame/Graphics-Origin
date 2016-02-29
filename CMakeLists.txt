@@ -25,7 +25,7 @@ set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
 set( GO_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
 set( GO_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
 set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial/bin" )
-set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test/bin" )
+set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
 
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
@@ -85,6 +85,14 @@ include_directories( "${GO_HEADERS_IN_DIR}" )
 # openmesh
 
 # boost
+set( Boost_USE_MULTITHREADED ON )
+set( Boost_USE_STATIC_LIBS OFF )
+set( Boost_USE_STATIC_RUNTIME OFF )
+find_package( Boost
+  REQUIRED
+  COMPONENTS serialization filesystem log log_setup locale random system )
+include_directories( ${Boost_INCLUDE_DIRS} )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK" )
 
 # qt
 
@@ -112,7 +120,6 @@ add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
 if( GO_BUILD_TOOLS_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
 endif()
-
 
 #configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
 #install ( TARGETS geometry  DESTINATION bin)
