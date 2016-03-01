@@ -7,6 +7,7 @@
 # include "../graphics_origin.h"
 
 # include <type_traits>
+# include <stdexcept>
 
 BEGIN_GO_NAMESPACE namespace tools {
 
