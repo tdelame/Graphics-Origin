@@ -3,6 +3,10 @@
 #*******************************************************************************
 cmake_minimum_required( VERSION 2.8.11 )
 
+message( "module path = ${CMAKE_MODULE_PATH}" )
+set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
+message( "module path = ${CMAKE_MODULE_PATH}" )
+
 # Graphics-Origin project
 project( Graphics-Origin )
 set( Graphics-Origin_VERSION_MAJOR 1 )
@@ -30,7 +34,6 @@ set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GO_EXECUTABLE_OUT_DIR} )
-
 
 #*********************
 # projection options *
@@ -81,25 +84,22 @@ endif()
 #*******************************************************************************
 set( CMAKE_CXX_FLAGS 
   "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
-  CACHE STRING "C++ compiler flags" FORCE)
+  CACHE STRING "C++ compiler flags" FORCE )
 set( CMAKE_CXX_FLAGS_RELEASE 
   "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
-  CACHE STRING "C++ compiler extra flags for release build type" FORCE)
+  CACHE STRING "C++ compiler extra flags for release build type" FORCE )
 set( CMAKE_CXX_FLAGS_DEBUG 
   "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
   CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
 
-set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp")
+set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
 include_directories( "${GO_HEADERS_IN_DIR}" )
   
 #*********************
 # external libraries *
 #*******************************************************************************  
 # openmesh
-set( OPENMESH_INCLUDE_DIR "/usr/local/include"
-  CACHE STRING "OpenMesh include path" FORCE )
-set( OPENMESH_LIBRARIES "/usr/local/lib/libOpenMeshCore.so"
-  CACHE STRING "OpenMesh libraries to link with" FORCE )
+find_package( OpenMesh )
 
 # boost
 set( Boost_USE_MULTITHREADED ON )
@@ -154,6 +154,11 @@ endif()
 set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
 include_directories( ${GLM_INCLUDE_DIRS} )
   
+configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
+
+
+install( DIRECTORY graphics-origin DESTINATION include )
+
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
@@ -170,4 +175,3 @@ if( GO_BUILD_APPLICATION_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
 endif()
 
-#configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
