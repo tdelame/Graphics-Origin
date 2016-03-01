@@ -1,7 +1,7 @@
 #**********************
 # cmake configuration *
 #*******************************************************************************
-cmake_minimum_required( VERSION 3.0 )
+cmake_minimum_required( VERSION 2.8.11 )
 
 # Graphics-Origin project
 project( Graphics-Origin )
@@ -60,12 +60,19 @@ option(
   GO_BUILD_TOOLS_TUTORIAL
   "Set to ON to build the tutorial for the tools library."
   ON)
+  
+option(
+  GO_BUILD_APPLICATION_TUTORIAL
+  "Set to ON to build the tutorial for tha application library."
+  ON)
 
 if( NOT GO_USE_QT )
   set( GO_BUILD_APPLICATION OFF)
+  set( GO_BUILD_APPLICATION_TUTORIAL OFF )
 else()
   if( NOT GO_BUILD_APPLICATION )
     set( GO_USE_QT OFF )
+    set( GO_BUILD_APPLICATION_TUTORIAL OFF)
   endif()
 endif()
 
@@ -89,6 +96,10 @@ include_directories( "${GO_HEADERS_IN_DIR}" )
 # external libraries *
 #*******************************************************************************  
 # openmesh
+set( OPENMESH_INCLUDE_DIR "/usr/local/include"
+  CACHE STRING "OpenMesh include path" FORCE )
+set( OPENMESH_LIBRARIES "/usr/local/lib/libOpenMeshCore.so"
+  CACHE STRING "OpenMesh libraries to link with" FORCE )
 
 # boost
 set( Boost_USE_MULTITHREADED ON )
@@ -100,33 +111,63 @@ find_package( Boost
 include_directories( ${Boost_INCLUDE_DIRS} )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 
-# qt
+
+if( GO_BUILD_APPLICATION )
+  # qt
+  set( CMAKE_INCLUDE_CURRENT_DIR ON )
+  set( CMAKE_AUTOMOC ON )
+  find_package( Qt5Core REQUIRED )
+  find_package( Qt5Quick REQUIRED )
+  find_package( Qt5Gui REQUIRED )
+  find_package( Qt5Qml REQUIRED )
+  find_package( Qt5Network REQUIRED )
+  include_directories( ${Qt5Core_INCLUDE_DIRS} )
+  include_directories( ${Qt5Quick_INCLUDE_DIRS} )
+  include_directories( ${Qt5Gui_INCLUDE_DIRS} )
+  include_directories( ${Qt5Qml_INCLUDE_DIRS} )
+  include_directories( ${Qt5Network_INCLUDE_DIRS} )
+  
+  # glew
+  find_package( GLEW REQUIRED )
+  include_directories( ${GLEW_INCLUDE_DIRS} )
+  
+  # gl
+  find_package( OpenGL REQUIRED )
+  include_directories( ${OPENGL_INCLUDE_DIR} )
+endif()
 
 # cuda
 if( GO_USE_CUDA )
-  find_package( CUDA )
+  find_package( CUDA REQUIRED )
   if( NOT CUDA_FOUND )
     set( GO_USE_CUDA OFF )
   else()
     include_directories( ${CUDA_TOOLKIT_INCLUDE} )
     set( CUDA_LIBRARIES 
-      "${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY}"
+      "${CUDA_CUDA_LIBRARY}" "${CUDA_CUDART_LIBRARY}"
       CACHE STRING "Libraries to link with if you want to use CUDA")
   endif()
 endif() 
 
-# opengl glew
 
 
 set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
+include_directories( ${GLM_INCLUDE_DIRS} )
   
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
 add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
+if( GO_BUILD_APPLICATION )
+  add_subdirectory( "${GO_SOURCES_IN_DIR}/application" )
+endif()
 
 if( GO_BUILD_TOOLS_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
+endif()
+
+if( GO_BUILD_APPLICATION_TUTORIAL )
+  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
 endif()
 
 #configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
