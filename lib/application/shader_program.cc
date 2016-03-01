@@ -24,7 +24,9 @@ namespace application {
   shader_program::~shader_program()
   {
     if( m_program_id )
-      glcheck(glDeleteProgram( m_program_id ));
+      {
+        glcheck(glDeleteProgram( m_program_id ));
+      }
   }
 
   void
@@ -213,6 +215,11 @@ namespace application {
      return shader;
   }
 
+  shader_program::operator unsigned int() const
+  {
+    return m_program_id;
+  }
+
   void
   shader_program::bind()
   {
@@ -221,14 +228,18 @@ namespace application {
         m_loaded = true;
 
         if( m_program_id )
-          glcheck(glDeleteShader(m_program_id));
+          {
+            glcheck(glDeleteShader(m_program_id));
+          }
 
         m_program_id = 0;
         bool valid = true;
         for( auto& filename : m_source_filenames )
           {
             if( !m_program_id )
-              glcheck( m_program_id = glCreateProgram());
+              {
+                glcheck( m_program_id = glCreateProgram());
+              }
             GLenum type;
             if( !is_supported_extension( tools::get_extension( filename ), type ) )
               {

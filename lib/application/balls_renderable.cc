@@ -5,14 +5,11 @@
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_helper.h>
 
-# include <graphics-origin/tools/log.h>
 # include <GL/glew.h>
-
-# include <thrust/sort.h>
 
 namespace graphics_origin { namespace application {
 
-  balls_renderable::storage::storage( const gpu_vec4& ball, const gpu_vec3& color )
+  balls_renderable::storage::storage( const gpu_vec4& ball, const gpu_vec4& color )
     : ball{ ball }, color{ color }
   {}
 
@@ -51,7 +48,7 @@ namespace graphics_origin { namespace application {
   }
 
   balls_renderable::balls_buffer::handle
-  balls_renderable::add( const geometry::ball& ball, const gpu_vec3& color )
+  balls_renderable::add( const geometry::ball& ball, const gpu_vec4& color )
   {
     m_dirty = true;
     auto pair = m_balls.create();
@@ -67,23 +64,6 @@ namespace graphics_origin { namespace application {
     m_dirty = true;
   }
 
-
-  struct ball_storage_sorter {
-
-    ball_storage_sorter( const gpu_vec4& indicator )
-      : m_indicator{ indicator }
-    {}
-
-    bool operator()( const balls_renderable::storage& a, const balls_renderable::storage& b ) const
-     {
-       return dot( m_indicator, gpu_vec4(a.ball.x, a.ball.y, a.ball.z, 1 ) ) + a.ball.w
-           < dot( m_indicator, gpu_vec4(b.ball.x, b.ball.y, b.ball.z, 1 ) ) + b.ball.w;
-     }
-
-    gpu_vec4 m_indicator;
-  };
-
-
   void
   balls_renderable::update_gpu_data()
   {
@@ -92,10 +72,6 @@ namespace graphics_origin { namespace application {
         glcheck(glGenVertexArrays( 1, &m_vao ));
         glcheck(glGenBuffers( 1, &m_balls_vbo ) );
       }
-
-//    auto mv = m_renderer->get_view_matrix() * m_model;
-//    thrust::sort( m_balls.begin(), m_balls.end(), ball_storage_sorter{gpu_vec4{ mv[0][2], mv[1][2], mv[2][2], mv[3][2] }} );
-
 
     int ball_location  = m_program->get_attribute_location(  "ball_attribute" );
     int color_location = m_program->get_attribute_location( "color_attribute" );
@@ -110,10 +86,10 @@ namespace graphics_origin { namespace application {
         reinterpret_cast<void*>(offsetof(storage,ball)))); // offset of the center inside an attribute
 
       glcheck(glEnableVertexAttribArray( color_location ));
-      glcheck(glVertexAttribPointer( color_location,         // format of color:
-        3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
-        sizeof(storage),                                     // each attribute has the size of storage
-        reinterpret_cast<void*>(offsetof(storage,color))));  // offset of the color inside an attribute
+      glcheck(glVertexAttribPointer( color_location,       // format of color:
+        4, GL_FLOAT, GL_FALSE,                             // 4 unnormalized floats
+        sizeof(storage),                                   // each attribute has the size of storage
+        reinterpret_cast<void*>(offsetof(storage,color))));// offset of the color inside an attribute
     glcheck(glBindVertexArray( 0 ));
   }
 
