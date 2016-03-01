@@ -1,7 +1,7 @@
 #**********************
 # cmake configuration *
 #*******************************************************************************
-cmake_minimum_required( VERSION 3.0 )
+cmake_minimum_required( VERSION 2.8.11 )
 
 # Graphics-Origin project
 project( Graphics-Origin )
@@ -24,8 +24,8 @@ set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
 
 set( GO_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
 set( GO_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
-set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial/bin" )
-set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test/bin" )
+set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial" )
+set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
 
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
@@ -60,21 +60,34 @@ option(
   GO_BUILD_TOOLS_TUTORIAL
   "Set to ON to build the tutorial for the tools library."
   ON)
+  
+option(
+  GO_BUILD_APPLICATION_TUTORIAL
+  "Set to ON to build the tutorial for tha application library."
+  ON)
 
 if( NOT GO_USE_QT )
   set( GO_BUILD_APPLICATION OFF)
+  set( GO_BUILD_APPLICATION_TUTORIAL OFF )
 else()
   if( NOT GO_BUILD_APPLICATION )
     set( GO_USE_QT OFF )
+    set( GO_BUILD_APPLICATION_TUTORIAL OFF)
   endif()
 endif()
 
 #***************
 # global flags *
 #*******************************************************************************
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp")
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra" )
+set( CMAKE_CXX_FLAGS 
+  "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+  CACHE STRING "C++ compiler flags" FORCE)
+set( CMAKE_CXX_FLAGS_RELEASE 
+  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
+  CACHE STRING "C++ compiler extra flags for release build type" FORCE)
+set( CMAKE_CXX_FLAGS_DEBUG 
+  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
+  CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
 
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp")
 include_directories( "${GO_HEADERS_IN_DIR}" )
@@ -83,41 +96,78 @@ include_directories( "${GO_HEADERS_IN_DIR}" )
 # external libraries *
 #*******************************************************************************  
 # openmesh
+set( OPENMESH_INCLUDE_DIR "/usr/local/include"
+  CACHE STRING "OpenMesh include path" FORCE )
+set( OPENMESH_LIBRARIES "/usr/local/lib/libOpenMeshCore.so"
+  CACHE STRING "OpenMesh libraries to link with" FORCE )
 
 # boost
+set( Boost_USE_MULTITHREADED ON )
+set( Boost_USE_STATIC_LIBS OFF )
+set( Boost_USE_STATIC_RUNTIME OFF )
+find_package( Boost
+  REQUIRED
+  COMPONENTS serialization filesystem log log_setup locale random system )
+include_directories( ${Boost_INCLUDE_DIRS} )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 
-# qt
+
+if( GO_BUILD_APPLICATION )
+  # qt
+  set( CMAKE_INCLUDE_CURRENT_DIR ON )
+  set( CMAKE_AUTOMOC ON )
+  find_package( Qt5Core REQUIRED )
+  find_package( Qt5Quick REQUIRED )
+  find_package( Qt5Gui REQUIRED )
+  find_package( Qt5Qml REQUIRED )
+  find_package( Qt5Network REQUIRED )
+  include_directories( ${Qt5Core_INCLUDE_DIRS} )
+  include_directories( ${Qt5Quick_INCLUDE_DIRS} )
+  include_directories( ${Qt5Gui_INCLUDE_DIRS} )
+  include_directories( ${Qt5Qml_INCLUDE_DIRS} )
+  include_directories( ${Qt5Network_INCLUDE_DIRS} )
+  
+  # glew
+  find_package( GLEW REQUIRED )
+  include_directories( ${GLEW_INCLUDE_DIRS} )
+  
+  # gl
+  find_package( OpenGL REQUIRED )
+  include_directories( ${OPENGL_INCLUDE_DIR} )
+endif()
 
 # cuda
 if( GO_USE_CUDA )
-  find_package( CUDA )
+  find_package( CUDA REQUIRED )
   if( NOT CUDA_FOUND )
     set( GO_USE_CUDA OFF )
   else()
-    set( GO_CUDA_LIBRARIES "${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY}" )
-    set( GO_CUDA_INCLUDES "${CUDA_TOOLKIT_INCLUDE}" )
+    include_directories( ${CUDA_TOOLKIT_INCLUDE} )
+    set( CUDA_LIBRARIES 
+      "${CUDA_CUDA_LIBRARY}" "${CUDA_CUDART_LIBRARY}"
+      CACHE STRING "Libraries to link with if you want to use CUDA")
   endif()
 endif() 
 
-# opengl glew
 
 
-set( GO_GLM_INCLUDE_DIR
-  "${GO_EXTLIBS_DIR}" ) 
+set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
+include_directories( ${GLM_INCLUDE_DIRS} )
   
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
+add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
+if( GO_BUILD_APPLICATION )
+  add_subdirectory( "${GO_SOURCES_IN_DIR}/application" )
+endif()
 
 if( GO_BUILD_TOOLS_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
 endif()
 
+if( GO_BUILD_APPLICATION_TUTORIAL )
+  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
+endif()
 
 #configure_file( "${PROJECT_SOURCE_DIR}/graphics-origin.h.in" "${PROJECT_BINARY_DIR}/graphics-origin.h")
-#install ( TARGETS geometry  DESTINATION bin)
-#install (  FILES truc.h   DESTINATION include)
-#include_directories( "${PROJECT_BINARY_DIR}" )
-#add_subdirectory()
-#add_library( geometry .cxx)
-#add_library( tools  ...)
