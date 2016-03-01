@@ -2,10 +2,18 @@
  *     Author: T.Delame (tdelame@gmail.com)
  */
 # ifndef GRAPHICS_ORIGIN_PROJECT_H_
-# define PROJECT_PROJECT_H_
+# define GRAPHICS_ORIGIN_PROJECT_H_
+
+# define GRAPHICS_ORIGIN_MAJOR @Graphics-Origin_VERSION_MAJOR@
+# define GRAPHICS_ORIGIN_MINOR @Graphics-Origin_VERSION_MINOR@
+
 # include <float.h>
 # define REAL_MIN DBL_MIN
 # define REAL_MAX DBL_MAX
+
+
+
+
 # define GO_NAMESPACE graphics_origin
 # define BEGIN_GO_NAMESPACE namespace GO_NAMESPACE {
 # define END_GO_NAMESPACE }

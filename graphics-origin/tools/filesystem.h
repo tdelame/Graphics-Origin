@@ -59,4 +59,4 @@ bool file_exist(const std::string& filename);
 
 } END_GO_NAMESPACE
 
-#endif
+# endif
