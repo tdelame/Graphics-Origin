@@ -3,9 +3,7 @@
 #*******************************************************************************
 cmake_minimum_required( VERSION 2.8.11 )
 
-message( "module path = ${CMAKE_MODULE_PATH}" )
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
-message( "module path = ${CMAKE_MODULE_PATH}" )
 
 # Graphics-Origin project
 project( Graphics-Origin )
@@ -156,9 +154,8 @@ include_directories( ${GLM_INCLUDE_DIRS} )
   
 configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
 
-
 install( DIRECTORY graphics-origin DESTINATION include )
-
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
