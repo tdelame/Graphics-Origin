@@ -285,7 +285,9 @@ BEGIN_GO_NAMESPACE namespace tools {
       if ( h.index >= m_capacity )
         throw tight_buffer_manager_invalid_handle( __FILE__, __LINE__ );
       auto entry = m_handle_buffer + h.index;
-      if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
+      if( entry->status != STATUS_ALLOCATED )
+        return;
+      if( entry->counter != h.counter )
         throw tight_buffer_manager_invalid_handle( __FILE__, __LINE__ );
 
       entry->next_free_index = m_next_free_handle_slot;
