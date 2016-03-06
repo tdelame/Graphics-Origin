@@ -49,25 +49,25 @@ namespace tools
 
 # define LOG(level,msg)                                                       \
   {                                                                           \
-    if( graphics_origin::tools::severity_level::level  >                      \
-        graphics_origin::tools::severity_level::warning )                     \
+    if( ::graphics_origin::tools::severity_level::level  >                    \
+        ::graphics_origin::tools::severity_level::warning )                   \
     {                                                                         \
-      BOOST_LOG_STREAM_SEV(graphics_origin::tools::logger::get(),             \
-      tools::severity_level::level) <<msg<<" (in "<<                          \
-      tools::get_basename(__FILE__)<<":"<< __LINE__ <<")";                    \
+      BOOST_LOG_STREAM_SEV(::graphics_origin::tools::logger::get(),           \
+      ::graphics_origin::tools::severity_level::level) <<msg<<" (in "<<       \
+      ::graphics_origin::tools::get_basename(__FILE__)<<":"<< __LINE__ <<")"; \
     }                                                                         \
     else                                                                      \
     {                                                                         \
-      BOOST_LOG_STREAM_SEV(graphics_origin::tools::logger::get(),             \
-      tools::severity_level::level) << msg;                                   \
+      BOOST_LOG_STREAM_SEV(::graphics_origin::tools::logger::get(),           \
+      ::graphics_origin::tools::severity_level::level) << msg;                \
     }                                                                         \
   }
 
 # define LOG_WITH_LINE_FILE(level,msg,line,file)                              \
   {                                                                           \
-      BOOST_LOG_STREAM_SEV(graphics_origin::tools::logger::get(),             \
-      graphics_origin::tools::severity_level::level) <<msg<<                  \
-      " (in "<<tools::get_basename( file )<<":"<< line <<")";                 \
+      BOOST_LOG_STREAM_SEV(::graphics_origin::tools::logger::get(),           \
+      ::graphics_origin::tools::severity_level::level) <<msg<<" (in "<<       \
+      ::graphics_origin::tools::get_basename( file )<<":"<< line <<")";       \
   }
 }
 
