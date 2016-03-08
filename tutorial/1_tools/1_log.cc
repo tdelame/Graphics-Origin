@@ -13,7 +13,7 @@ do_tutorial()
   LOG( info, "this is an information");
   LOG( warning, "this is a warning" );
   LOG( error, "this is an error, the line and the file of the error are automatically displayed");
-  LOG( fatal, "this is a fatal error, i.e. causing a program exit ")
+  LOG( fatal, "this is a fatal error, i.e. typically causing a program exit ")
 
   LOG( trace, "");
   LOG( info, "We demonstrate now that the log functionality can be used in different thread without problem")
