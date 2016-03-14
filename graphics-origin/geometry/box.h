@@ -58,6 +58,9 @@ public:
   void
   merge( const aabox& other ) noexcept;
 
+  void
+  merge( const vec3& point ) noexcept;
+
 
 private:
   bool
