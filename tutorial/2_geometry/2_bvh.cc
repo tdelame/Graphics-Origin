@@ -131,15 +131,15 @@ namespace graphics_origin { namespace geometry {
   static int execute()
   {
     std::vector< ball > balls;
-    read_balls_file( balls, "tutorial/2_geometry/bumpy_torus.balls");
-//    {
-//      static const size_t nbballs = 10000;
-//      balls.resize( nbballs );
-//      for( auto& b : balls )
-//        {
-//          b = vec4{ unit_random(), unit_random(), unit_random(), unit_random() };
-//        }
-//    }
+//    read_balls_file( balls, "tutorial/2_geometry/bumpy_torus.balls");
+    {
+      static const size_t nbballs = 10000000;
+      balls.resize( nbballs );
+      for( auto& b : balls )
+        {
+          b = vec4{ unit_random(), unit_random(), unit_random(), unit_random() };
+        }
+    }
 
     std::vector< old_ball > old_balls( balls.size(), old_ball{} );
     # pragma omp parallel for
