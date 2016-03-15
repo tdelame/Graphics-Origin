@@ -52,6 +52,11 @@ option(
   ON)  
   
 option(
+  GO_USE_THRUST
+  "Set to ON to use CUDA Thrust library. If set to false, parallel versions of some algorithms might not be available"
+  ON)
+  
+option(
   GO_BUILD_APPLICATION
   "Set to ON to build the application library. Since this library depends on the QT framework,
   it will be built if both BUILD_APPLICATION and USE_QT are set to ON"
@@ -64,8 +69,13 @@ option(
   
 option(
   GO_BUILD_APPLICATION_TUTORIAL
-  "Set to ON to build the tutorial for tha application library."
+  "Set to ON to build the tutorial for the application library."
   ON)
+  
+option(
+	GO_BUILD_GEOMETRY_TUTORIAL
+	"Set to ON to build the tutorial for the geometry library."
+	ON)
 
 if( NOT GO_USE_QT )
   set( GO_BUILD_APPLICATION OFF)
@@ -84,12 +94,12 @@ set( CMAKE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
   CACHE STRING "C++ compiler flags" FORCE )
 set( CMAKE_CXX_FLAGS_RELEASE 
-  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
+  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG -g" 
   CACHE STRING "C++ compiler extra flags for release build type" FORCE )
 set( CMAKE_CXX_FLAGS_DEBUG 
   "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
   CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
-
+  
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
 include_directories( "${GO_HEADERS_IN_DIR}" )
   
@@ -144,8 +154,12 @@ if( GO_USE_CUDA )
     set( CUDA_LIBRARIES 
       "${CUDA_CUDA_LIBRARY}" "${CUDA_CUDART_LIBRARY}"
       CACHE STRING "Libraries to link with if you want to use CUDA")
+    set( CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST") 
   endif()
 endif() 
+
+
 
 
 
@@ -168,7 +182,34 @@ if( GO_BUILD_TOOLS_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/1_tools" )
 endif()
 
+if( GO_BUILD_GEOMETRY_TUTORIAL )
+	add_subdirectory( "${GO_TUTORIAL_IN_DIR}/2_geometry" )
+endif()
+
 if( GO_BUILD_APPLICATION_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
 endif()
+
+message(
+  "Graphics-Origin Options:\n"
+  "GO_USE_CGAL    = ${GO_USE_CGAL}\n"
+  "GO_USE_QT      = ${GO_USE_QT}\n"
+  "GO_USE_CUDA    = ${GO_USE_CUDA}\n"
+  "GO_USE_THRUST  = ${GO_USE_THRUST}\n"
+)
+
+message(
+  "CXX_FLAGS:\n"
+  "CMAKE_CXX_FLAGS         = ${CMAKE_CXX_FLAGS}\n"
+  "CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}\n")
+if( NOT GO_USE_QT )
+  set( GO_BUILD_APPLICATION OFF)
+  set( GO_BUILD_APPLICATION_TUTORIAL OFF )
+else()
+  if( NOT GO_BUILD_APPLICATION )
+    set( GO_USE_QT OFF )
+    set( GO_BUILD_APPLICATION_TUTORIAL OFF)
+  endif()
+endif()
+
 

@@ -52,7 +52,7 @@ namespace graphics_origin { namespace application {
   {
     m_dirty = true;
     auto pair = m_balls.create();
-    pair.second.ball = gpu_vec4{ ball.get_center(), ball.get_radius() };
+    pair.second.ball = gpu_vec4{ ball };
     pair.second.color  = color;
     return pair.first;
   }

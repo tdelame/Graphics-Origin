@@ -1,8 +1,8 @@
 /*  Created on: Jan 23, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/geometry/ball.h>
-# include <graphics-origin/geometry/box.h>
+# include "../../graphics-origin/geometry/ball.h"
+# include "../../graphics-origin/geometry/box.h"
 
 # include <utility>
 BEGIN_GO_NAMESPACE
@@ -73,7 +73,7 @@ aabox::get_max() const
 }
 
 bool
-aabox::do_contain( const vec3& p ) const
+aabox::contain( const vec3& p ) const
 {
   auto diff = p - m_center;
   return std::abs (diff.x) <= m_half_sides.x
@@ -82,10 +82,10 @@ aabox::do_contain( const vec3& p ) const
 }
 
 bool
-aabox::do_intersect( const ball& b ) const
+aabox::intersect( const ball& b ) const
 {
-  auto ball_interiority = b.get_radius() * b.get_radius();
-  auto diff = glm::abs(m_center - b.get_center()) - m_half_sides;
+  auto ball_interiority = b.w * b.w;
+  auto diff = glm::abs(m_center - vec3{b}) - m_half_sides;
   for( int i = 0; i < 3; ++ i )
     if( diff[i] > 0 )
       {
@@ -95,7 +95,7 @@ aabox::do_intersect( const ball& b ) const
 }
 
 void
-aabox::do_compute_bounding_box( aabox& b) const
+aabox::compute_bounding_box( aabox& b) const
 {
   b = *this;
 }

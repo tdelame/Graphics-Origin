@@ -16,6 +16,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * bool intersect( const ball& b ) const;
      * \endcode */
     static const bool is_ball_intersecter      = false;
+    /**@brief True if T is a bounding ball computer.
+     *
+     * True if T is a bounding ball computer, i.e. is able to compute
+     * a bounding ball of its geometry. When this is the case, T
+     * has a method with the following signature:
+     * \code{.cpp}
+     * void compute_bounding_ball( ball& b ) const;
+     * \endcode */
+    static const bool is_bounding_ball_computer = false;
     /**@brief True if T is a bounding box computer.
      *
      * True if T is a bounding box computer, i.e. is able to compute
@@ -25,6 +34,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * void compute_bounding_box( aabox& b ) const;
      * \endcode */
     static const bool is_bounding_box_computer = false;
+    /**@brief Tue if T is a bounding volume merger.
+     *
+     * True if T is a bounding volume and an instance of T can merge itself with
+     * another instance of T. When this is the case, T has a method with the following
+     * signature:
+     * \code{.cpp}
+     * void merge( const T& other );
+     * \endcode */
+    static const bool is_bounding_volume_merger = false;
     /**@brief True if T is a box container.
      *
      * True if T is a box container, i.e. is able to say if it contains

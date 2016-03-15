@@ -1,61 +1,50 @@
 /*  Created on: Jan 24, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/geometry/ball.h>
-# include <graphics-origin/geometry/box.h>
+# include "../../graphics-origin/geometry/ball.h"
+# include "../../graphics-origin/geometry/box.h"
+# include "../../graphics-origin/tools/log.h"
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
   ball::ball() noexcept
-    : center{}, radius{1.0}
+    : vec4{}
   {}
 
   ball::ball( const vec3& center, const real& radius ) noexcept
-    : center{ center }, radius{ radius }
+    : vec4{ center, radius }
   {}
 
   ball::ball( const ball&& other ) noexcept
-    : center{ other.center }, radius{ other.radius }
+    : vec4{ other }
+  {}
+
+  ball::ball( const vec4& b ) noexcept
+    : vec4{ b }
   {}
 
   ball&
   ball::operator=( const ball&& other ) noexcept
   {
-    center = other.center;
-    radius = other.radius;
+    vec4::operator=( std::move( other ) );
     return *this;
   }
 
-  const vec3&
-  ball::get_center() const noexcept
+  bool ball::intersect( const ball& b ) const
   {
-    return center;
+    auto diff = vec4{ b.x - x, b.y - y, b.z - z, b.w + b.w };
+    return diff.x * diff.x + diff.y * diff.y + diff.z * diff.z < diff.w * diff.w;
   }
 
-  const real&
-  ball::get_radius() const noexcept
+  void ball::compute_bounding_box( aabox& b ) const
   {
-    return radius;
+    b = aabox{ vec3{*this}, vec3{w,w,w} };
   }
 
-  void
-  ball::set_center( const vec3& p ) noexcept
+  bool ball::intersect( const aabox& b ) const
   {
-    center = p;
-  }
-
-  void
-  ball::set_radius( const real& r ) noexcept
-  {
-    radius = r;
-  }
-
-  bool
-  ball::do_intersect( const aabox& b ) const
-  {
-
-    auto ball_interiority = radius * radius;
-    auto diff = glm::abs(center - b.get_center()) - b.get_half_sides();
+    auto ball_interiority = w * w;
+    auto diff = glm::abs( vec3{*this} - b.get_center()) - b.get_half_sides();
     for( int i = 0; i < 3; ++ i )
       if( diff[i] > 0 )
         {
@@ -64,17 +53,26 @@ namespace geometry {
     return ball_interiority >= 0;
   }
 
-  void
-  ball::do_compute_bounding_box( aabox& b ) const
+  bool ball::contain( const aabox& b ) const
   {
-    b = aabox{ center, vec3{radius, radius, radius} };
+    LOG( debug, "TODO");
+    return false;
   }
 
-  bool
-  ball::do_contain( const vec3& p ) const
+  void ball::compute_bounding_ball( ball& b ) const
   {
-    return sdistance( p, center ) <= radius * radius;
+    b = std::move(*this);
   }
 
+  void ball::merge( const ball& other )
+  {
+    LOG( debug, "TODO");
+  }
+
+  bool ball::contain( const vec3& p ) const
+  {
+    auto diff = vec3{ p.x - x, p.y - y, p.z };
+    return dot( diff, diff ) <= w * w;
+  }
 }
 END_GO_NAMESPACE

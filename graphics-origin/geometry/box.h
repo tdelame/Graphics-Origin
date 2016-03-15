@@ -5,18 +5,13 @@
 # ifndef GRAPHICS_ORIGIN_BOX_H_
 # define GRAPHICS_ORIGIN_BOX_H_
 # include "../graphics_origin.h"
-# include "./concepts/ball_intersecter.h"
-# include "./concepts/bounding_box_computer.h"
-# include "./concepts/point_container.h"
-# include "./vec.h"
+# include "traits.h"
+# include "vec.h"
 
 BEGIN_GO_NAMESPACE
 namespace geometry {
-
-class aabox :
-    public ball_intersecter,
-    public bounding_box_computer,
-    public point_container {
+class ball;
+class aabox {
 public:
   virtual
   ~aabox() = default;
@@ -61,20 +56,26 @@ public:
   void
   merge( const vec3& point ) noexcept;
 
-
-private:
   bool
-  do_contain( const vec3& p ) const override;
+  contain( const vec3& p ) const;
 
   bool
-  do_intersect( const ball& b ) const override;
+  intersect( const ball& b ) const;
 
   void
-  do_compute_bounding_box( aabox& b ) const override;
-
+  compute_bounding_box( aabox& b ) const;
+private:
   vec3 m_center;
   vec3 m_half_sides;
 };
+
+  template<>
+  struct geometric_traits<aabox> {
+    static const bool is_ball_intersecter = true;
+    static const bool is_bounding_box_computer = true;
+    static const bool is_bounding_volume_merger = true;
+    static const bool is_point_container = true;
+  };
 
 extern aabox
 create_aabox_from_min_max( const vec3& min_point, const vec3& max_point );

@@ -42,7 +42,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-# include <graphics-origin/geometry/bvh.h>
+/**@file
+ * @todo Integrate the CUDA version with transfer functions GPU <--> CPU
+ */
+
+# include "../../graphics-origin/geometry/bvh.h"
 
 # include <atomic>
 
@@ -50,7 +54,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 BEGIN_GO_NAMESPACE
 namespace geometry {
-
 # define MCODE_SIZE   64
 # define STACK_SIZE   64
 # define MCODE_LENGTH (21)
@@ -59,7 +62,7 @@ namespace geometry {
 # define LEAF_INDEX_MASK 0x7FFFFFFF
 # define CLZ( a ) __builtin_clzl( a )
 
-  struct morton_code_order {
+  struct morton_code_order1 {
     bool
     operator()( const box_bvh::leaf_node& a, const box_bvh::leaf_node& b ) const
     {
@@ -92,6 +95,7 @@ namespace geometry {
   void
   box_bvh::set_leaf_nodes()
   {
+    auto time = omp_get_wtime();
     aabox bounding_box;
     elements[0].compute_bounding_box( bounding_box );
 
@@ -138,7 +142,7 @@ namespace geometry {
           }
       }
 
-    thrust::sort( leaves.begin(), leaves.end(), morton_code_order{} );
+    thrust::sort( leaves.begin(), leaves.end(), morton_code_order1{} );
   }
 
 
