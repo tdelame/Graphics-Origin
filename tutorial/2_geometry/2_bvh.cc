@@ -123,7 +123,7 @@ namespace graphics_origin { namespace geometry {
 
   real unit_random()
   {
-    static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count() );
+    static std::default_random_engine generator(2);//std::chrono::system_clock::now().time_since_epoch().count() );
     static std::uniform_real_distribution<real> distribution( real(0), real(1));
     return distribution(generator);
   }
@@ -131,36 +131,44 @@ namespace graphics_origin { namespace geometry {
   static int execute()
   {
     std::vector< ball > balls;
-//    read_balls_file( balls, "tutorial/2_geometry/bumpy_torus.balls");
-    {
-      static const size_t nbballs = 10000000;
-      balls.resize( nbballs );
-      for( auto& b : balls )
-        {
-          b = vec4{ unit_random(), unit_random(), unit_random(), unit_random() };
-        }
-    }
+    read_balls_file( balls, "tutorial/2_geometry/bumpy_torus.balls");
+//    {
+//      static const size_t nbballs = 10000;
+//      balls.resize( nbballs );
+//      for( auto& b : balls )
+//        {
+//          b = vec4{ unit_random(), unit_random(), unit_random(), unit_random() };
+//        }
+//    }
 
     std::vector< old_ball > old_balls( balls.size(), old_ball{} );
+    # pragma omp parallel for
     for( size_t i = 0; i < balls.size(); ++ i )
       {
         old_balls[i] = std::move(vec4{ balls[i] });
       }
+    auto start = omp_get_wtime();
+
+
+    LOG( debug, "OLD ONE:");
+    start = omp_get_wtime();
+        CALLGRIND_START_INSTRUMENTATION;
+        box_bvh old_box_bvh_of_balls( old_balls.data(), old_balls.size());
+        CALLGRIND_STOP_INSTRUMENTATION;
+        auto old_perf = omp_get_wtime() - start;
+        LOG( info, old_box_bvh_of_balls.get_number_of_nodes() << " nodes in " << old_perf << " second");
+
+
 
     LOG( debug, "NEW ONE:");
-    auto start = omp_get_wtime();
+    start = omp_get_wtime();
     CALLGRIND_START_INSTRUMENTATION;
     bvh<aabox> box_bvh_of_balls( balls.data(), balls.size() );
     CALLGRIND_STOP_INSTRUMENTATION;
     auto new_perf = omp_get_wtime() - start;
     LOG( info, box_bvh_of_balls.get_number_of_nodes() << " nodes in " << new_perf << " second");
-    LOG( debug, "OLD ONE:");
-    start = omp_get_wtime();
-    CALLGRIND_START_INSTRUMENTATION;
-    box_bvh old_box_bvh_of_balls( old_balls.data(), old_balls.size());
-    CALLGRIND_STOP_INSTRUMENTATION;
-    auto old_perf = omp_get_wtime() - start;
-    LOG( info, old_box_bvh_of_balls.get_number_of_nodes() << " nodes in " << old_perf << " second");
+
+
 
 
     LOG( debug, "sizeof new ball = " << sizeof( ball ) );

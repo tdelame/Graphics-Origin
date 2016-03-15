@@ -95,7 +95,6 @@ namespace geometry {
   void
   box_bvh::set_leaf_nodes()
   {
-    auto time = omp_get_wtime();
     aabox bounding_box;
     elements[0].compute_bounding_box( bounding_box );
 
@@ -123,7 +122,7 @@ namespace geometry {
       real(0.5 * MCODE_OFFSET) / bounding_box.get_half_sides().z
     };
 
-    # pragma omp parallel for
+    # pragma omp parallel for schedule(static)
     for( uint32_t i = 0; i < number_of_elements; ++ i )
       {
         auto& leaf = leaves[ i ];
@@ -274,7 +273,7 @@ namespace geometry {
       while( activity )
         {
           activity = false;
-          # pragma omp parallel for schedule(dynamic)
+          # pragma omp parallel for schedule(static)
           for( uint32_t i = 0; i < nelements; ++ i )
             {
               if( emulate_one_thread_loop( i ) )
@@ -285,7 +284,7 @@ namespace geometry {
 
     void init_counters()
     {
-      # pragma omp parallel for
+      # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < nelements; ++ i )
         {
           counters[ i ] = 0;
@@ -294,7 +293,7 @@ namespace geometry {
 
     void init_threads()
     {
-      # pragma omp parallel for
+      # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < nelements; ++ i )
         {
           auto& var = variables[ i ];

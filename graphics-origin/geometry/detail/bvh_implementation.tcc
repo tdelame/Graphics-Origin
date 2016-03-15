@@ -56,14 +56,13 @@ BEGIN_GO_NAMESPACE namespace geometry {
         typename bvh<aabox>::leaf_node* leaves,
         size_t number_of_leaves )
     {
-      auto time = omp_get_wtime();
       aabox bounding;
       elements[0].compute_bounding_box( bounding );
 
       # pragma omp parallel
       {
         aabox thread_bounding = bounding;
-        # pragma omp for
+        # pragma omp for  schedule(static)
         for( uint32_t i = 0; i < number_of_leaves; ++ i )
           {
             auto& leaf = leaves[ i ];
@@ -83,7 +82,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
         real(0.5 * mcode_offset) / bounding.get_half_sides().z
       };
 
-      # pragma omp parallel for
+      # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < number_of_leaves; ++ i )
         {
           auto& leaf = leaves[ i ];
@@ -312,7 +311,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       while( activity )
         {
           activity = false;
-          # pragma omp parallel for schedule(dynamic)
+          # pragma omp parallel for schedule(static)
           for( uint32_t i = 0; i < nelements; ++ i )
             {
               if( emulate_one_thread_loop( i ) )
@@ -323,7 +322,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_counters()
     {
-      # pragma omp parallel for
+      # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < m_nelements; ++ i )
         {
           m_counters[ i ] = 0;
@@ -332,7 +331,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_threads()
     {
-      # pragma omp parallel for
+      # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < m_nelements; ++ i )
         {
           auto& var = variables[ i ];
