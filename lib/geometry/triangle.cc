@@ -1,8 +1,8 @@
 /* Created on: Jan 25, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/geometry/box.h>
-# include <graphics-origin/geometry/triangle.h>
+# include "../../graphics-origin/geometry/box.h"
+# include "../../graphics-origin/geometry/triangle.h"
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
@@ -19,7 +19,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 1 ] + fb * box.get_half_sides()[ 2 ]; \
+  rad = fa * b.get_half_sides()[ 1 ] + fb * b.get_half_sides()[ 2 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -36,7 +36,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 1 ] + fb * box.get_half_sides()[ 2 ]; \
+  rad = fa * b.get_half_sides()[ 1 ] + fb * b.get_half_sides()[ 2 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -54,7 +54,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 0 ] + fb * box.get_half_sides()[ 2 ]; \
+  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 2 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -71,7 +71,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 0 ] + fb * box.get_half_sides()[ 2 ]; \
+  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 2 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -89,7 +89,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[1];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 0 ] + fb * box.get_half_sides()[ 1 ]; \
+  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 1 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -106,7 +106,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * box.get_half_sides()[ 0 ] + fb * box.get_half_sides()[ 1 ]; \
+  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 1 ]; \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -143,11 +143,11 @@ namespace geometry {
 
 
   bool
-  triangle::do_intersect( const aabox& box ) const
+  triangle::intersect( const aabox& b ) const
   {
-    vec3 v0 = vertices[0] - box.get_center();
-    vec3 v1 = vertices[1] - box.get_center();
-    vec3 v2 = vertices[2] - box.get_center();
+    vec3 v0 = vertices[0] - b.get_center();
+    vec3 v1 = vertices[1] - b.get_center();
+    vec3 v2 = vertices[2] - b.get_center();
 
     vec3 e0 = v1 - v0;
     vec3 e1 = v2 - v1;
@@ -183,17 +183,72 @@ namespace geometry {
 
 
     FINDMINMAX(v0[0],v1[0],v2[0],min,max);
-    if(min>box.get_half_sides()[0] || max<-box.get_half_sides()[0]) return false;
+    if(min>b.get_half_sides()[0] || max<-b.get_half_sides()[0]) return false;
 
     FINDMINMAX(v0[1],v1[1],v2[1],min,max);
-    if(min>box.get_half_sides()[1] || max<-box.get_half_sides()[1]) return false;
+    if(min>b.get_half_sides()[1] || max<-b.get_half_sides()[1]) return false;
 
     FINDMINMAX(v0[2],v1[2],v2[2],min,max);
-    if(min>box.get_half_sides()[2] || max<-box.get_half_sides()[2]) return false;
+    if(min>b.get_half_sides()[2] || max<-b.get_half_sides()[2]) return false;
 
-    return plane_overlap_box( normal, vertices[0], box.get_half_sides() );
+    return plane_overlap_box( normal, vertices[0], b.get_half_sides() );
   }
 
+
+  triangle::triangle(
+      const vec3& p1,
+      const vec3& p2,
+      const vec3& p3 )
+    : vertices{ p1, p2, p3 }, normal{ normalize(cross( p2 - p1, p3 - p1 )) }
+  {}
+
+  void
+  triangle::compute_bounding_box( aabox& b ) const
+  {
+    b = create_aabox_from_min_max(
+        min( min( vertices[0], vertices[1] ), vertices[3] ),
+        max( max( vertices[0], vertices[1] ), vertices[3] ) );
+  }
+
+  triangle::triangle()
+  {}
+
+  triangle::triangle( const triangle& t )
+    : vertices{ t.vertices[0], t.vertices[1], t.vertices[2] },
+      normal{ t.normal }
+  {}
+
+  triangle&
+  triangle::operator=( const triangle& t )
+  {
+    vertices = { t.vertices[0], t.vertices[1], t.vertices[2] };
+    normal = t.normal;
+    return *this;
+  }
+
+  bool
+  triangle::intersect( const ray& r, real& t ) const
+  {
+    auto edge1 = vertices[1] - vertices[0];
+    auto edge2 = vertices[2] - vertices[0];
+
+    auto cross_dir_edge2 = cross( direction, edge2 );
+    auto determinant = dot( edge1, cross_dir_edge2 );
+    if( std::abs( determinant ) < EPSILON )
+      return false;
+
+    auto inv_determinant = real(1.0 /  determinant );
+    auto v1_source = source - vertices[0];
+    auto u = dot( v1_source, cross_dir_edge2 ) * inv_determinant;
+    if( u < 0 || u > 1.0 ) return false;
+
+    auto cross_v1_source_edge1 = cross( v1_source, edge1 );
+    auto v = dot( direction, cross_v1_source_edge1 ) * inv_determinant;
+    if( v < 0 || v > 1.0 ) return false;
+
+    t = dot( edge2, cross_v1_source_edge1 ) * inv_determinant;
+    return t >= 0;
+  }
 
 }
 END_GO_NAMESPACE

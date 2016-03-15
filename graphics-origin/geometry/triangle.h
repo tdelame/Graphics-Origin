@@ -5,23 +5,38 @@
 # define GRAPHICS_ORIGIN_TRIANGLE_H_
 
 # include "../graphics_origin.h"
-# include "./concepts/box_intersecter.h"
-# include "./vec.h"
+# include "vec.h"
+# include "traits.h"
 
 BEGIN_GO_NAMESPACE
 namespace geometry {
-  class triangle:
-      public box_intersecter {
+  class triangle {
   public:
 
+    triangle(
+        const vec3& p1,
+        const vec3& p2,
+        const vec3& p3 );
+    triangle( const triangle& t );
+    triangle();
+
+    triangle&
+    operator=( const triangle& t );
+
+    void compute_bounding_box( aabox& b ) const;
+    bool intersect( const aabox& b ) const;
+    bool intersect( const ray& r, real& t ) const;
 
   private:
-
-    bool
-    do_intersect( const aabox& b ) const override;
-
     vec3 vertices[3];
     vec3 normal;
+  };
+
+  template <>
+  struct geometric_traits {
+    static const bool is_bounding_box_computer  = true;
+    static const bool is_box_intersecter        = true;
+    static const bool is_ray_intersecter        = true;
   };
 
 }

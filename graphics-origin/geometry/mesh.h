@@ -6,6 +6,7 @@
 # define GRAPHICS_ORIGIN_MESH_H_
 # include "../graphics_origin.h"
 # include "traits.h"
+# include "bvh.h"
 # include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 BEGIN_GO_NAMESPACE namespace geometry {
 
@@ -78,5 +79,22 @@ BEGIN_GO_NAMESPACE namespace geometry {
     static const bool is_bounding_box_computer = true;
   };
 
+  class mesh_spatial_optimization {
+  public:
+    mesh_spatial_optimization( mesh& m );
+    ~mesh_spatial_optimization();
+    bool intersect( const ray& r, real& t ) const;
+    bool contain( const vec3& p ) const;
+  private:
+    std::vector< triangle > m_triangles;
+    bvh<aabox>* m_bvh;
+    mesh& m_mesh;
+  };
+
+  template <>
+  struct geometric_traits<mesh_spatial_optimization> {
+    static const bool is_ray_intersecter = true;
+    static const bool is_point_container = true;
+  };
 } END_GO_NAMESPACE
 # endif

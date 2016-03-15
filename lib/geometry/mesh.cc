@@ -584,4 +584,44 @@ BEGIN_GO_NAMESPACE namespace geometry {
         || ext == ply_file_extension;
   }
 
+  mesh_spatial_optimization::~mesh_spatial_optimization()
+  {
+    delete m_bvh;
+  }
+
+  mesh_spatial_optimization::mesh_spatial_optimization( mesh& m )
+    : m_triangles( m.n_faces() ),
+      m_mesh{ m }
+  {
+    const auto nfaces = m.n_faces();
+    # pragma omp parallel for schedule(static)
+    for( size_t i = 0; i < nfaces; ++ i )
+      {
+        auto it = m.fv_begin( mesh::FaceHandle{i} );
+        auto& p1 = m.point( *it ); ++it;
+        auto& p2 = m.point( *it ); ++it;
+        auto& p3 = m.point( *it );
+        m_triangles[ i ] = triangle(
+            vec3{ p1[0], p1[1], p1[2] },
+            vec3{ p2[0], p2[1], p2[2] },
+            vec3{ p3[0], p3[1], p3[2] } );
+      }
+
+    m_bvh = new bvh<aabox>( m_triangles.data(), nfaces );
+  }
+
+  bool
+  mesh_spatial_optimization::intersect( const ray& r, real& t ) const
+  {
+    LOG( debug, "TODO");
+    return true;
+  }
+
+  bool
+  mesh_spatial_optimization::contain( const vec3& p ) const
+  {
+    LOG( debug, "TODO" );
+    return true;
+  }
+
 } END_GO_NAMESPACE
