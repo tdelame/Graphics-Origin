@@ -3,6 +3,7 @@
  */
 # include "../../graphics-origin/geometry/box.h"
 # include "../../graphics-origin/geometry/triangle.h"
+# include "../../graphics-origin/geometry/ray.h"
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
@@ -19,7 +20,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 1 ] + fb * b.get_half_sides()[ 2 ]; \
+  rad = fa * bb.get_half_sides()[ 1 ] + fb * bb.get_half_sides()[ 2 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -36,7 +37,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 1 ] + fb * b.get_half_sides()[ 2 ]; \
+  rad = fa * bb.get_half_sides()[ 1 ] + fb * bb.get_half_sides()[ 2 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -54,7 +55,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 2 ]; \
+  rad = fa * bb.get_half_sides()[ 0 ] + fb * bb.get_half_sides()[ 2 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -71,7 +72,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 2 ]; \
+  rad = fa * bb.get_half_sides()[ 0 ] + fb * bb.get_half_sides()[ 2 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -89,7 +90,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[1];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 1 ]; \
+  rad = fa * bb.get_half_sides()[ 0 ] + fb * bb.get_half_sides()[ 1 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -106,7 +107,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * b.get_half_sides()[ 0 ] + fb * b.get_half_sides()[ 1 ]; \
+  rad = fa * bb.get_half_sides()[ 0 ] + fb * bb.get_half_sides()[ 1 ];   \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -143,11 +144,11 @@ namespace geometry {
 
 
   bool
-  triangle::intersect( const aabox& b ) const
+  triangle::intersect( const aabox& bb ) const
   {
-    vec3 v0 = vertices[0] - b.get_center();
-    vec3 v1 = vertices[1] - b.get_center();
-    vec3 v2 = vertices[2] - b.get_center();
+    vec3 v0 = vertices[0] - bb.get_center();
+    vec3 v1 = vertices[1] - bb.get_center();
+    vec3 v2 = vertices[2] - bb.get_center();
 
     vec3 e0 = v1 - v0;
     vec3 e1 = v2 - v1;
@@ -183,15 +184,15 @@ namespace geometry {
 
 
     FINDMINMAX(v0[0],v1[0],v2[0],min,max);
-    if(min>b.get_half_sides()[0] || max<-b.get_half_sides()[0]) return false;
+    if(min>bb.get_half_sides()[0] || max<-bb.get_half_sides()[0]) return false;
 
     FINDMINMAX(v0[1],v1[1],v2[1],min,max);
-    if(min>b.get_half_sides()[1] || max<-b.get_half_sides()[1]) return false;
+    if(min>bb.get_half_sides()[1] || max<-bb.get_half_sides()[1]) return false;
 
     FINDMINMAX(v0[2],v1[2],v2[2],min,max);
-    if(min>b.get_half_sides()[2] || max<-b.get_half_sides()[2]) return false;
+    if(min>bb.get_half_sides()[2] || max<-bb.get_half_sides()[2]) return false;
 
-    return plane_overlap_box( normal, vertices[0], b.get_half_sides() );
+    return plane_overlap_box( normal, vertices[0], bb.get_half_sides() );
   }
 
 
@@ -221,7 +222,9 @@ namespace geometry {
   triangle&
   triangle::operator=( const triangle& t )
   {
-    vertices = { t.vertices[0], t.vertices[1], t.vertices[2] };
+    vertices[0] = t.vertices[0];
+    vertices[1] = t.vertices[1];
+    vertices[2] = t.vertices[2];
     normal = t.normal;
     return *this;
   }
@@ -232,18 +235,18 @@ namespace geometry {
     auto edge1 = vertices[1] - vertices[0];
     auto edge2 = vertices[2] - vertices[0];
 
-    auto cross_dir_edge2 = cross( direction, edge2 );
+    auto cross_dir_edge2 = cross( r.get_direction(), edge2 );
     auto determinant = dot( edge1, cross_dir_edge2 );
-    if( std::abs( determinant ) < EPSILON )
+    if( std::abs( determinant ) < 1e-7 )
       return false;
 
     auto inv_determinant = real(1.0 /  determinant );
-    auto v1_source = source - vertices[0];
+    auto v1_source = r.get_origin() - vertices[0];
     auto u = dot( v1_source, cross_dir_edge2 ) * inv_determinant;
     if( u < 0 || u > 1.0 ) return false;
 
     auto cross_v1_source_edge1 = cross( v1_source, edge1 );
-    auto v = dot( direction, cross_v1_source_edge1 ) * inv_determinant;
+    auto v = dot( r.get_direction(), cross_v1_source_edge1 ) * inv_determinant;
     if( v < 0 || v > 1.0 ) return false;
 
     t = dot( edge2, cross_v1_source_edge1 ) * inv_determinant;

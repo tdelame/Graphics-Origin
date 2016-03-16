@@ -1,12 +1,12 @@
 /*  Created on: Feb 20, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/application/aaboxes_renderable.h>
-# include <graphics-origin/application/gl_window_renderer.h>
-# include <graphics-origin/application/gl_helper.h>
-# include <graphics-origin/geometry/bvh.h>
+# include "../../graphics-origin/application/aaboxes_renderable.h"
+# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/gl_helper.h"
+# include "../../graphics-origin/geometry/bvh.h"
+# include "../../graphics-origin/tools/log.h"
 
-# include <graphics-origin/tools/log.h>
 # include <GL/glew.h>
 
 namespace graphics_origin { namespace application {
@@ -122,7 +122,7 @@ namespace graphics_origin { namespace application {
   }
 
   aaboxes_renderable*
-  aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::box_bvh& bvh )
+  aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::bvh<geometry::aabox>& bvh )
   {
     const auto nb_boxes = bvh.get_number_of_nodes();
     auto result = new aaboxes_renderable( program, nb_boxes );

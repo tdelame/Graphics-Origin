@@ -4,6 +4,55 @@
 # ifndef GRAPHICS_ORIGIN_BVH_IMPLEMENTATION_TCC_
 # define GRAPHICS_ORIGIN_BVH_IMPLEMENTATION_TCC_
 
+/*  Created on: Jan 24, 2016
+ *      Author: T. Delame (tdelame@gmail.com)
+ *
+ * The implementation is based on a CUDA version I made in an another project.
+ * I found it easier to have sensibly the same code for both the GPU and the CPU
+ * versions. It might be a little sub-efficient for the CPU, but it does the job.
+ * This CUDA version was itself based on:
+ *
+ *  - the paper "Maximizing Parallelism in the Construction of BVHs, Octrees, and k-d Trees"
+ *  Tero Karras, High Performance Graphics (2012)
+ *  (a copy is available here:
+ *  http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2012/11/karras2012hpg_paper.pdf)
+ *
+ *  - the related blog articles
+ *  http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-i-collision-detection-gpu/
+ *  http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/
+ *  http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/
+ *
+ *  - the following github repository https://github.com/andrewwuan/smallpt-parallel-bvh-gpu
+ *  with the accompanying license text:
+LICENSE
+
+Copyright (c) 2006-2008 Kevin Beason (kevin.beason@gmail.com)
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**@file
+ * @todo Integrate the CUDA version with transfer functions GPU <--> CPU
+ */
+
+
 # include "../box.h"
 # include "../ball.h"
 
@@ -12,17 +61,11 @@
 
 BEGIN_GO_NAMESPACE namespace geometry {
 
-//  static constexpr uint8_t  mcode_size = 64;
-//  static constexpr uint8_t  mcode_length = 21;
-//  static constexpr uint32_t mcode_offset = 1U << mcode_length;
-//  static constexpr uint32_t leaf_mask = 0x80000000;
-//  static constexpr uint32_t leaf_index_mask = 0x7FFFFFFF;
-
-# define mcode_size 64
-# define mcode_length (21)
-# define mcode_offset (1U << mcode_length )
-# define leaf_mask 0x80000000
-# define leaf_index_mask 0x7FFFFFFF
+  static constexpr uint8_t  mcode_size = 64;
+  static constexpr uint8_t  mcode_length = 21;
+  static constexpr uint32_t mcode_offset = 1U << mcode_length;
+  static constexpr uint32_t leaf_mask = 0x80000000;
+  static constexpr uint32_t leaf_index_mask = 0x7FFFFFFF;
 
 # define CLZ( a ) __builtin_clzl( a )
 
@@ -36,14 +79,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     : morton_code{0}, parent_index{0}, element_index{0}
   {}
 
-  struct morton_code_order2 {
-    bool
-    operator()( const typename bvh<aabox>::leaf_node& a, const typename bvh<aabox>::leaf_node& b ) const
-    {
-      return a.morton_code < b.morton_code;
-    }
-  };
-
   /**Specialization of set_leaf_nodes structure
    */
   template< typename bounded_element >
@@ -51,6 +86,55 @@ BEGIN_GO_NAMESPACE namespace geometry {
     static_assert(
         geometric_traits<bounded_element>::is_bounding_box_computer,
         "The elements bounded by bounding boxes in the BVH must be able to compute a bounding box");
+
+    set_leaf_nodes(
+        const bounded_element* elements,
+        aabox& root_bounding_object,
+        typename bvh<aabox>::leaf_node* leaves,
+        size_t number_of_leaves )
+    {
+      # pragma omp parallel for schedule(static)
+      for( uint32_t i = 0; i < number_of_leaves; ++ i )
+        {
+          auto& leaf = leaves[ i ];
+          leaf.element_index = i;
+          elements[i].compute_bounding_box( leaf.bounding );
+        }
+
+      // now we have the bounding box, we can compute morton codes
+      auto lower = root_bounding_object.get_min();
+      auto inv_extents_times_mcode_offset = vec3{
+        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().x,
+        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().y,
+        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().z
+      };
+
+      # pragma omp parallel for schedule(static)
+      for( uint32_t i = 0; i < number_of_leaves; ++ i )
+        {
+          auto& leaf = leaves[ i ];
+          const auto& p = leaf.bounding.get_center();
+
+          uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
+          uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
+          uint64_t c = (uint64_t)( (p.z - lower.z) * inv_extents_times_mcode_offset.z );
+
+          for( uint j = 0; j < mcode_length; ++ j )
+            {
+              leaf.morton_code |=
+              ((((a >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 1)) |
+               (((b >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 2)) |
+               (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
+            }
+        }
+   # ifdef GO_USE_CUDA_THRUST
+      thrust::sort( leaves, leaves + number_of_leaves, morton_code_order<aabox>{} );
+  # else
+      //todo: a parallel version with OpenMP
+      std::sort( leaves, leaves + number_of_leaves, morton_code_order<aabox>{} );
+  # endif
+    }
+
     set_leaf_nodes(
         const bounded_element* elements,
         typename bvh<aabox>::leaf_node* leaves,
@@ -100,17 +184,70 @@ BEGIN_GO_NAMESPACE namespace geometry {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
-//  # ifdef GO_USE_CUDA_THRUST
-      thrust::sort( leaves, leaves + number_of_leaves, morton_code_order2{});//<aabox>{} );
-//  # else
+   # ifdef GO_USE_CUDA_THRUST
+      thrust::sort( leaves, leaves + number_of_leaves, morton_code_order<aabox>{} );
+  # else
       //todo: a parallel version with OpenMP
-//      std::sort( leaves, leaves + number_of_leaves, morton_code_order<aabox>{} );
-//  # endif
+      std::sort( leaves, leaves + number_of_leaves, morton_code_order<aabox>{} );
+  # endif
     }
   };
 
   template< typename bounded_element >
   struct set_leaf_nodes< ball, bounded_element> {
+
+    set_leaf_nodes(
+        const bounded_element* elements,
+        ball& root_bounding_object,
+        typename bvh<ball>::leaf_node* leaves,
+        size_t number_of_leaves )
+    {
+      static_assert(
+        geometric_traits<bounded_element>::is_bounding_ball_computer,
+        "The elements bounded by bounding balls in the BVH must be able to compute a bounding ball");
+
+      # pragma omp parallel for schedule(static)
+      for( uint32_t i = 0; i < number_of_leaves; ++ i )
+        {
+          auto& leaf = leaves[ i ];
+          leaf.element_index = i;
+          elements[i].compute_bounding_ball( leaf.bounding );
+        }
+
+      // now we have the bounding ball, we can compute morton codes
+      auto lower = vec3{root_bounding_object} - vec3{root_bounding_object.w, root_bounding_object.w, root_bounding_object.w};
+      auto inv_extents_times_mcode_offset = vec3{
+        real(0.5 * mcode_offset) / root_bounding_object.w,
+        real(0.5 * mcode_offset) / root_bounding_object.w,
+        real(0.5 * mcode_offset) / root_bounding_object.w
+      };
+
+      # pragma omp parallel for
+      for( uint32_t i = 0; i < number_of_leaves; ++ i )
+        {
+          auto& leaf = leaves[ i ];
+          const auto& p = leaf.bounding;
+
+          uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
+          uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
+          uint64_t c = (uint64_t)( (p.z - lower.z) * inv_extents_times_mcode_offset.z );
+
+          for( uint j = 0; j < mcode_length; ++ j )
+            {
+              leaf.morton_code |=
+              ((((a >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 1)) |
+               (((b >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 2)) |
+               (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
+            }
+        }
+  # ifdef GO_USE_CUDA_THRUST
+      thrust::sort( leaves, leaves, morton_code_order<ball>{} );
+  # else
+      //todo: a parallel version with OpenMP
+      std::sort( m_leaves, m_leaves + number_of_leaves, morton_code_order<ball>{} );
+  # endif
+    }
+
     set_leaf_nodes(
         const bounded_element* elements,
         typename bvh<ball>::leaf_node* leaves,
@@ -168,7 +305,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       thrust::sort( leaves, leaves, morton_code_order<ball>{} );
   # else
       //todo: a parallel version with OpenMP
-      std::sort( m_leaves, m_leaves + number_of_leaves, morton_code_order<aabox>{} );
+      std::sort( m_leaves, m_leaves + number_of_leaves, morton_code_order<ball>{} );
   # endif
     }
   };
@@ -382,6 +519,33 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
   template< typename bounding_object >
    template< typename bounded_element >
+   bvh<bounding_object>::bvh( const bounded_element* elements, bounding_object& root_bounding_object, size_t number_of_elements )
+     : m_elements{ number_of_elements }
+   {
+     static_assert(
+         std::is_default_constructible<bounding_object>::value,
+         "The bounding objects must be default constructible");
+
+     if( m_elements > max_number_of_elements )
+       {
+         LOG( fatal, "internal structures cannot handle the requested number of elements");
+         return;
+       }
+     else if( m_elements < 2 )
+       {
+         LOG( fatal, "not enough elements to create a bounding volume hierarchy");
+         return;
+       }
+     m_leaves.resize( m_elements );
+     m_internals.resize( m_elements - 1 );
+     set_leaf_nodes<bounding_object,bounded_element>( elements, root_bounding_object, m_leaves.data(), m_leaves.size() );
+     determine_nodes_hierarchy<bounding_object>( m_leaves.data(), m_internals.data(), m_internals.size() );
+     build_bvh_tree_kernel_emulation<bounding_object>( m_leaves.data(), m_internals.data(), m_leaves.size() );
+   }
+
+
+  template< typename bounding_object >
+   template< typename bounded_element >
    bvh<bounding_object>::bvh(
        const bounded_element* elements,
        size_t number_of_elements )
@@ -403,22 +567,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
        }
      m_leaves.resize( m_elements );
      m_internals.resize( m_elements - 1 );
-
-     auto time = omp_get_wtime();
      set_leaf_nodes<bounding_object,bounded_element>( elements, m_leaves.data(), m_leaves.size() );
-     time = omp_get_wtime() - time;
-     LOG( debug, "leaves    = " << time );
-
-     time = omp_get_wtime();
      determine_nodes_hierarchy<bounding_object>( m_leaves.data(), m_internals.data(), m_internals.size() );
-     time = omp_get_wtime() - time;
-     LOG( debug, "leaves    = " << time );
-
-     time = omp_get_wtime();
      build_bvh_tree_kernel_emulation<bounding_object>( m_leaves.data(), m_internals.data(), m_leaves.size() );
-     time = omp_get_wtime() - time;
-     LOG( debug, "leaves    = " << time );
    }
+ template< typename bounding_object >
+ bool bvh<bounding_object>::is_leaf( uint32_t node_index ) const
+ {
+   return node_index & leaf_mask;
+ }
 
 } END_GO_NAMESPACE
 

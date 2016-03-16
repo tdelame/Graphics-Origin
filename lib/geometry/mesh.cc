@@ -1,9 +1,11 @@
 /*  Created on: Mar 14, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/geometry/mesh.h>
-# include <graphics-origin/geometry/box.h>
-# include <graphics-origin/tools/filesystem.h>
+# include "../../graphics-origin/geometry/mesh.h"
+# include "../../graphics-origin/geometry/box.h"
+# include "../../graphics-origin/geometry/triangle.h"
+# include "../../graphics-origin/geometry/ray.h"
+# include "../../graphics-origin/tools/filesystem.h"
 
 # include <OpenMesh/Core/IO/exporter/BaseExporter.hh>
 # include <OpenMesh/Core/IO/IOManager.hh>
@@ -590,21 +592,31 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   mesh_spatial_optimization::mesh_spatial_optimization( mesh& m )
-    : m_triangles( m.n_faces() ),
+    : m_triangles( m.n_faces() ), m_vertices( m.n_vertices() ),
       m_mesh{ m }
   {
-    const auto nfaces = m.n_faces();
+    const auto nfaces  = m_triangles.size();
+    const auto npoints = m_vertices.size();
+
+    # pragma omp parallel for schedule(static)
+    for( size_t i = 0; i < npoints; ++ i )
+      {
+        auto& src = m_mesh.point( mesh::VertexHandle( i ) );
+        auto& dst = m_vertices[i];
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+      }
+
     # pragma omp parallel for schedule(static)
     for( size_t i = 0; i < nfaces; ++ i )
       {
-        auto it = m.fv_begin( mesh::FaceHandle{i} );
-        auto& p1 = m.point( *it ); ++it;
-        auto& p2 = m.point( *it ); ++it;
-        auto& p3 = m.point( *it );
+        mesh::FaceVertexIter it = m.fv_begin( mesh::FaceHandle(i) );
+        auto i1 = it->idx(); ++it;
+        auto i2 = it->idx(); ++it;
+        auto i3 = it->idx();
         m_triangles[ i ] = triangle(
-            vec3{ p1[0], p1[1], p1[2] },
-            vec3{ p2[0], p2[1], p2[2] },
-            vec3{ p3[0], p3[1], p3[2] } );
+            m_vertices[i1], m_vertices[i2], m_vertices[i3] );
       }
 
     m_bvh = new bvh<aabox>( m_triangles.data(), nfaces );

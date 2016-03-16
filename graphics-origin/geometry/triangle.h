@@ -10,6 +10,8 @@
 
 BEGIN_GO_NAMESPACE
 namespace geometry {
+  class ray;
+  class aabox;
   class triangle {
   public:
 
@@ -33,7 +35,7 @@ namespace geometry {
   };
 
   template <>
-  struct geometric_traits {
+  struct geometric_traits<triangle> {
     static const bool is_bounding_box_computer  = true;
     static const bool is_box_intersecter        = true;
     static const bool is_ray_intersecter        = true;

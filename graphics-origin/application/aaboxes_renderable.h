@@ -11,7 +11,8 @@
 
 namespace graphics_origin {
   namespace geometry {
-    class box_bvh;
+    template< typename bounding_object >
+    class bvh;
   }
   namespace application {
     class aaboxes_renderable
@@ -49,7 +50,7 @@ namespace graphics_origin {
     };
 
     aaboxes_renderable*
-    aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::box_bvh& bvh );
+    aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::bvh<geometry::aabox>& bvh );
 
   }
 }

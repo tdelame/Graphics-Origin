@@ -32,6 +32,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   class aabox;
+  class triangle;
+  class ray;
 
   /**@brief A triangular mesh class.
    *
@@ -43,6 +45,10 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * OpenMesh. The only addition is a better I/O system, since on some version of
    * the OpenMesh library, the exporter/importer internal classes of OpenMesh does
    * not compile.
+   *
+   * Ideally, it would more nice and efficient to have vec3 for the position of
+   * vertices and geometry::triangle for faces. This would require to rewrite a whole
+   * mesh class, which is not a priority for now.
    */
   struct mesh
     : public OpenMesh::TriMesh_ArrayKernelT< detail::mesh_traits > {
@@ -86,7 +92,57 @@ BEGIN_GO_NAMESPACE namespace geometry {
     bool intersect( const ray& r, real& t ) const;
     bool contain( const vec3& p ) const;
   private:
+
+    struct nanoflann_adaptator {
+      // Must return the number of data points
+      inline size_t kdtree_get_point_count() const
+      {
+        return m_size;
+      }
+
+      inline real kdtree_distance(const real* a, const size_t b_idx, size_t size) const
+      {
+       real result = 0;
+       real* b = pts + b_idx * size;
+       for( size_t i = 0; i < size; ++ i, ++ b )
+         {
+           real temp = a[i] - *b;
+           temp *= temp;
+           result += temp;
+         }
+       return result;
+      }
+
+
+      inline real kdtree_get_pt(const size_t idx, int component) const
+      {
+       return pts[ idx * dimension + component ];
+      }
+
+      // Optional bounding-box computation: return false to default to a standard bbox computation loop.
+      //   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+      //   Look at bb.m_size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+
+      template <class BBOX>
+      bool kdtree_get_bbox(BBOX& bb) const
+      {
+        auto low  = bounding_box.get_min();
+        auto high = bounding_box.get_min();
+        for( size_t d = 0; d < dimension; ++ d )
+         {
+            bb[ d ].low  =  low[d];
+            bb[ d ].high = high[d];
+         }
+        return true;
+      }
+      aabox bounding_box;
+      real* pts;
+      const size_t m_size;
+      static const size_t dimension;
+    };
+
     std::vector< triangle > m_triangles;
+    std::vector< vec3 > m_vertices;
     bvh<aabox>* m_bvh;
     mesh& m_mesh;
   };

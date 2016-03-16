@@ -12,7 +12,6 @@
 
 # include <vector>
 # include <type_traits>
-# include <omp.h>
 
 BEGIN_GO_NAMESPACE
 namespace geometry {
@@ -42,6 +41,9 @@ namespace geometry {
     template< typename bounded_element >
     bvh( const bounded_element* elements, size_t number_of_elements );
 
+    template< typename bounded_element >
+    bvh( const bounded_element* elements, bounding_object& root_bounding_object, size_t number_of_elements );
+
     size_t get_number_of_nodes() const
     {
       return get_number_of_internal_nodes() + get_number_of_leaf_nodes();
@@ -67,6 +69,8 @@ namespace geometry {
       return m_leaves[ node_index ];
     }
 
+    bool is_leaf( uint32_t node_index ) const;
+
   private:
     static const size_t max_number_of_elements = (1U << uint8_t(32)) - 1;
 
@@ -89,6 +93,12 @@ namespace geometry {
       const bounded_element* elements,
       typename bvh<bounding_object>::leaf_node* leaves,
       size_t number_of_leaves );
+
+    set_leaf_nodes(
+      const bounded_element* elements,
+      bounding_object& root_bounding_object,
+      typename bvh<bounding_object>::leaf_node* leaves,
+      size_t number_of_leaves );
   };
 
   /**@brief Order BVH leaf nodes by increasing Morton code.
@@ -102,103 +112,6 @@ namespace geometry {
     {
       return a.morton_code < b.morton_code;
     }
-  };
-
-
-  /** BVH with boxes as bounding volume.
-   *
-   *TODO: put the element buffer in a temporary variable. Since after the construction,
-   *TODO: the buffer does not matter anymore.
-   *
-   */
-  class box_bvh {
-  public:
-    struct internal_node {
-      internal_node();
-      aabox bounding;
-      uint32_t parent_index;
-      uint32_t left_index;
-      uint32_t right_index;
-    };
-
-    struct leaf_node {
-      leaf_node();
-      aabox bounding;
-      uint64_t morton_code;
-      uint32_t parent_index;
-      uint32_t element_index;
-    };
-
-    template< typename element >
-    box_bvh( const element* elements, size_t number_of_elements )
-      : sizeof_element{ sizeof( element ) },
-        number_of_elements{ number_of_elements },
-        elements{ elements }
-    {
-      if( number_of_elements < 2 )
-        {
-          LOG( error, "not enough elements to create a box bvh.");
-          return;
-        }
-      leaves.resize( number_of_elements );
-      internals.resize( number_of_elements - 1 );
-
-
-      auto time = omp_get_wtime();
-      set_leaf_nodes();
-      time = omp_get_wtime() - time;
-      LOG( debug, "leaves    = " << time );
-
-      time = omp_get_wtime();
-      set_nodes_hierarchy();
-      time = omp_get_wtime() - time;
-      LOG( debug, "leaves    = " << time );
-
-      time = omp_get_wtime();
-      set_internal_bounding_boxes();
-      time = omp_get_wtime() - time;
-      LOG( debug, "leaves    = " << time );
-    }
-
-    const internal_node&
-    get_root() const;
-
-    bool is_leaf( uint32_t node_index ) const;
-
-    const internal_node&
-    get_internal_node( uint32_t node_index ) const;
-
-    const leaf_node&
-    get_leaf_node( uint32_t node_index ) const;
-
-    size_t get_number_of_nodes() const;
-    size_t get_number_of_internal_nodes() const;
-    size_t get_number_of_leaf_nodes() const;
-
-  private:
-
-//    struct cpu_bvh_builder {
-//      void set_leaf_nodes();
-//      void set_nodes_hierarchy();
-//      void set_internal_bounding_boxes();
-//      box_bvh* parent;
-//    };
-
-
-    void set_leaf_nodes();
-    void set_nodes_hierarchy();
-    void set_internal_bounding_boxes();
-
-    int longest_common_prefix( const uint64_t& c1, int j );
-    uivec2 determine_range( uint32_t i );
-    uint32_t find_split( const uivec2& range );
-
-    const size_t sizeof_element;
-    const size_t number_of_elements;
-    const bounding_box_computer* elements;
-
-    std::vector< leaf_node > leaves;
-    std::vector< internal_node > internals;
   };
 }
 END_GO_NAMESPACE
