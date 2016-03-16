@@ -51,6 +51,8 @@ namespace application {
       return m_camera;
     }
 
+    gpu_vec2 get_window_dimensions() const;
+
   public slots:
     void render_next();
   signals:

@@ -142,5 +142,11 @@ namespace application {
     return m_cached_fps;
   }
 
+  gpu_vec2
+  gl_window_renderer::get_window_dimensions() const
+  {
+    return gpu_vec2{ m_width, m_height };
+  }
+
 }
 END_GO_NAMESPACE

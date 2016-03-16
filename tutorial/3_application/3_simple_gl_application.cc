@@ -9,6 +9,7 @@
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/aaboxes_renderable.h"
+# include "../../graphics-origin/application/mesh_renderable.h"
 # include "../../graphics-origin/application/balls_renderable.h"
 # include "../../graphics-origin/tools/log.h"
 
@@ -171,37 +172,47 @@ namespace application {
             "shaders/flat.vert",
             "shaders/flat.frag"});
 
+      shader_program_ptr mesh_program =
+          std::make_shared<shader_program>( std::list<std::string>{
+            "shaders/mesh.vert",
+            "shaders/mesh.geom",
+            "shaders/mesh.frag"});
 
-      size_t nb_balls = 0;
-      size_t nline = 0;
-      std::ifstream input( "tutorial/3_application/bumpy_torus.balls");
 
-      {
-        std::istringstream tokenizer( get_next_line( input, nline ) );
-        tokenizer >> nb_balls;
-      }
-      auto brenderable = new balls_renderable( balls_program, nb_balls );
-      for( size_t i = 0; i < nb_balls; ++ i )
-        {
-          std::string line_string = get_next_line( input, nline );
-          std::istringstream tokenizer( line_string );
-          vec3 c;
-          real radius;
-          tokenizer >> c.x >> c.y >> c.z >> radius;
-          if( tokenizer.fail() )
-            {
-              LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
-            }
-          else
-            {
-              brenderable->add( geometry::ball( c, radius ));
-            }
-        }
-      input.close();
-//      geometry::box_bvh bvh( balls, nb_balls );
+//      size_t nb_balls = 0;
+//      size_t nline = 0;
+//      std::ifstream input( "tutorial/3_application/bumpy_torus.balls");
+//
+//      {
+//        std::istringstream tokenizer( get_next_line( input, nline ) );
+//        tokenizer >> nb_balls;
+//      }
+//      auto brenderable = new balls_renderable( balls_program, nb_balls );
+//      for( size_t i = 0; i < nb_balls; ++ i )
+//        {
+//          std::string line_string = get_next_line( input, nline );
+//          std::istringstream tokenizer( line_string );
+//          vec3 c;
+//          real radius;
+//          tokenizer >> c.x >> c.y >> c.z >> radius;
+//          if( tokenizer.fail() )
+//            {
+//              LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
+//            }
+//          else
+//            {
+//              brenderable->add( geometry::ball( c, radius ));
+//            }
+//        }
+//      input.close();
+////      geometry::box_bvh bvh( balls, nb_balls );
+//
+////      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
+//      add_renderable( brenderable );
 
-//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
-      add_renderable( brenderable );
+      auto mesh = new mesh_renderable( mesh_program );
+      mesh->load( "tutorial/3_application/armadillo.off");
+      add_renderable( mesh );
     }
 
 
