@@ -1,13 +1,14 @@
 /*  Created on: Mar 14, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-
 # ifndef GRAPHICS_ORIGIN_MESH_H_
 # define GRAPHICS_ORIGIN_MESH_H_
 # include "../graphics_origin.h"
 # include "traits.h"
 # include "bvh.h"
+# include <nanoflann.h>
 # include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+
 BEGIN_GO_NAMESPACE namespace geometry {
 
   namespace detail {
@@ -31,10 +32,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     };
   }
 
-  class aabox;
-  class triangle;
-  class ray;
-
   /**@brief A triangular mesh class.
    *
    * This class represent a mesh with triangular faces. This mesh is represented
@@ -46,7 +43,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * the OpenMesh library, the exporter/importer internal classes of OpenMesh does
    * not compile.
    *
-   * Ideally, it would more nice and efficient to have vec3 for the position of
+   * Ideally, it would nicer to have vec3 for the position of
    * vertices and geometry::triangle for faces. This would require to rewrite a whole
    * mesh class, which is not a priority for now.
    */
@@ -85,64 +82,61 @@ BEGIN_GO_NAMESPACE namespace geometry {
     static const bool is_bounding_box_computer = true;
   };
 
+
+  class aabox;
+  class ray;
+  class triangle;
+
   class mesh_spatial_optimization {
   public:
     mesh_spatial_optimization( mesh& m );
     ~mesh_spatial_optimization();
     bool intersect( const ray& r, real& t ) const;
     bool contain( const vec3& p ) const;
+
+    inline size_t kdtree_get_point_count() const
+    {
+      return m_mesh.n_vertices();
+    }
+
+    inline real kdtree_distance(const real* a, const size_t b_idx, size_t size) const
+    {
+     real result = 0;
+     real* b = &m_mesh.point( mesh::VertexHandle(0) )[0] + b_idx * size;
+     for( size_t i = 0; i < size; ++ i, ++ b )
+       {
+         real temp = a[i] - *b;
+         temp *= temp;
+         result += temp;
+       }
+     return result;
+    }
+
+
+    inline real kdtree_get_pt(const size_t idx, int component) const
+    {
+      return m_mesh.point( mesh::VertexHandle( idx ) )[ component ];
+    }
+
+    template <class BBOX>
+    bool kdtree_get_bbox(BBOX& bb) const
+    {
+      auto low  = bounding_box.get_min();
+      auto high = bounding_box.get_min();
+      for( size_t d = 0; d < 3; ++ d )
+       {
+          bb[ d ].low  =  low[d];
+          bb[ d ].high = high[d];
+       }
+      return true;
+    }
   private:
-
-    struct nanoflann_adaptator {
-      // Must return the number of data points
-      inline size_t kdtree_get_point_count() const
-      {
-        return m_size;
-      }
-
-      inline real kdtree_distance(const real* a, const size_t b_idx, size_t size) const
-      {
-       real result = 0;
-       real* b = pts + b_idx * size;
-       for( size_t i = 0; i < size; ++ i, ++ b )
-         {
-           real temp = a[i] - *b;
-           temp *= temp;
-           result += temp;
-         }
-       return result;
-      }
-
-
-      inline real kdtree_get_pt(const size_t idx, int component) const
-      {
-       return pts[ idx * dimension + component ];
-      }
-
-      // Optional bounding-box computation: return false to default to a standard bbox computation loop.
-      //   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
-      //   Look at bb.m_size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
-
-      template <class BBOX>
-      bool kdtree_get_bbox(BBOX& bb) const
-      {
-        auto low  = bounding_box.get_min();
-        auto high = bounding_box.get_min();
-        for( size_t d = 0; d < dimension; ++ d )
-         {
-            bb[ d ].low  =  low[d];
-            bb[ d ].high = high[d];
-         }
-        return true;
-      }
-      aabox bounding_box;
-      real* pts;
-      const size_t m_size;
-      static const size_t dimension;
-    };
-
+    nanoflann::KDTreeSingleIndexAdaptor<
+     nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization >,
+     mesh_spatial_optimization
+     > m_kdtree;
+    aabox bounding_box;
     std::vector< triangle > m_triangles;
-    std::vector< vec3 > m_vertices;
     bvh<aabox>* m_bvh;
     mesh& m_mesh;
   };

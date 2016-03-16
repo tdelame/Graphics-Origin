@@ -7,7 +7,7 @@
 BEGIN_GO_NAMESPACE namespace geometry {
   template< typename T >
   struct geometric_traits {
-    /**@brief True if T is a ball intersected.
+    /**@brief True if T is a ball intersecter.
      *
      * This member is true if T is a ball intersecter, i.e. is able to compute
      * if it intersects with a ball. When this is the case, T has a method with
@@ -54,7 +54,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     static const bool is_box_container         = false;
     /**@brief True if T is a box intersecter.
      *
-     * True if T is a box intersected, i.e. is able to say if it intersects
+     * True if T is a box intersecter, i.e. is able to say if it intersects
      * the volume of an axis aligned box. When this is the case, T has a
      * method with the following signature:
      * \code{.cpp}
@@ -70,14 +70,22 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * void contain( const vec3& p ) const;
      * \endcode */
     static const bool is_point_container       = false;
-    /**@brief True if T is a ray intersected.
+    /**@brief True if T is a ray intersecter.
      *
-     * True if T is a ray intersected, i.e. is able to say if it intersects
+     * True if T is a ray intersecter, i.e. is able to say if it intersects
      * a ray. When this is the case, T has a method with the following signature:
      * \code{.cpp}
      * bool intersect( const ray& r, real& t ) const;
      * \endcode */
-    static const bool is_ray_intersected       = false;
+    static const bool is_ray_intersecter       = false;
+    /**@brief True if T is a ray with inversed direction intersecter.
+     *
+     * True if T is a ray intersected, i.e. is able to say if it intersects
+     * a ray. When this is the case, T has a method with the following signature:
+     * \code{.cpp}
+     * bool intersect( const ray_with_inv_dir& r, real& t ) const;
+     * \endcode */
+    static const bool is_ray_with_inversed_direction_intersecter = false;
   };
 } END_GO_NAMESPACE
 # endif

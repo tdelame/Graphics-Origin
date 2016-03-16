@@ -18,8 +18,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * direction (normalized, pointing in the direction where the line is
    * infinite) of the ray and t >= 0.
    */
-  class ray {
-  public:
+  struct ray {
     /**@brief Build a ray.
      *
      * Build a new ray.
@@ -47,9 +46,22 @@ BEGIN_GO_NAMESPACE namespace geometry {
       return m_direction;
     }
 
-  private:
     vec3 m_origin;
     vec3 m_direction;
+  };
+
+  struct ray_with_inv_dir {
+    ray_with_inv_dir( const ray& r )
+      : m_origin{ r.m_origin },
+        m_inv_direction{
+          real(1.0 / r.m_direction.x),
+          real(1.0 / r.m_direction.y),
+          real(1.0 / r.m_direction.z) }
+    {}
+
+
+    vec3 m_origin;
+    vec3 m_inv_direction;
   };
 
 } END_GO_NAMESPACE

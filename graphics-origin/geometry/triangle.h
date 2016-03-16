@@ -15,6 +15,8 @@ namespace geometry {
   class triangle {
   public:
 
+    typedef enum{ V0, V1, V2 } vertex_index;
+
     triangle(
         const vec3& p1,
         const vec3& p2,
@@ -24,6 +26,8 @@ namespace geometry {
 
     triangle&
     operator=( const triangle& t );
+
+    const vec3& get_vertex( vertex_index i ) const;
 
     void compute_bounding_box( aabox& b ) const;
     bool intersect( const aabox& b ) const;

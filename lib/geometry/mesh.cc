@@ -575,7 +575,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
         minp.minimize( p );
         maxp.maximize( p );
       }
-    b = create_aabox_from_min_max( vec3{ minp[0], minp[1], minp[2]}, vec3{ maxp[0], maxp[1], maxp[2] } );
+    b = aabox( vec3{ minp[0], minp[1], minp[2]}, vec3{ maxp[0], maxp[1], maxp[2] } );
   }
 
   bool
@@ -592,34 +592,27 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   mesh_spatial_optimization::mesh_spatial_optimization( mesh& m )
-    : m_triangles( m.n_faces() ), m_vertices( m.n_vertices() ),
-      m_mesh{ m }
+    : m_kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} },
+      m_triangles( m.n_faces() ), m_mesh{ m }
   {
     const auto nfaces  = m_triangles.size();
-    const auto npoints = m_vertices.size();
-
-    # pragma omp parallel for schedule(static)
-    for( size_t i = 0; i < npoints; ++ i )
-      {
-        auto& src = m_mesh.point( mesh::VertexHandle( i ) );
-        auto& dst = m_vertices[i];
-        dst[0] = src[0];
-        dst[1] = src[1];
-        dst[2] = src[2];
-      }
-
     # pragma omp parallel for schedule(static)
     for( size_t i = 0; i < nfaces; ++ i )
       {
         mesh::FaceVertexIter it = m.fv_begin( mesh::FaceHandle(i) );
-        auto i1 = it->idx(); ++it;
-        auto i2 = it->idx(); ++it;
-        auto i3 = it->idx();
+        auto& p1 = m_mesh.point( *it ); ++ it;
+        auto& p2 = m_mesh.point( *it ); ++ it;
+        auto& p3 = m_mesh.point( *it );
+
         m_triangles[ i ] = triangle(
-            m_vertices[i1], m_vertices[i2], m_vertices[i3] );
+            vec3{ p1[0], p1[1], p1[2] },
+            vec3{ p2[0], p2[1], p2[2] },
+            vec3{ p3[0], p3[1], p3[2] } );
       }
 
-    m_bvh = new bvh<aabox>( m_triangles.data(), nfaces );
+    m_mesh.compute_bounding_box( bounding_box );
+    m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
+    m_kdtree.buildIndex();
   }
 
   bool
@@ -632,8 +625,76 @@ BEGIN_GO_NAMESPACE namespace geometry {
   bool
   mesh_spatial_optimization::contain( const vec3& p ) const
   {
-    LOG( debug, "TODO" );
-    return true;
+    real distance_to_mesh = 0;
+    size_t closest_vertex_index = 0;
+    m_kdtree.knnSearch( &p.x, 1, &closest_vertex_index, &distance_to_mesh );
+
+    //fixme: check if vfit == vfitend to throw an exception
+    size_t closest_face_index = m_mesh.vf_begin( mesh::VertexHandle( closest_vertex_index ) )->idx();
+
+    vec3 target = m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V0 );
+    target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V1 );
+    target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
+    target *= real(1.0 / 3.0);
+
+    target -= p;
+    distance_to_mesh = length( target );
+    target *= real(1.0) / distance_to_mesh;
+    ray r( p, target );
+    ray_with_inv_dir inv_r( r );
+
+    std::vector< uint32_t > stack;
+    stack.reserve( 64 );
+    stack.push_back( 0 );
+    uint32_t node_index = 0;
+    real t = 0;
+    do
+      {
+        auto& intern = m_bvh->get_internal_node( node_index );
+        bool leafL = bvh_leaf_mask & intern.left_index;
+        bool leafR = bvh_leaf_mask & intern.right_index;
+
+        bool overlapL = leafL ?
+            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t ) && t <= distance_to_mesh
+          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t ) && t <= distance_to_mesh
+          ;
+        distance_to_mesh = std::min( distance_to_mesh, t );
+
+        bool overlapR = leafR ?
+            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t ) && t <= distance_to_mesh
+          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t ) && t <= distance_to_mesh
+          ;
+        distance_to_mesh = std::min( distance_to_mesh, t );
+
+        if( overlapL && leafL )
+          {
+            closest_face_index = m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index;
+          }
+        if( overlapR && leafR )
+          {
+            closest_face_index = m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index;
+          }
+        bool traverseL = (overlapL && !leafL );
+        bool traverseR = (overlapR && !leafR );
+        if( !traverseL && !traverseR )
+          {
+            stack.pop_back();
+            node_index = stack.back();
+          }
+        else
+          {
+            node_index = (traverseL) ? intern.left_index : intern.right_index;
+            if( traverseL && traverseR )
+              {
+                stack.push_back( intern.right_index );
+              }
+          }
+
+      }
+    while( node_index );
+
+    auto normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
+    return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;
   }
 
 } END_GO_NAMESPACE

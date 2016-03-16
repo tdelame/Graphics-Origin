@@ -64,8 +64,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
   static constexpr uint8_t  mcode_size = 64;
   static constexpr uint8_t  mcode_length = 21;
   static constexpr uint32_t mcode_offset = 1U << mcode_length;
-  static constexpr uint32_t leaf_mask = 0x80000000;
-  static constexpr uint32_t leaf_index_mask = 0x7FFFFFFF;
 
 # define CLZ( a ) __builtin_clzl( a )
 
@@ -104,16 +102,16 @@ BEGIN_GO_NAMESPACE namespace geometry {
       // now we have the bounding box, we can compute morton codes
       auto lower = root_bounding_object.get_min();
       auto inv_extents_times_mcode_offset = vec3{
-        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().x,
-        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().y,
-        real(0.5 * mcode_offset) / root_bounding_object.get_half_sides().z
+        real(0.5 * mcode_offset) / root_bounding_object.m_hsides.x,
+        real(0.5 * mcode_offset) / root_bounding_object.m_hsides.y,
+        real(0.5 * mcode_offset) / root_bounding_object.m_hsides.z
       };
 
       # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < number_of_leaves; ++ i )
         {
           auto& leaf = leaves[ i ];
-          const auto& p = leaf.bounding.get_center();
+          const auto& p = leaf.bounding.m_center;
 
           uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
           uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
@@ -161,16 +159,16 @@ BEGIN_GO_NAMESPACE namespace geometry {
       // now we have the bounding box, we can compute morton codes
       auto lower = bounding.get_min();
       auto inv_extents_times_mcode_offset = vec3{
-        real(0.5 * mcode_offset) / bounding.get_half_sides().x,
-        real(0.5 * mcode_offset) / bounding.get_half_sides().y,
-        real(0.5 * mcode_offset) / bounding.get_half_sides().z
+        real(0.5 * mcode_offset) / bounding.m_hsides.x,
+        real(0.5 * mcode_offset) / bounding.m_hsides.y,
+        real(0.5 * mcode_offset) / bounding.m_hsides.z
       };
 
       # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < number_of_leaves; ++ i )
         {
           auto& leaf = leaves[ i ];
-          const auto& p = leaf.bounding.get_center();
+          const auto& p = leaf.bounding.m_center;
 
           uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
           uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
@@ -396,7 +394,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
           if( split == range.x )
             {
               m_leaves[ split ].parent_index = i;
-              child_index |= leaf_mask;
+              child_index |= bvh_leaf_mask;
             }
           else
             {
@@ -409,7 +407,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
           if( split == range.y )
             {
               m_leaves[ split ].parent_index = i;
-              child_index |= leaf_mask;
+              child_index |= bvh_leaf_mask;
             }
           else m_internals[ split ].parent_index = i;
           intern.right_index = child_index;
@@ -504,8 +502,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     bounding_object& get_bo( uint32_t index )
     {
-      if( index & leaf_mask )
-        return m_leaves[ index & leaf_index_mask ].bounding;
+      if( index & bvh_leaf_mask )
+        return m_leaves[ index & bvh_leaf_index_mask ].bounding;
       return m_internals[ index ].bounding;
     }
 
@@ -574,7 +572,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
  template< typename bounding_object >
  bool bvh<bounding_object>::is_leaf( uint32_t node_index ) const
  {
-   return node_index & leaf_mask;
+   return node_index & bvh_leaf_mask;
  }
 
 } END_GO_NAMESPACE

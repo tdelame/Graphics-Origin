@@ -16,6 +16,9 @@
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
+  static constexpr uint32_t bvh_leaf_mask = 0x80000000;
+  static constexpr uint32_t bvh_leaf_index_mask = 0x7FFFFFFF;
+
   template<
     typename bounding_object = aabox >
   class bvh {
