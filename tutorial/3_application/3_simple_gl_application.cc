@@ -9,12 +9,15 @@
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/aaboxes_renderable.h"
+# include "../../graphics-origin/application/points_renderable.h"
 # include "../../graphics-origin/application/mesh_renderable.h"
+# include "../../graphics-origin/application/lines_renderable.h"
 # include "../../graphics-origin/application/balls_renderable.h"
 # include "../../graphics-origin/tools/log.h"
 
 # include "../../graphics-origin/geometry/ball.h"
 # include "../../graphics-origin/geometry/bvh.h"
+# include "../../graphics-origin/geometry/ray.h"
 
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
 # include "3_simple_gl_application.h"
@@ -29,8 +32,24 @@
 # include <fstream>
 # include <sstream>
 
+
+# include <chrono>
+# include <random>
+
+
 namespace graphics_origin {
 namespace application {
+
+real unit_random()
+{
+  //fixme:
+//  static std::default_random_engine generator( 7 );
+  static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count() );
+  static std::uniform_real_distribution<real> distribution( real(0), real(1));
+  return distribution(generator);
+}
+
+
 
     simple_camera::simple_camera( QObject* parent )
       : camera{ parent }, m_direction{},
@@ -195,6 +214,7 @@ namespace application {
 //        tokenizer >> nb_balls;
 //      }
 //      auto brenderable = new balls_renderable( balls_program, nb_balls );
+//      std::vector< geometry::ball> balls( nb_balls );
 //      for( size_t i = 0; i < nb_balls; ++ i )
 //        {
 //          std::string line_string = get_next_line( input, nline );
@@ -208,18 +228,77 @@ namespace application {
 //            }
 //          else
 //            {
+//              balls[ i ] = geometry::ball( c, radius );
 //              brenderable->add( geometry::ball( c, radius ));
 //            }
 //        }
 //      input.close();
-////      geometry::box_bvh bvh( balls, nb_balls );
+//      geometry::bvh<geometry::aabox> bvh( balls.data(), nb_balls );
 //
-////      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
+//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
 //      add_renderable( brenderable );
+
 
       auto mesh = new mesh_renderable( mesh_program );
       mesh->load( "tutorial/3_application/dinopet.off");
       add_renderable( mesh );
+      geometry::mesh_spatial_optimization msp( mesh->get_geometry() );
+
+//      auto bbox = new aaboxes_renderable( box_wireframe_program, 1 );
+      geometry::aabox box;
+      mesh->get_geometry().compute_bounding_box( box );
+//      bbox->add( box, gpu_vec3{1,0,0});
+//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, *msp.get_bvh()));
+
+
+
+      const size_t npoints = 1;
+      std::vector< std::pair< vec3, bool> > points_data( npoints, std::make_pair( vec3{}, false ) );
+
+//      # pragma omp parallel for
+      for( size_t i = 0; i < npoints; ++ i )
+        {
+          vec3 p = vec3{ unit_random() - 0.5, unit_random() - 0.5, unit_random() - 0.5} * 2.0 * box.m_hsides + box.m_center;
+          points_data[ i ] = std::make_pair( p, msp.contain( p ) );
+        }
+
+      auto points = new points_renderable( flat_program, npoints );
+      auto lines = new lines_renderable( flat_program, npoints );
+      for( auto& pair : points_data )
+        {
+          points->add( pair.first, pair.second ? gpu_vec3{0,1,0} : gpu_vec3{0,0,1} );
+
+          size_t vi = 0;
+          real distance = 0;
+          msp.get_closest_vertex( pair.first, vi, distance );
+
+          geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
+
+          auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
+          target += mesh->get_geometry().point( *fviter ); ++ fviter;
+          target += mesh->get_geometry().point( *fviter );
+          target *= real( 1.0 / 3.0 );
+
+
+          vec3 direction = vec3{ target[0] - pair.first.x,
+                    target[1] - pair.first.y,
+                    target[2] - pair.first.z };
+          distance = glm::length( direction );
+          direction *= real(1.0) / distance;
+          distance *= 1.1;
+
+          if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
+            {
+              LOG( info, "youhou");
+              lines->add( pair.first, gpu_vec3{1,1,0}, pair.first + distance * direction,
+                          gpu_vec3{1,1,0});
+            }
+          else
+            lines->add( pair.first, gpu_vec3{1,0,0},
+                        vec3{target[0], target[1], target[2] }, gpu_vec3{1,0,0});
+        }
+      add_renderable( points );
+      add_renderable( lines );
     }
 
 

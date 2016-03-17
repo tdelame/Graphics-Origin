@@ -20,6 +20,11 @@ namespace graphics_origin {
       ~mesh_renderable();
       void load( const std::string& filename );
 
+      geometry::mesh& get_geometry()
+      {
+        return m_mesh;
+      }
+
     private:
       void update_gpu_data() override;
       void do_render() override;

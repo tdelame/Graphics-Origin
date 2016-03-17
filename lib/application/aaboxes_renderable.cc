@@ -152,7 +152,7 @@ namespace graphics_origin { namespace application {
         indexes.pop_front();
         if( bvh.is_leaf( current_index.first ) )
           {
-            result->add( bvh.get_leaf_node( current_index.first ).bounding, get_color( current_index.second, 0, max_level ) );
+            result->add( bvh.get_leaf_node( current_index.first & geometry::bvh_leaf_index_mask ).bounding, get_color( current_index.second, 0, max_level ) );
           }
         else
           {

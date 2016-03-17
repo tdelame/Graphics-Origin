@@ -207,8 +207,8 @@ namespace geometry {
   triangle::compute_bounding_box( aabox& b ) const
   {
     b = aabox(
-        min( min( vertices[0], vertices[1] ), vertices[3] ),
-        max( max( vertices[0], vertices[1] ), vertices[3] ) );
+        min( min( vertices[0], vertices[1] ), vertices[2] ),
+        max( max( vertices[0], vertices[1] ), vertices[2] ) );
   }
 
   triangle::triangle()

@@ -312,7 +312,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   struct determine_nodes_hierarchy {
     int longest_common_prefix( const uint64_t& c1, int j )
     {
-      if( j >= 0 && j < m_number_of_leaves )
+      if( j >= int(0) && (size_t)j < m_number_of_leaves )
         return CLZ( c1 ^ m_leaves[ j ].morton_code );
       return -1;
     }
@@ -414,8 +414,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
         }
     }
 
-    typename bvh<bounding_object>::internal_node* m_internals;
     typename bvh<bounding_object>::leaf_node* m_leaves;
+    typename bvh<bounding_object>::internal_node* m_internals;
 
     const size_t m_number_of_internals;
     const size_t m_number_of_leaves;
@@ -486,8 +486,9 @@ BEGIN_GO_NAMESPACE namespace geometry {
           return false;
         }
 
-      get_bo( m_internals[ var.index ].left_index ).merge(
-          get_bo( m_internals[ var.index ].right_index ));
+      auto& bo = get_bo( var.index );
+      bo = get_bo( m_internals[ var.index ].left_index );
+      bo.merge( get_bo( m_internals[ var.index ].right_index ));
 
       if( var.index == 0 )
         {

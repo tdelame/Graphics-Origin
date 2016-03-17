@@ -5,7 +5,7 @@ in vec3 out_normal;
 in vec3 out_vertex;
 noperspective in vec3 dist;
 
-const vec4 light_position = vec4(0,0,0,1);
+uniform vec3 light_position;// = vec4(0,0,0,1);
 const vec4 light_ambient  = vec4(0.1, 0.1, 0.1, 1);
 const vec4 light_specular = vec4(1.0, 1.0, 1.0, 1);
 const vec4 light_diffuse  = vec4(1.0, 1.0, 1.0, 1);
@@ -13,7 +13,7 @@ const vec4 mesh_color     = vec4(0.3, 0.5, 0.9, 1);
 
 void main()
 {
-  vec3 L = normalize( light_position.xyz - out_vertex );
+  vec3 L = normalize( light_position - out_vertex );
   vec3 E = normalize( -out_vertex );
   vec3 R = -reflect( L, out_normal );
 

@@ -91,6 +91,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
   public:
     mesh_spatial_optimization( mesh& m );
     ~mesh_spatial_optimization();
+
+    void get_closest_vertex( const vec3& location, size_t& vertex_index, real& distance_to_vertex ) const;
     bool intersect( const ray& r, real& t ) const;
     bool contain( const vec3& p ) const;
 
@@ -130,7 +132,17 @@ BEGIN_GO_NAMESPACE namespace geometry {
        }
       return true;
     }
+
+    bvh<aabox>* get_bvh()
+        {
+      return m_bvh;
+        }
+
   private:
+    bool intersect( const ray&, real& distance_to_mesh, size_t& closest_face_index ) const;
+
+
+    mesh& m_mesh;
     nanoflann::KDTreeSingleIndexAdaptor<
      nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization >,
      mesh_spatial_optimization
@@ -138,7 +150,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     aabox bounding_box;
     std::vector< triangle > m_triangles;
     bvh<aabox>* m_bvh;
-    mesh& m_mesh;
   };
 
   template <>

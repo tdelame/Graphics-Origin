@@ -592,8 +592,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   mesh_spatial_optimization::mesh_spatial_optimization( mesh& m )
-    : m_kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} },
-      m_triangles( m.n_faces() ), m_mesh{ m }
+    : m_mesh{ m }, m_kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} },
+      m_triangles( m.n_faces() )
   {
     const auto nfaces  = m_triangles.size();
     # pragma omp parallel for schedule(static)
@@ -611,6 +611,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       }
 
     m_mesh.compute_bounding_box( bounding_box );
+    LOG( debug, "bounding box = " << bounding_box.get_min() << " -- " << bounding_box.get_max() );
     m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
     m_kdtree.buildIndex();
   }
@@ -618,8 +619,111 @@ BEGIN_GO_NAMESPACE namespace geometry {
   bool
   mesh_spatial_optimization::intersect( const ray& r, real& t ) const
   {
-    LOG( debug, "TODO");
-    return true;
+    size_t dummy = 0;
+//    t = REAL_MAX;
+    return intersect( r, t, dummy );
+  }
+
+  bool
+  mesh_spatial_optimization::intersect( const ray& r, real& distance_to_mesh, size_t& closest_face_index ) const
+  {
+    bool result = false;
+    ray_with_inv_dir inv_r( r );
+
+    std::vector< uint32_t > stack;
+    stack.reserve( 64 );
+    stack.push_back( 0 );
+    uint32_t node_index = 0;
+    do
+      {
+        real t1 = REAL_MAX;
+        real t2 = REAL_MAX;
+        auto& intern = m_bvh->get_internal_node( node_index );
+        bool leafL = bvh_leaf_mask & intern.left_index;
+        bool leafR = bvh_leaf_mask & intern.right_index;
+
+        bool overlapL = leafL ?
+            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t1 ) && t1 <= distance_to_mesh
+          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t1 ) && t1 <= distance_to_mesh
+          ;
+
+//        if( !overlapL )
+//          {
+//            if( leafL )
+//              {
+//                LOG( debug, "detected that leaf " << intern.left_index << " "
+//                     << m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).bounding.get_min() << " -- "
+//                     << m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).bounding.get_max() << " does not intersect the ray");
+//              }
+//            else
+//              {
+//                LOG( debug, "detected that node " << intern.left_index << " "
+//                     << m_bvh->get_internal_node( intern.left_index ).bounding.get_min() << " -- "
+//                     << m_bvh->get_internal_node( intern.left_index ).bounding.get_max() << " does not intersect the ray");
+//              }
+//          }
+
+        bool overlapR = leafR ?
+            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t2 ) && t2 <= distance_to_mesh
+          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t2 ) && t2 <= distance_to_mesh
+          ;
+
+//        if( !overlapR )
+//          {
+//            if( leafR )
+//              {
+//                LOG( debug, "detected that leaf " << intern.right_index << " "
+//                     << m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).bounding.get_min() << " -- "
+//                     << m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).bounding.get_max() << " does not intersect the ray");
+//              }
+//            else
+//              {
+//                LOG( debug, "detected that node " << intern.right_index << " "
+//                     << m_bvh->get_internal_node( intern.right_index ).bounding.get_min() << " -- "
+//                     << m_bvh->get_internal_node( intern.right_index ).bounding.get_max() << " does not intersect the ray");
+//              }
+//          }
+
+        if( overlapL && leafL && t1 <= distance_to_mesh )
+          {
+            closest_face_index = m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index;
+            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t1 << " in leaf node " << (intern.left_index & bvh_leaf_index_mask) );
+            distance_to_mesh = std::min( distance_to_mesh, t1 );
+            result = true;
+          }
+        if( overlapR && leafR && t2 <= distance_to_mesh )
+          {
+            closest_face_index = m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index;
+            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t2 << " in leaf node " << (intern.right_index & bvh_leaf_index_mask) );
+            result = true;
+            distance_to_mesh = std::min( distance_to_mesh, t2 );
+          }
+        bool traverseL = (overlapL && !leafL );
+        bool traverseR = (overlapR && !leafR );
+        if( !traverseL && !traverseR )
+          {
+            stack.pop_back();
+            node_index = stack.back();
+            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
+          }
+        else
+          {
+            node_index = (traverseL) ? intern.left_index : intern.right_index;
+            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
+            if( traverseL && traverseR )
+              {
+                stack.push_back( intern.right_index );
+              }
+          }
+      }
+    while( node_index );
+    return result;
+  }
+
+  void
+  mesh_spatial_optimization::get_closest_vertex( const vec3& location, size_t& vertex_index, real& distance_to_vertex ) const
+  {
+    m_kdtree.knnSearch( &location.x, 1, &vertex_index, &distance_to_vertex );
   }
 
   bool
@@ -627,7 +731,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   {
     real distance_to_mesh = 0;
     size_t closest_vertex_index = 0;
-    m_kdtree.knnSearch( &p.x, 1, &closest_vertex_index, &distance_to_mesh );
+    get_closest_vertex( p, closest_vertex_index, distance_to_mesh );
 
     //fixme: check if vfit == vfitend to throw an exception
     size_t closest_face_index = m_mesh.vf_begin( mesh::VertexHandle( closest_vertex_index ) )->idx();
@@ -641,58 +745,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
     distance_to_mesh = length( target );
     target *= real(1.0) / distance_to_mesh;
     ray r( p, target );
-    ray_with_inv_dir inv_r( r );
 
-    std::vector< uint32_t > stack;
-    stack.reserve( 64 );
-    stack.push_back( 0 );
-    uint32_t node_index = 0;
-    real t = 0;
-    do
+    distance_to_mesh *= 1.1;
+
+    LOG( error, "checking point " << p );
+    if( !intersect( r,  distance_to_mesh, closest_face_index ) )
       {
-        auto& intern = m_bvh->get_internal_node( node_index );
-        bool leafL = bvh_leaf_mask & intern.left_index;
-        bool leafR = bvh_leaf_mask & intern.right_index;
-
-        bool overlapL = leafL ?
-            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t ) && t <= distance_to_mesh
-          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t ) && t <= distance_to_mesh
-          ;
-        distance_to_mesh = std::min( distance_to_mesh, t );
-
-        bool overlapR = leafR ?
-            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t ) && t <= distance_to_mesh
-          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t ) && t <= distance_to_mesh
-          ;
-        distance_to_mesh = std::min( distance_to_mesh, t );
-
-        if( overlapL && leafL )
-          {
-            closest_face_index = m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index;
-          }
-        if( overlapR && leafR )
-          {
-            closest_face_index = m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index;
-          }
-        bool traverseL = (overlapL && !leafL );
-        bool traverseR = (overlapR && !leafR );
-        if( !traverseL && !traverseR )
-          {
-            stack.pop_back();
-            node_index = stack.back();
-          }
-        else
-          {
-            node_index = (traverseL) ? intern.left_index : intern.right_index;
-            if( traverseL && traverseR )
-              {
-                stack.push_back( intern.right_index );
-              }
-          }
-
+        LOG( error, "WTF?");
       }
-    while( node_index );
-
     auto normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
     return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;
   }
