@@ -33,7 +33,8 @@ namespace graphics_origin {
 namespace application {
 
     simple_camera::simple_camera( QObject* parent )
-      : camera{ parent }, m_direction{}, m_update_time{ omp_get_wtime() },
+      : camera{ parent }, m_direction{},
+        m_update_time{ omp_get_wtime() },
         m_forward{false}, m_left{false}, m_right{false},
         m_backward{false}, m_up{false}, m_down{false}
     {}
@@ -79,18 +80,24 @@ namespace application {
     {
       if( m_forward || m_left || m_right || m_backward )
         {
-          real elapsed_time = omp_get_wtime() - m_update_time;
+          gpu_real factor = glm::length( m_direction );
+          if( factor > 0.01 )
+            {
+              factor = gpu_real((omp_get_wtime() - m_update_time)* 0.5 ) / factor;
+              gpu_vec3 shift = factor * m_direction;
+              if( std::isnan( shift.x ) || std::isnan( shift.y ) || std::isnan( shift.z ) )
+                {
+                  LOG( error, "SHIFT IS NAN = " << shift );
+                }
+              m_view[3][0] += shift.x;
+              m_view[3][1] += shift.y;
+              m_view[3][2] += shift.z;
 
-          gpu_vec3 shift = glm::normalize(m_direction) * gpu_real(elapsed_time) * gpu_real(0.5);
-          m_view[3][0] += shift.x;
-          m_view[3][1] += shift.y;
-          m_view[3][2] += shift.z;
-
-          emit position_changed();
+              emit position_changed();
+            }
         }
       m_update_time = omp_get_wtime();
     }
-
 
   simple_gl_renderer::~simple_gl_renderer()
   {}
@@ -211,7 +218,7 @@ namespace application {
 //      add_renderable( brenderable );
 
       auto mesh = new mesh_renderable( mesh_program );
-      mesh->load( "tutorial/3_application/armadillo.off");
+      mesh->load( "tutorial/3_application/dinopet.off");
       add_renderable( mesh );
     }
 

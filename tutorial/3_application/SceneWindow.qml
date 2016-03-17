@@ -213,7 +213,6 @@ Item {
           cam1.spaceship_rotate( dx, dy )
           prevX = mouse.x
           prevY = mouse.y
-          
         }
       }
       
@@ -249,7 +248,7 @@ Item {
       	  event.accepted = true;
       	} else if( event.key == Qt.Key_D ) {
       	  cam1.set_go_right( false );
-		  event.accepted = true;
+		  		event.accepted = true;
       	} else if( event.key == Qt.Key_Z ) {
       	  cam1.set_go_forward( false );
       	  event.accepted = true;

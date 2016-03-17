@@ -45,12 +45,10 @@ namespace application {
     Q_INVOKABLE void set_go_right( bool right );
     Q_INVOKABLE void set_go_forward( bool forward );
     Q_INVOKABLE void set_go_backward( bool backward );
-
   private:
     void do_update();
 
     gpu_vec3 m_direction;
-
     real m_update_time;
     bool m_forward;
     bool m_left;

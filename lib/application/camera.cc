@@ -1,7 +1,8 @@
 /* Created on: Feb 2, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include <graphics-origin/application/camera.h>
+# include "../../graphics-origin/application/camera.h"
+# include "../../graphics-origin/tools/log.h"
 namespace graphics_origin {
 namespace application {
 
@@ -79,6 +80,13 @@ namespace application {
         for( int j = 0; j < 3; ++ j )
           m_view[3][i] -= m_view[j][i] * pos[j];
       }
+
+    if( std::isnan( m_view[3][0] )
+     || std::isnan( m_view[3][1] )
+     || std::isnan( m_view[3][2] ) )
+    {
+        LOG( error, "IS NAN from " << pos );
+    }
   }
 
   void
@@ -210,12 +218,25 @@ namespace application {
 
     gpu_mat3 rotation = gpu_mat3( m_view );
     gpu_vec3 minus_pos = gpu_vec3( m_view[3] ) * rotation;
+
+    if( std::isnan( minus_pos.x ) || std::isnan( minus_pos.y ) || std::isnan( minus_pos.z ) )
+      {
+        LOG( error, "minus pos is nan = " << minus_pos <<", dmouse = " << mouse_dx << ", " << mouse_dy <<", rotation = \n"
+             << rotation[0] << "\n" << rotation[1] << "\n" << rotation[2] << "\nm_view[3] = " << m_view[3] );
+      }
+
+
+
     // build a rotation matrix to apply to the current rotation:
     //
     rotation = glm::mat3(
                 glm::vec3( cx, sx*sy,-sx*cy),
                 glm::vec3(  0,    cy,    sy),
                 glm::vec3( sx,-cx*sy, cx*cy) ) *rotation;
+
+
+
+
     for( int col = 0; col < 3; ++ col )
         for( int lin = 0; lin < 3; ++ lin )
         {
@@ -223,6 +244,8 @@ namespace application {
         }
 
     set_position( -minus_pos );
+
+    LOG( debug, "m_view = \n" << m_view[0] << "\n" << m_view[1] << "\n" << m_view[2] << "\n" << m_view[3] );
 
     emit position_changed();
     emit forward_changed();
