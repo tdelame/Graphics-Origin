@@ -85,14 +85,14 @@ namespace graphics_origin { namespace application {
   void
   mesh_renderable::do_render()
   {
-    gpu_mat4 temp = m_model;
-    glcheck(glUniform3fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
+    glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
     glcheck(glUniformMatrix3fv( m_program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( m_model ) ) ) ) ));
     glcheck(glBindVertexArray( m_vao ));
-    glcheck(glDrawElements( GL_TRIANGLES, m_mesh.n_vertices() * 3, GL_UNSIGNED_INT, (void*)0));
+    glcheck(glDrawElements( GL_TRIANGLES, m_mesh.n_faces() * 3, GL_UNSIGNED_INT, (void*)0));
+    glcheck(glBindVertexArray( 0 ) );
   }
 
   void

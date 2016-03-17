@@ -1,17 +1,5 @@
 # version 440
-layout (std140, column_major) uniform global_definitions {
-  mat4 projection;
-  mat4 model_view;
-  vec4 light_position;
-  vec4 light_ambient;
-  vec4 light_diffuse;
-  vec4 light_specular;
-  vec4 window_dimensions;
-};
-
-layout( location = 0 ) out vec4 frag_color;
-
-
+out vec4 frag_color;
 
 in vec3 out_normal;
 in vec3 out_vertex;
@@ -36,5 +24,6 @@ void main()
   float nearD = min(min(dist[0],dist[1]),dist[2]);
   float edge_intensity = exp2( -1.0 * nearD * nearD );
   
-  frag_color = edge_intensity * vec4(0.1,0.1,0.1,1.0)+ (1.0 - edge_intensity) *  (vec4(i_ambient + clamp( i_diffuse, 0, 1 ) + clamp( i_specular, 0, 1 ),1)*mesh_color);
+  frag_color =  edge_intensity * vec4(0.1,0.1,0.1,1.0) 
+    + (1.0 - edge_intensity) * ( vec4(i_ambient + clamp( i_diffuse, 0, 1 ) + clamp( i_specular, 0, 1 ),1)*mesh_color);
 }
