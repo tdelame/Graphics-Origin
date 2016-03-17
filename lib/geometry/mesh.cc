@@ -611,7 +611,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       }
 
     m_mesh.compute_bounding_box( bounding_box );
-    LOG( debug, "bounding box = " << bounding_box.get_min() << " -- " << bounding_box.get_max() );
+//    LOG( debug, "bounding box = " << bounding_box.get_min() << " -- " << bounding_box.get_max() );
     m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
     m_kdtree.buildIndex();
   }
@@ -630,9 +630,9 @@ BEGIN_GO_NAMESPACE namespace geometry {
     bool result = false;
     ray_with_inv_dir inv_r( r );
 
-    std::vector< uint32_t > stack;
+    std::vector< std::pair<uint32_t, real> > stack;
     stack.reserve( 64 );
-    stack.push_back( 0 );
+    stack.push_back( std::make_pair( uint32_t(0), real(-1) ) );
     uint32_t node_index = 0;
     do
       {
@@ -643,8 +643,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
         bool leafR = bvh_leaf_mask & intern.right_index;
 
         bool overlapL = leafL ?
-            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t1 ) && t1 <= distance_to_mesh
-          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t1 ) && t1 <= distance_to_mesh
+            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t1 )
+          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t1 )
           ;
 
 //        if( !overlapL )
@@ -664,8 +664,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
 //          }
 
         bool overlapR = leafR ?
-            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t2 ) && t2 <= distance_to_mesh
-          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t2 ) && t2 <= distance_to_mesh
+            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t2 )
+          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t2 )
           ;
 
 //        if( !overlapR )
@@ -687,33 +687,38 @@ BEGIN_GO_NAMESPACE namespace geometry {
         if( overlapL && leafL && t1 <= distance_to_mesh )
           {
             closest_face_index = m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index;
-            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t1 << " in leaf node " << (intern.left_index & bvh_leaf_index_mask) );
+//            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t1 << " in leaf node " << (intern.left_index & bvh_leaf_index_mask) );
             distance_to_mesh = std::min( distance_to_mesh, t1 );
             result = true;
           }
         if( overlapR && leafR && t2 <= distance_to_mesh )
           {
             closest_face_index = m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index;
-            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t2 << " in leaf node " << (intern.right_index & bvh_leaf_index_mask) );
+//            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t2 << " in leaf node " << (intern.right_index & bvh_leaf_index_mask) );
             result = true;
             distance_to_mesh = std::min( distance_to_mesh, t2 );
           }
-        bool traverseL = (overlapL && !leafL );
-        bool traverseR = (overlapR && !leafR );
+        bool traverseL = (overlapL && !leafL && t1 <= distance_to_mesh );
+        bool traverseR = (overlapR && !leafR && t2 <= distance_to_mesh );
         if( !traverseL && !traverseR )
           {
+//            stack.pop_back();
+            while( stack.back().second > distance_to_mesh )
+              stack.pop_back();
+            node_index = stack.back().first;
             stack.pop_back();
-            node_index = stack.back();
-            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
+//            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
           }
         else
           {
-            node_index = (traverseL) ? intern.left_index : intern.right_index;
-            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
             if( traverseL && traverseR )
               {
-                stack.push_back( intern.right_index );
+                node_index = ( t1 < t2 ) ? intern.left_index : intern.right_index;
+                stack.push_back( ( t1 < t2 ) ? std::make_pair( intern.right_index, t2 ) : std::make_pair( intern.left_index, t1 ) );
               }
+            else
+              node_index = (traverseL) ? intern.left_index : intern.right_index;
+//            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
           }
       }
     while( node_index );
@@ -741,17 +746,20 @@ BEGIN_GO_NAMESPACE namespace geometry {
     target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
     target *= real(1.0 / 3.0);
 
+    vec3 temp = target;
+
     target -= p;
     distance_to_mesh = length( target );
     target *= real(1.0) / distance_to_mesh;
     ray r( p, target );
 
-    distance_to_mesh *= 1.1;
+    // look for an intersection
+    distance_to_mesh *= 1.05;
 
-    LOG( error, "checking point " << p );
+//    LOG( error, "checking point " << p << " --> " << temp );
     if( !intersect( r,  distance_to_mesh, closest_face_index ) )
       {
-        LOG( error, "WTF?");
+        LOG( error, "WTF? for " << p << " to " << temp );
       }
     auto normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
     return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;

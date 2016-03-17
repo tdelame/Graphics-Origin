@@ -96,7 +96,7 @@ aabox::intersect( const ray_with_inv_dir& r, real& t ) const
   t2 = ( t1 + m_hsides.z ) * r.m_inv_direction.z;
   t1 = ( t1 - m_hsides.z ) * r.m_inv_direction.z;
 
-  t    = std::max( tmin, std::min( t1, t2 ) );
+  t    = std::max( real(0), std::max( tmin, std::min( t1, t2 ) ) );
   tmax = std::min( tmax, std::max( t1, t2 ) );
 
   return tmax >= std::max( real(0), t );

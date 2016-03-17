@@ -43,8 +43,10 @@ namespace application {
 real unit_random()
 {
   //fixme:
-//  static std::default_random_engine generator( 7 );
-  static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count() );
+  static std::default_random_engine generator( 7 );
+//  static std::minstd_rand0 generator(0);
+//  std::default_random_engine generator;
+//  static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count() );
   static std::uniform_real_distribution<real> distribution( real(0), real(1));
   return distribution(generator);
 }
@@ -252,15 +254,31 @@ real unit_random()
 
 
 
-      const size_t npoints = 1;
+      const size_t npoints = 100000;
       std::vector< std::pair< vec3, bool> > points_data( npoints, std::make_pair( vec3{}, false ) );
 
-//      # pragma omp parallel for
       for( size_t i = 0; i < npoints; ++ i )
         {
-          vec3 p = vec3{ unit_random() - 0.5, unit_random() - 0.5, unit_random() - 0.5} * 2.0 * box.m_hsides + box.m_center;
-          points_data[ i ] = std::make_pair( p, msp.contain( p ) );
+          points_data[ i ].first = vec3{ unit_random() - 0.5, unit_random() - 0.5, unit_random() - 0.5} * 2.0 * box.m_hsides + box.m_center;
         }
+
+      auto time = omp_get_wtime();
+      # pragma omp parallel for
+      for( size_t i = 0; i < npoints; ++ i )
+        {
+          points_data[ i ].second = msp.contain( points_data[i].first );
+        }
+      time = omp_get_wtime() - time;
+      std::cout << "time = " << time << std::endl;
+
+      for( size_t i = 0; i < npoints; ++ i )
+        {
+          std::cout << points_data[i].second;
+          if( ! ((i+1)%100) ) std::cout << std::endl;
+        }
+      std::cout << std::endl;
+
+      exit( EXIT_SUCCESS );
 
       auto points = new points_renderable( flat_program, npoints );
       auto lines = new lines_renderable( flat_program, npoints );
@@ -289,7 +307,6 @@ real unit_random()
 
           if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
             {
-              LOG( info, "youhou");
               lines->add( pair.first, gpu_vec3{1,1,0}, pair.first + distance * direction,
                           gpu_vec3{1,1,0});
             }
