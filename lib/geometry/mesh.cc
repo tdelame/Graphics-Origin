@@ -638,13 +638,13 @@ BEGIN_GO_NAMESPACE namespace geometry {
       {
         real t1 = REAL_MAX;
         real t2 = REAL_MAX;
-        auto& intern = m_bvh->get_internal_node( node_index );
-        bool leafL = bvh_leaf_mask & intern.left_index;
-        bool leafR = bvh_leaf_mask & intern.right_index;
+        auto& node = m_bvh->get_node( node_index );
+        bool leafL = m_bvh->is_leaf( node.left_index );
+        bool leafR = m_bvh->is_leaf( node.right_index );
 
         bool overlapL = leafL ?
-            m_triangles[ m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index ].intersect( r, t1 )
-          : m_bvh->get_internal_node( intern.left_index ).bounding.intersect( inv_r, t1 )
+            m_triangles[ m_bvh->get_node( node.left_index ).element_index ].intersect( r, t1 )
+          : m_bvh->get_node( node.left_index ).bounding.intersect( inv_r, t1 )
           ;
 
 //        if( !overlapL )
@@ -664,8 +664,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
 //          }
 
         bool overlapR = leafR ?
-            m_triangles[ m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index ].intersect( r, t2 )
-          : m_bvh->get_internal_node( intern.right_index ).bounding.intersect( inv_r, t2 )
+            m_triangles[ m_bvh->get_node( node.right_index ).element_index ].intersect( r, t2 )
+          : m_bvh->get_node( node.right_index ).bounding.intersect( inv_r, t2 )
           ;
 
 //        if( !overlapR )
@@ -686,14 +686,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
         if( overlapL && leafL && t1 <= distance_to_mesh )
           {
-            closest_face_index = m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).element_index;
+            closest_face_index = m_bvh->get_node( node.left_index ).element_index;
 //            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t1 << " in leaf node " << (intern.left_index & bvh_leaf_index_mask) );
             distance_to_mesh = std::min( distance_to_mesh, t1 );
             result = true;
           }
         if( overlapR && leafR && t2 <= distance_to_mesh )
           {
-            closest_face_index = m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).element_index;
+            closest_face_index = m_bvh->get_node( node.right_index ).element_index;
 //            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t2 << " in leaf node " << (intern.right_index & bvh_leaf_index_mask) );
             result = true;
             distance_to_mesh = std::min( distance_to_mesh, t2 );
@@ -713,11 +713,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
           {
             if( traverseL && traverseR )
               {
-                node_index = ( t1 < t2 ) ? intern.left_index : intern.right_index;
-                stack.push_back( ( t1 < t2 ) ? std::make_pair( intern.right_index, t2 ) : std::make_pair( intern.left_index, t1 ) );
+                node_index = ( t1 < t2 ) ? node.left_index : node.right_index;
+                stack.push_back( ( t1 < t2 ) ? std::make_pair( node.right_index, t2 ) : std::make_pair( node.left_index, t1 ) );
               }
             else
-              node_index = (traverseL) ? intern.left_index : intern.right_index;
+              node_index = (traverseL) ? node.left_index : node.right_index;
 //            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
           }
       }

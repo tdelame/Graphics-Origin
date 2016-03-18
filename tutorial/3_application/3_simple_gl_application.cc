@@ -254,7 +254,7 @@ real unit_random()
 
 
 
-      const size_t npoints = 100000;
+      const size_t npoints = 10000;
       std::vector< std::pair< vec3, bool> > points_data( npoints, std::make_pair( vec3{}, false ) );
 
       for( size_t i = 0; i < npoints; ++ i )

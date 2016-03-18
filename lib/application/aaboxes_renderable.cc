@@ -137,7 +137,7 @@ namespace graphics_origin { namespace application {
           max_level = std::max( max_level, current_index.second );
           if( !bvh.is_leaf( current_index.first ) )
             {
-              const auto& node = bvh.get_internal_node( current_index.first );
+              const auto& node = bvh.get_node( current_index.first );
               indexes.push_back( std::make_pair( node.left_index, current_index.second + 1));
               indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));
             }
@@ -152,11 +152,11 @@ namespace graphics_origin { namespace application {
         indexes.pop_front();
         if( bvh.is_leaf( current_index.first ) )
           {
-            result->add( bvh.get_leaf_node( current_index.first & geometry::bvh_leaf_index_mask ).bounding, get_color( current_index.second, 0, max_level ) );
+            result->add( bvh.get_node( current_index.first ).bounding, get_color( current_index.second, 0, max_level ) );
           }
         else
           {
-            const auto& node = bvh.get_internal_node( current_index.first );
+            const auto& node = bvh.get_node( current_index.first );
             result->add( node.bounding, get_color( current_index.second, 0, max_level ) );
             indexes.push_back( std::make_pair( node.left_index, current_index.second + 1));
             indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));

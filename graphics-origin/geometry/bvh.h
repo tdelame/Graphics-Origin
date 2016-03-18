@@ -16,9 +16,6 @@
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
-  static constexpr uint32_t bvh_leaf_mask = 0x80000000;
-  static constexpr uint32_t bvh_leaf_index_mask = 0x7FFFFFFF;
-
   template<
     typename bounding_object = aabox >
   class bvh {
@@ -26,19 +23,30 @@ namespace geometry {
     static_assert(
         geometric_traits<bounding_object>::is_bounding_volume_merger,
         "The bounding objects must be bounding volume and must be able to merge themselves");
-    struct internal_node {
-      internal_node();
+
+    /**We store indices in uint32_t. We then have 2^32 nodes in total. Those nodes
+     * are composed of n - 1 internal nodes and n leaves, for a bvh of n primitives.
+     * The maximum number of primitives is the solution of
+     * 2 n = 2^32 - 1
+     * thus n = 2^31 - 1 (since n is an integer).
+     *
+     * The node of index i is a leaf if i >= n - 1
+     */
+
+    /**@brief A unique structure to represent both internal and leaf nodes.
+     *
+     *
+     *
+     */
+    struct node {
+      node();
       bounding_object bounding;
       uint32_t parent_index;
-      uint32_t left_index;
+      union {
+        uint32_t left_index;
+        uint32_t element_index;
+      };
       uint32_t right_index;
-    };
-    struct leaf_node {
-      leaf_node();
-      bounding_object bounding;
-      uint64_t morton_code;
-      uint32_t parent_index;
-      uint32_t element_index;
     };
 
     template< typename bounded_element >
@@ -49,38 +57,33 @@ namespace geometry {
 
     size_t get_number_of_nodes() const
     {
-      return get_number_of_internal_nodes() + get_number_of_leaf_nodes();
+      return m_nodes.size();
     }
+
     size_t get_number_of_internal_nodes() const
     {
-      return m_internals.size();
+      return m_number_of_internal_nodes;
     }
+
     size_t get_number_of_leaf_nodes() const
     {
-      return m_leaves.size();
+      return m_number_of_internal_nodes + 1;
     }
 
-    const internal_node&
-    get_internal_node( uint32_t node_index ) const
+    const node&
+    get_node( uint32_t node_index ) const
     {
-      return m_internals[ node_index ];
+      return m_nodes[ node_index ];
     }
 
-    const leaf_node&
-    get_leaf_node( uint32_t node_index ) const
+    bool is_leaf( uint32_t node_index ) const
     {
-      return m_leaves[ node_index ];
+      return node_index >= m_number_of_internal_nodes;
     }
-
-    bool is_leaf( uint32_t node_index ) const;
 
   private:
-    static const size_t max_number_of_elements = (1U << uint8_t(32)) - 1;
-
-    const size_t m_elements;
-
-    std::vector< leaf_node > m_leaves;
-    std::vector< internal_node > m_internals;
+    const size_t m_number_of_internal_nodes;
+    std::vector< node > m_nodes;
   };
 
   /**@brief Create the leaf nodes of a BVH.
@@ -94,28 +97,18 @@ namespace geometry {
   struct set_leaf_nodes {
     set_leaf_nodes(
       const bounded_element* elements,
-      typename bvh<bounding_object>::leaf_node* leaves,
-      size_t number_of_leaves );
+      std::vector<typename bvh<bounding_object>::node>& nodes,
+      size_t number_of_internals,
+      std::vector<uint64_t>& morton_codes);
 
     set_leaf_nodes(
       const bounded_element* elements,
       bounding_object& root_bounding_object,
-      typename bvh<bounding_object>::leaf_node* leaves,
-      size_t number_of_leaves );
+      std::vector<typename bvh<bounding_object>::node>& nodes,
+      size_t number_of_internals,
+      std::vector<uint64_t>& morton_codes );
   };
 
-  /**@brief Order BVH leaf nodes by increasing Morton code.
-   *
-   * This structure orders BVH leaf nodes by increasing Morton code. It is
-   * used by set_leaf_nodes. */
-  template< typename bounding_object >
-  struct morton_code_order {
-    bool
-    operator()( const typename bvh<bounding_object>::leaf_node& a, const  typename bvh<bounding_object>::leaf_node& b ) const
-    {
-      return a.morton_code < b.morton_code;
-    }
-  };
 }
 END_GO_NAMESPACE
 
