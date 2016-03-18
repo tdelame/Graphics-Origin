@@ -81,6 +81,11 @@ namespace geometry {
       return node_index >= m_number_of_internal_nodes;
     }
 
+    bool is_leaf( const node* pnode ) const
+    {
+      return std::distance( m_nodes.data(), pnode ) >= m_number_of_internal_nodes;
+    }
+
   private:
     const size_t m_number_of_internal_nodes;
     std::vector< node > m_nodes;

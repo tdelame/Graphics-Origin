@@ -254,7 +254,7 @@ real unit_random()
 
 
 
-      const size_t npoints = 10000;
+      const size_t npoints = 1000000;
       std::vector< std::pair< vec3, bool> > points_data( npoints, std::make_pair( vec3{}, false ) );
 
       for( size_t i = 0; i < npoints; ++ i )
@@ -284,35 +284,35 @@ real unit_random()
       auto lines = new lines_renderable( flat_program, npoints );
       for( auto& pair : points_data )
         {
-          points->add( pair.first, pair.second ? gpu_vec3{0,1,0} : gpu_vec3{0,0,1} );
-//
-//          size_t vi = 0;
-//          real distance = 0;
-//          msp.get_closest_vertex( pair.first, vi, distance );
-//
-//          geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
-//
-//          auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
-//          target += mesh->get_geometry().point( *fviter ); ++ fviter;
-//          target += mesh->get_geometry().point( *fviter );
-//          target *= real( 1.0 / 3.0 );
-//
-//
-//          vec3 direction = vec3{ target[0] - pair.first.x,
-//                    target[1] - pair.first.y,
-//                    target[2] - pair.first.z };
-//          distance = glm::length( direction );
-//          direction *= real(1.0) / distance;
-//          distance *= 1.1;
-//
-//          if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
-//            {
+//          points->add( pair.first, pair.second ? gpu_vec3{0,1,0} : gpu_vec3{0,0,1} );
+
+          size_t vi = 0;
+          real distance = 0;
+          msp.get_closest_vertex( pair.first, vi, distance );
+
+          geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
+
+          auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
+          target += mesh->get_geometry().point( *fviter ); ++ fviter;
+          target += mesh->get_geometry().point( *fviter );
+          target *= real( 1.0 / 3.0 );
+
+
+          vec3 direction = vec3{ target[0] - pair.first.x,
+                    target[1] - pair.first.y,
+                    target[2] - pair.first.z };
+          distance = glm::length( direction );
+          direction *= real(1.0) / distance;
+          distance *= 1.1;
+
+          if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
+            {
 //              lines->add( pair.first, gpu_vec3{1,1,0}, pair.first + distance * direction,
 //                          gpu_vec3{1,1,0});
-//            }
-//          else
-//            lines->add( pair.first, gpu_vec3{1,0,0},
-//                        vec3{target[0], target[1], target[2] }, gpu_vec3{1,0,0});
+            }
+          else
+            lines->add( pair.first, gpu_vec3{1,0,0},
+                        vec3{target[0], target[1], target[2] }, gpu_vec3{1,0,0});
         }
       add_renderable( points );
       add_renderable( lines );

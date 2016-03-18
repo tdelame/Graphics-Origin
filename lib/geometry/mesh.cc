@@ -595,6 +595,24 @@ BEGIN_GO_NAMESPACE namespace geometry {
     : m_mesh{ m }, m_kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} },
       m_triangles( m.n_faces() )
   {
+      {
+        bool ok = true;
+        const auto nvertices = m.n_vertices();
+        # pragma omp parallel for schedule(static)
+        for( size_t i = 0; i < nvertices; ++i )
+          {
+            if( !m.is_manifold( mesh::VertexHandle(i) ) )
+              {
+                ok = false;
+              }
+          }
+        if(!ok)
+          {
+            LOG( fatal, "input mesh is not manifold. Cannot build a spatial optimization");
+            throw std::runtime_error("non manifold mesh");
+          }
+      }
+
     const auto nfaces  = m_triangles.size();
     # pragma omp parallel for schedule(static)
     for( size_t i = 0; i < nfaces; ++ i )
@@ -611,7 +629,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
       }
 
     m_mesh.compute_bounding_box( bounding_box );
-//    LOG( debug, "bounding box = " << bounding_box.get_min() << " -- " << bounding_box.get_max() );
     m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
     m_kdtree.buildIndex();
   }
@@ -620,7 +637,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   mesh_spatial_optimization::intersect( const ray& r, real& t ) const
   {
     size_t dummy = 0;
-//    t = REAL_MAX;
+    t = REAL_MAX; //no result yet, so do not limit the research area
     return intersect( r, t, dummy );
   }
 
@@ -630,98 +647,58 @@ BEGIN_GO_NAMESPACE namespace geometry {
     bool result = false;
     ray_with_inv_dir inv_r( r );
 
-    std::vector< std::pair<uint32_t, real> > stack;
+    const bvh<geometry::aabox>::node* pnode = &m_bvh->get_node( 0 );
+    std::vector< std::pair<const bvh<geometry::aabox>::node*, real> > stack;
     stack.reserve( 64 );
-    stack.push_back( std::make_pair( uint32_t(0), real(-1) ) );
-    uint32_t node_index = 0;
+    stack.push_back( std::make_pair( nullptr, real(-1) ) );
+
     do
       {
+
         real t1 = REAL_MAX;
         real t2 = REAL_MAX;
-        auto& node = m_bvh->get_node( node_index );
-        bool leafL = m_bvh->is_leaf( node.left_index );
-        bool leafR = m_bvh->is_leaf( node.right_index );
+        auto childL = &m_bvh->get_node( pnode->left_index );
+        auto childR = &m_bvh->get_node( pnode->right_index );
 
-        bool overlapL = leafL ?
-            m_triangles[ m_bvh->get_node( node.left_index ).element_index ].intersect( r, t1 )
-          : m_bvh->get_node( node.left_index ).bounding.intersect( inv_r, t1 )
-          ;
+        // check if the ray intersects the bounding objects inside the research area
+        bool overlapL = childL->bounding.intersect( inv_r, t1 ) && t1 <= distance_to_mesh;
+        bool overlapR = childR->bounding.intersect( inv_r, t2 ) && t2 <= distance_to_mesh;
 
-//        if( !overlapL )
-//          {
-//            if( leafL )
-//              {
-//                LOG( debug, "detected that leaf " << intern.left_index << " "
-//                     << m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).bounding.get_min() << " -- "
-//                     << m_bvh->get_leaf_node( intern.left_index & bvh_leaf_index_mask ).bounding.get_max() << " does not intersect the ray");
-//              }
-//            else
-//              {
-//                LOG( debug, "detected that node " << intern.left_index << " "
-//                     << m_bvh->get_internal_node( intern.left_index ).bounding.get_min() << " -- "
-//                     << m_bvh->get_internal_node( intern.left_index ).bounding.get_max() << " does not intersect the ray");
-//              }
-//          }
-
-        bool overlapR = leafR ?
-            m_triangles[ m_bvh->get_node( node.right_index ).element_index ].intersect( r, t2 )
-          : m_bvh->get_node( node.right_index ).bounding.intersect( inv_r, t2 )
-          ;
-
-//        if( !overlapR )
-//          {
-//            if( leafR )
-//              {
-//                LOG( debug, "detected that leaf " << intern.right_index << " "
-//                     << m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).bounding.get_min() << " -- "
-//                     << m_bvh->get_leaf_node( intern.right_index & bvh_leaf_index_mask ).bounding.get_max() << " does not intersect the ray");
-//              }
-//            else
-//              {
-//                LOG( debug, "detected that node " << intern.right_index << " "
-//                     << m_bvh->get_internal_node( intern.right_index ).bounding.get_min() << " -- "
-//                     << m_bvh->get_internal_node( intern.right_index ).bounding.get_max() << " does not intersect the ray");
-//              }
-//          }
-
-        if( overlapL && leafL && t1 <= distance_to_mesh )
+        if( overlapL && m_bvh->is_leaf( childL ) && m_triangles[ childL->element_index ].intersect( r, t1 ) && t1 <= distance_to_mesh )
           {
-            closest_face_index = m_bvh->get_node( node.left_index ).element_index;
-//            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t1 << " in leaf node " << (intern.left_index & bvh_leaf_index_mask) );
-            distance_to_mesh = std::min( distance_to_mesh, t1 );
+            closest_face_index = childL->element_index;
+            distance_to_mesh = t1;
             result = true;
           }
-        if( overlapR && leafR && t2 <= distance_to_mesh )
+
+        if( overlapR && m_bvh->is_leaf( childR ) && m_triangles[ childR->element_index ].intersect( r, t2 ) && t2 <= distance_to_mesh )
           {
-            closest_face_index = m_bvh->get_node( node.right_index ).element_index;
-//            LOG( debug, "found candidate #" << closest_face_index <<" at distance = " << t2 << " in leaf node " << (intern.right_index & bvh_leaf_index_mask) );
+            closest_face_index = childR->element_index;
+            distance_to_mesh = t2;
             result = true;
-            distance_to_mesh = std::min( distance_to_mesh, t2 );
           }
-        bool traverseL = (overlapL && !leafL && t1 <= distance_to_mesh );
-        bool traverseR = (overlapR && !leafR && t2 <= distance_to_mesh );
+
+        bool traverseL = (overlapL && !m_bvh->is_leaf( childL ) );
+        bool traverseR = (overlapR && !m_bvh->is_leaf( childR ) );
         if( !traverseL && !traverseR )
           {
-//            stack.pop_back();
             while( stack.back().second > distance_to_mesh )
               stack.pop_back();
-            node_index = stack.back().first;
+            pnode = stack.back().first;
             stack.pop_back();
-//            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
           }
         else
           {
             if( traverseL && traverseR )
               {
-                node_index = ( t1 < t2 ) ? node.left_index : node.right_index;
-                stack.push_back( ( t1 < t2 ) ? std::make_pair( node.right_index, t2 ) : std::make_pair( node.left_index, t1 ) );
+                pnode = (t1 < t2 ) ? childL : childR;
+                stack.push_back( (t1 < t2) ? std::make_pair( childR, t2 ) : std::make_pair( childL, t1 ) );
               }
             else
-              node_index = (traverseL) ? node.left_index : node.right_index;
-//            LOG( debug, "going to node #" << node_index << ": " << m_bvh->get_internal_node( node_index ).bounding.get_min() << " -- " << m_bvh->get_internal_node( node_index ).bounding.get_max() );
+              pnode = (traverseL) ? childL : childR;
           }
       }
-    while( node_index );
+    while( pnode );
     return result;
   }
 
@@ -738,7 +715,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     size_t closest_vertex_index = 0;
     get_closest_vertex( p, closest_vertex_index, distance_to_mesh );
 
-    //fixme: check if vfit == vfitend to throw an exception
     size_t closest_face_index = m_mesh.vf_begin( mesh::VertexHandle( closest_vertex_index ) )->idx();
 
     vec3 target = m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V0 );
@@ -756,7 +732,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     // look for an intersection
     distance_to_mesh *= 1.05;
 
-//    LOG( error, "checking point " << p << " --> " << temp );
     if( !intersect( r,  distance_to_mesh, closest_face_index ) )
       {
         LOG( error, "WTF? for " << p << " to " << temp );
