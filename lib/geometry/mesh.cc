@@ -11,7 +11,6 @@
 # include <OpenMesh/Core/IO/IOManager.hh>
 
 BEGIN_GO_NAMESPACE namespace geometry {
-
   static const std::string obj_file_extension = ".obj";
   static const std::string off_file_extension = ".off";
   static const std::string ply_file_extension = ".ply";
@@ -537,6 +536,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
     load( filename );
   }
 
+  void mesh::clean()
+  {
+    garbage_collection(true,true,true);
+  }
+
   bool
   mesh::load( const std::string& filename )
   {
@@ -589,11 +593,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
   mesh_spatial_optimization::~mesh_spatial_optimization()
   {
     delete m_bvh;
+    delete m_kdtree;
   }
 
-  mesh_spatial_optimization::mesh_spatial_optimization( mesh& m )
-    : m_mesh{ m }, m_kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} },
-      m_triangles( m.n_faces() )
+  mesh_spatial_optimization::mesh_spatial_optimization( mesh& m, bool build_the_ktree, bool build_the_bvh )
+    : m_points{ &m.point( mesh::VertexHandle(0) )[0] },
+      m_normals{ &m.normal( mesh::VertexHandle(0) )[0] },
+      m_mesh{ m }, m_kdtree{ nullptr },
+      m_bvh{ nullptr }
   {
       {
         bool ok = true;
@@ -612,32 +619,49 @@ BEGIN_GO_NAMESPACE namespace geometry {
             throw std::runtime_error("non manifold mesh");
           }
       }
-
-    const auto nfaces  = m_triangles.size();
-    # pragma omp parallel for schedule(static)
-    for( size_t i = 0; i < nfaces; ++ i )
+      m_mesh.compute_bounding_box( bounding_box );
+      if( build_the_ktree ) build_kdtree();
+      if( build_the_bvh ) build_bvh();
+  }
+  void mesh_spatial_optimization::build_bvh()
+  {
+    if( m_triangles.empty() )
       {
-        mesh::FaceVertexIter it = m.fv_begin( mesh::FaceHandle(i) );
-        auto& p1 = m_mesh.point( *it ); ++ it;
-        auto& p2 = m_mesh.point( *it ); ++ it;
-        auto& p3 = m_mesh.point( *it );
+        m_triangles.resize( m_mesh.n_faces() );
+        const auto nfaces  = m_triangles.size();
+        # pragma omp parallel for schedule(static)
+        for( size_t i = 0; i < nfaces; ++ i )
+          {
+            mesh::FaceVertexIter it = m_mesh.fv_begin( mesh::FaceHandle(i) );
+            auto& p1 = m_mesh.point( *it ); ++ it;
+            auto& p2 = m_mesh.point( *it ); ++ it;
+            auto& p3 = m_mesh.point( *it );
 
-        m_triangles[ i ] = triangle(
-            vec3{ p1[0], p1[1], p1[2] },
-            vec3{ p2[0], p2[1], p2[2] },
-            vec3{ p3[0], p3[1], p3[2] } );
+            m_triangles[ i ] = triangle(
+                vec3{ p1[0], p1[1], p1[2] },
+                vec3{ p2[0], p2[1], p2[2] },
+                vec3{ p3[0], p3[1], p3[2] } );
+          }
+        m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
       }
+  }
 
-    m_mesh.compute_bounding_box( bounding_box );
-    m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
-    m_kdtree.buildIndex();
+  void mesh_spatial_optimization::build_kdtree()
+  {
+    if( !m_kdtree )
+      {
+        m_kdtree = new nanoflann::KDTreeSingleIndexAdaptor<
+            nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization >,
+            mesh_spatial_optimization
+            >{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} };
+        m_kdtree->buildIndex();
+      }
   }
 
   bool
   mesh_spatial_optimization::intersect( const ray& r, real& t ) const
   {
     size_t dummy = 0;
-    t = REAL_MAX; //no result yet, so do not limit the research area
     return intersect( r, t, dummy );
   }
 
@@ -645,6 +669,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   mesh_spatial_optimization::intersect( const ray& r, real& distance_to_mesh, size_t& closest_face_index ) const
   {
     bool result = false;
+    distance_to_mesh = REAL_MAX;
     ray_with_inv_dir inv_r( r );
 
     const bvh<geometry::aabox>::node* pnode = &m_bvh->get_node( 0 );
@@ -703,14 +728,26 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   void
-  mesh_spatial_optimization::get_closest_vertex( const vec3& location, size_t& vertex_index, real& distance_to_vertex ) const
+  mesh_spatial_optimization::get_closest_vertex( const vec3& location, size_t& vertex_index, real& squared_distance_to_vertex ) const
   {
-    m_kdtree.knnSearch( &location.x, 1, &vertex_index, &distance_to_vertex );
+    m_kdtree->knnSearch( &location.x, 1, &vertex_index, &squared_distance_to_vertex );
+  }
+
+  void
+  mesh_spatial_optimization::k_nearest_vertices(
+      const vec3& location, uint32_t k, size_t* indices, real* squared_distances )
+  {
+    m_kdtree->knnSearch( &location.x, k, indices, squared_distances );
   }
 
   bool
   mesh_spatial_optimization::contain( const vec3& p ) const
   {
+    /* We find the closest face to the point and we cast a ray to its
+     * middle. Doing so is slower than just casting a ray in a random
+     * direction, but is also much more robust. Indeed, we avoid all
+     * cases that would require numeric precision handling.
+     */
     real distance_to_mesh = 0;
     size_t closest_vertex_index = 0;
     get_closest_vertex( p, closest_vertex_index, distance_to_mesh );
@@ -722,22 +759,33 @@ BEGIN_GO_NAMESPACE namespace geometry {
     target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
     target *= real(1.0 / 3.0);
 
-    vec3 temp = target;
-
     target -= p;
     distance_to_mesh = length( target );
     target *= real(1.0) / distance_to_mesh;
     ray r( p, target );
 
-    // look for an intersection
-    distance_to_mesh *= 1.05;
-
     if( !intersect( r,  distance_to_mesh, closest_face_index ) )
       {
-        LOG( error, "WTF? for " << p << " to " << temp );
+        LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction );
       }
     auto normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
     return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;
+  }
+
+  bvh<aabox>* mesh_spatial_optimization::get_bvh()
+          {
+        return m_bvh;
+          }
+
+  mesh& mesh_spatial_optimization::get_geometry()
+  {
+    return m_mesh;
+  }
+
+  const aabox&
+  mesh_spatial_optimization::get_bounding_box() const
+  {
+    return bounding_box;
   }
 
 } END_GO_NAMESPACE

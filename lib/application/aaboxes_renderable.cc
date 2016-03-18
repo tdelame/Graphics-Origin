@@ -162,8 +162,6 @@ namespace graphics_origin { namespace application {
             indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));
           }
       }
-    LOG( debug, "max depth = " << max_level );
-
     return result;
   }
 

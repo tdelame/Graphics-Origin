@@ -106,10 +106,10 @@ real unit_random()
             {
               factor = gpu_real((omp_get_wtime() - m_update_time)* 0.5 ) / factor;
               gpu_vec3 shift = factor * m_direction;
-              if( std::isnan( shift.x ) || std::isnan( shift.y ) || std::isnan( shift.z ) )
-                {
-                  LOG( error, "SHIFT IS NAN = " << shift );
-                }
+//              if( std::isnan( shift.x ) || std::isnan( shift.y ) || std::isnan( shift.z ) )
+//                {
+//                  LOG( error, "SHIFT IS NAN = " << shift );
+//                }
               m_view[3][0] += shift.x;
               m_view[3][1] += shift.y;
               m_view[3][2] += shift.z;
@@ -209,7 +209,7 @@ real unit_random()
 
 //      size_t nb_balls = 0;
 //      size_t nline = 0;
-//      std::ifstream input( "tutorial/3_application/bumpy_torus.balls");
+//      std::ifstream input( "btorus.balls");//tutorial/3_application/bumpy_torus.balls");
 //
 //      {
 //        std::istringstream tokenizer( get_next_line( input, nline ) );
@@ -240,20 +240,19 @@ real unit_random()
 //      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
 //      add_renderable( brenderable );
 
-
       auto mesh = new mesh_renderable( mesh_program );
       mesh->load( "tutorial/3_application/dinopet.off");
       add_renderable( mesh );
       geometry::mesh_spatial_optimization msp( mesh->get_geometry() );
 
-//      auto bbox = new aaboxes_renderable( box_wireframe_program, 1 );
+      auto bbox = new aaboxes_renderable( box_wireframe_program, 1 );
       geometry::aabox box;
       mesh->get_geometry().compute_bounding_box( box );
 //      bbox->add( box, gpu_vec3{1,0,0});
 //      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, *msp.get_bvh()));
-
-
-
+//
+//
+//
       const size_t npoints = 1000000;
       std::vector< std::pair< vec3, bool> > points_data( npoints, std::make_pair( vec3{}, false ) );
 
@@ -281,41 +280,41 @@ real unit_random()
 //      exit( EXIT_SUCCESS );
 
       auto points = new points_renderable( flat_program, npoints );
-      auto lines = new lines_renderable( flat_program, npoints );
+//      auto lines = new lines_renderable( flat_program, npoints );
       for( auto& pair : points_data )
         {
-//          points->add( pair.first, pair.second ? gpu_vec3{0,1,0} : gpu_vec3{0,0,1} );
-
-          size_t vi = 0;
-          real distance = 0;
-          msp.get_closest_vertex( pair.first, vi, distance );
-
-          geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
-
-          auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
-          target += mesh->get_geometry().point( *fviter ); ++ fviter;
-          target += mesh->get_geometry().point( *fviter );
-          target *= real( 1.0 / 3.0 );
-
-
-          vec3 direction = vec3{ target[0] - pair.first.x,
-                    target[1] - pair.first.y,
-                    target[2] - pair.first.z };
-          distance = glm::length( direction );
-          direction *= real(1.0) / distance;
-          distance *= 1.1;
-
-          if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
-            {
-//              lines->add( pair.first, gpu_vec3{1,1,0}, pair.first + distance * direction,
-//                          gpu_vec3{1,1,0});
-            }
-          else
-            lines->add( pair.first, gpu_vec3{1,0,0},
-                        vec3{target[0], target[1], target[2] }, gpu_vec3{1,0,0});
+          points->add( pair.first, pair.second ? gpu_vec3{0,1,0} : gpu_vec3{0,0,1} );
+//
+//          size_t vi = 0;
+//          real distance = 0;
+//          msp.get_closest_vertex( pair.first, vi, distance );
+//
+//          geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
+//
+//          auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
+//          target += mesh->get_geometry().point( *fviter ); ++ fviter;
+//          target += mesh->get_geometry().point( *fviter );
+//          target *= real( 1.0 / 3.0 );
+//
+//
+//          vec3 direction = vec3{ target[0] - pair.first.x,
+//                    target[1] - pair.first.y,
+//                    target[2] - pair.first.z };
+//          distance = glm::length( direction );
+//          direction *= real(1.0) / distance;
+//          distance *= 1.1;
+//
+//          if( msp.intersect( geometry::ray( pair.first, direction ), distance ) )
+//            {
+////              lines->add( pair.first, gpu_vec3{1,1,0}, pair.first + distance * direction,
+////                          gpu_vec3{1,1,0});
+//            }
+//          else
+//            lines->add( pair.first, gpu_vec3{1,0,0},
+//                        vec3{target[0], target[1], target[2] }, gpu_vec3{1,0,0});
         }
       add_renderable( points );
-      add_renderable( lines );
+//      add_renderable( lines );
     }
 
 
