@@ -6,7 +6,7 @@ in vec3 out_vertex;
 noperspective in vec3 dist;
 
 uniform vec3 light_position;// = vec4(0,0,0,1);
-const vec4 light_ambient  = vec4(0.1, 0.1, 0.1, 1);
+const vec4 light_ambient  = vec4(0.3, 0.3, 0.3, 1);
 const vec4 light_specular = vec4(1.0, 1.0, 1.0, 1);
 const vec4 light_diffuse  = vec4(1.0, 1.0, 1.0, 1);
 const vec4 mesh_color     = vec4(0.3, 0.5, 0.9, 1);

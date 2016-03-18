@@ -13,6 +13,6 @@ out vec3 camera_normal;
 void main()
 {
   camera_vertex = vec3(view * model * vec4( position, 1.0 ));
-  camera_normal = nit * normal;
+  camera_normal = (view * vec4( nit * normal, 0 )).xyz;
   gl_Position = projection * vec4(camera_vertex,1.0);
 }
