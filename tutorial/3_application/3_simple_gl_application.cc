@@ -209,13 +209,12 @@ real unit_random()
 
       size_t nb_balls = 0;
       size_t nline = 0;
-      std::ifstream input( "btorus.balls");//tutorial/3_application/bumpy_torus.balls");
+      std::ifstream input( "dinopet.balls");//tutorial/3_application/bumpy_torus.balls");
 
       {
         std::istringstream tokenizer( get_next_line( input, nline ) );
         tokenizer >> nb_balls;
       }
-      auto brenderable = new balls_renderable( balls_program, nb_balls );
       std::vector< geometry::ball> balls( nb_balls );
       for( size_t i = 0; i < nb_balls; ++ i )
         {
@@ -231,20 +230,68 @@ real unit_random()
           else
             {
               balls[ i ] = geometry::ball( c, radius );
-              brenderable->add( geometry::ball( c, radius ));
             }
         }
       input.close();
-//      geometry::bvh<geometry::aabox> bvh( balls.data(), nb_balls );
-
-//      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
-      add_renderable( brenderable );
-      return;
 
       auto mesh = new mesh_renderable( mesh_program );
+      auto lines = new lines_renderable( flat_program, nb_balls );
       mesh->load( "tutorial/3_application/dinopet.off");
       add_renderable( mesh );
       geometry::mesh_spatial_optimization msp( mesh->get_geometry() );
+
+      {
+        auto points = new points_renderable( flat_program, nb_balls );
+        for( size_t i = 0; i < nb_balls; ++ i )
+          {
+            vec3 p = vec3( balls[ i ] );
+            if( msp.contain( p ) )
+              {
+//                points->add( p, gpu_vec3{1,0,0} );
+              }
+            else
+              {
+                points->add( p, gpu_vec3{0.1, 0.1, 0.1});
+
+
+                size_t vi = 0;
+                real distance = 0;
+                msp.get_closest_vertex( p, vi, distance );
+
+                geometry::mesh::FaceVertexIter fviter = mesh->get_geometry().fv_begin( *mesh->get_geometry().vf_begin( geometry::mesh::VertexHandle( vi ) ) );
+
+                auto target = mesh->get_geometry().point( *fviter ); ++ fviter;
+                target += mesh->get_geometry().point( *fviter ); ++ fviter;
+                target += mesh->get_geometry().point( *fviter );
+                target *= real( 1.0 / 3.0 );
+
+
+                vec3 direction = vec3{ target[0] - p.x,
+                          target[1] - p.y,
+                          target[2] - p.z };
+                distance = glm::length( direction );
+                direction *= real(1.0) / distance;
+                distance *= 1.1;
+
+                points->add( gpu_vec3{target[0], target[1], target[2]}, gpu_vec3{1,0,0});
+
+//                lines->add( p, gpu_vec3{0,1,0}, vec3{target[0], target[1], target[2] }, gpu_vec3{0,1,0});
+                if( msp.intersect( geometry::ray( p, direction ), distance ) )
+                  {
+                    lines->add( p, gpu_vec3{1,0,0}, p + distance * direction, gpu_vec3{1,0,0});
+                  }
+                else
+                  lines->add( p, gpu_vec3{0,0,1}, p + distance * direction, gpu_vec3{0,0,1});
+
+              }
+          }
+        add_renderable( points );
+        add_renderable( lines );
+        return;
+      }
+      return;
+
+
 
       auto bbox = new aaboxes_renderable( box_wireframe_program, 1 );
       geometry::aabox box;

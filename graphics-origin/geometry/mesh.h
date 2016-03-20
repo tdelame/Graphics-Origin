@@ -5,9 +5,16 @@
 # define GRAPHICS_ORIGIN_MESH_H_
 # include "../graphics_origin.h"
 # include "traits.h"
-# include "bvh.h"
-# include "../extlibs/nanoflann.h"
+# include "box.h"
 # include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+
+namespace nanoflann {
+  template <typename Distance, class DatasetAdaptor,int DIM, typename IndexType>
+  class KDTreeSingleIndexAdaptor;
+
+  template<class T, class DataSource, typename _DistanceType>
+  struct L2_Simple_Adaptor;
+}
 
 BEGIN_GO_NAMESPACE namespace geometry {
 
@@ -31,6 +38,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
                          |   OpenMesh::Attributes::Color        ) );
     };
   }
+  class ray;
+  class triangle;
 
   /**@brief A triangular mesh class.
    *
@@ -86,9 +95,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
     static const bool is_bounding_box_computer = true;
   };
 
-  class aabox;
-  class ray;
-  class triangle;
+
+
+  template<
+    typename bounding_object >
+  class bvh;
 
   /**@brief Implement some operations on a mesh with spatial optimization.
    *
@@ -313,8 +324,9 @@ BEGIN_GO_NAMESPACE namespace geometry {
     const real* m_normals;
     mesh& m_mesh;
     nanoflann::KDTreeSingleIndexAdaptor<
-     nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization >,
-     mesh_spatial_optimization
+     nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization, real >,
+     mesh_spatial_optimization,
+     3, size_t
      >* m_kdtree;
     bvh<aabox>* m_bvh;
   };

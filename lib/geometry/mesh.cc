@@ -1,6 +1,7 @@
 /*  Created on: Mar 14, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
+# include "../../graphics-origin/geometry/bvh.h"
 # include "../../graphics-origin/geometry/mesh.h"
 # include "../../graphics-origin/geometry/box.h"
 # include "../../graphics-origin/geometry/triangle.h"
@@ -9,6 +10,8 @@
 
 # include <OpenMesh/Core/IO/exporter/BaseExporter.hh>
 # include <OpenMesh/Core/IO/IOManager.hh>
+
+# include "../../graphics-origin/extlibs/nanoflann.h"
 
 BEGIN_GO_NAMESPACE namespace geometry {
   static const std::string obj_file_extension = ".obj";
@@ -651,9 +654,9 @@ BEGIN_GO_NAMESPACE namespace geometry {
     if( !m_kdtree )
       {
         m_kdtree = new nanoflann::KDTreeSingleIndexAdaptor<
-            nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization >,
-            mesh_spatial_optimization
-            >{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} };
+            nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization, real >,
+            mesh_spatial_optimization,
+            3, size_t >{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} };
         m_kdtree->buildIndex();
       }
   }
