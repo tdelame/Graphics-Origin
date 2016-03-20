@@ -162,6 +162,7 @@ namespace application {
 
         current->makeCurrent(window());
         initialize_glew_for_current_context();
+        initialize_current_context();
         QMetaObject::invokeMethod(this, "ready");
         return nullptr;
       }

@@ -207,38 +207,39 @@ real unit_random()
             "shaders/mesh.frag"});
 
 
-//      size_t nb_balls = 0;
-//      size_t nline = 0;
-//      std::ifstream input( "btorus.balls");//tutorial/3_application/bumpy_torus.balls");
-//
-//      {
-//        std::istringstream tokenizer( get_next_line( input, nline ) );
-//        tokenizer >> nb_balls;
-//      }
-//      auto brenderable = new balls_renderable( balls_program, nb_balls );
-//      std::vector< geometry::ball> balls( nb_balls );
-//      for( size_t i = 0; i < nb_balls; ++ i )
-//        {
-//          std::string line_string = get_next_line( input, nline );
-//          std::istringstream tokenizer( line_string );
-//          vec3 c;
-//          real radius;
-//          tokenizer >> c.x >> c.y >> c.z >> radius;
-//          if( tokenizer.fail() )
-//            {
-//              LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
-//            }
-//          else
-//            {
-//              balls[ i ] = geometry::ball( c, radius );
-//              brenderable->add( geometry::ball( c, radius ));
-//            }
-//        }
-//      input.close();
+      size_t nb_balls = 0;
+      size_t nline = 0;
+      std::ifstream input( "btorus.balls");//tutorial/3_application/bumpy_torus.balls");
+
+      {
+        std::istringstream tokenizer( get_next_line( input, nline ) );
+        tokenizer >> nb_balls;
+      }
+      auto brenderable = new balls_renderable( balls_program, nb_balls );
+      std::vector< geometry::ball> balls( nb_balls );
+      for( size_t i = 0; i < nb_balls; ++ i )
+        {
+          std::string line_string = get_next_line( input, nline );
+          std::istringstream tokenizer( line_string );
+          vec3 c;
+          real radius;
+          tokenizer >> c.x >> c.y >> c.z >> radius;
+          if( tokenizer.fail() )
+            {
+              LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
+            }
+          else
+            {
+              balls[ i ] = geometry::ball( c, radius );
+              brenderable->add( geometry::ball( c, radius ));
+            }
+        }
+      input.close();
 //      geometry::bvh<geometry::aabox> bvh( balls.data(), nb_balls );
-//
+
 //      add_renderable( aaboxes_renderable_from_box_bvh( box_wireframe_program, bvh ) );
-//      add_renderable( brenderable );
+      add_renderable( brenderable );
+      return;
 
       auto mesh = new mesh_renderable( mesh_program );
       mesh->load( "tutorial/3_application/dinopet.off");

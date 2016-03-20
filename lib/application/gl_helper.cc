@@ -46,5 +46,11 @@ namespace application {
      LOG(info, "  + Vendor = " << glGetString(GL_VENDOR) )
      LOG(info, "  + Renderer = " << glGetString(GL_RENDERER) )
   }
+
+  void initialize_current_context()
+  {
+    glEnable( GL_CULL_FACE );
+    glCullFace( GL_BACK );
+  }
 }
 END_GO_NAMESPACE
