@@ -746,39 +746,75 @@ BEGIN_GO_NAMESPACE namespace geometry {
   bool
   mesh_spatial_optimization::contain( const vec3& p ) const
   {
-    /* We find the closest face to the point and we cast a ray to its
-     * middle. Doing so is slower than just casting a ray in a random
-     * direction, but is also much more robust. Indeed, we avoid all
-     * cases that would require numeric precision handling.
+    /* To detect if a point is inside a surface, we can cast a ray starting
+     * at that point. If there is no intersection, the point is outside. If
+     * there are intersections, we choose the closest one. The normal at the
+     * closest intersection should be in the same direction as the ray (positive
+     * dot product) if the point is inside the mesh.
+     *
+     * In order to be robust, we have two choices:
+     *  - we deal with numerical precision
+     *  - we choose wisely our ray.
+     *
+     * Since I am not at ease with numerical precision, I prefer the second solution.
+     * I start to collect the closest vertex from that point. Then, I choose a face
+     * incident to that vertex. This face is chosen in order to maximize the absolute
+     * value of the dot product between the normal of the face and the ray direction.
+     * Speaking of which, the ray direction points to the middle point of the face.
+     * By doing so, we cast a ray in a direction that is unlikely to hit another face.
      */
     real distance_to_mesh = 0;
     size_t closest_vertex_index = 0;
     get_closest_vertex( p, closest_vertex_index, distance_to_mesh );
 
-    size_t closest_face_index = m_mesh.vf_begin( mesh::VertexHandle( closest_vertex_index ) )->idx();
+    auto vh = mesh::VertexHandle( closest_vertex_index );
+    auto vfit = m_mesh.vf_begin( vh ), vfitend = m_mesh.vf_end( vh );
 
+    size_t closest_face_index = vfit->idx();
     vec3 target = m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V0 );
     target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V1 );
     target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
     target *= real(1.0 / 3.0);
+    target = normalize( target -  p );
 
-    target -= p;
-    distance_to_mesh = length( target );
-    target *= real(1.0) / distance_to_mesh;
+    auto normal = m_mesh.normal( *vfit );
+    real score = std::abs( normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] );
+    ++vfit;
+    while( vfit != vfitend )
+      {
+        size_t fid = vfit->idx();
+        vec3 new_target = m_triangles[ fid ].get_vertex( triangle::vertex_index::V0 );
+        new_target += m_triangles[ fid ].get_vertex( triangle::vertex_index::V1 );
+        new_target += m_triangles[ fid ].get_vertex( triangle::vertex_index::V2 );
+        new_target *= real(1.0 / 3.0);
+        new_target = normalize( new_target - p );
+        auto new_normal = m_mesh.normal( *vfit );
+        real new_score = std::abs(
+            new_normal[0] * new_target[0] + new_normal[1] * new_target[1] + new_normal[2] * new_target[2] );
+        if( new_score > score )
+          {
+            score = new_score;
+            target = new_target;
+            normal = new_normal;
+          }
+        ++vfit;
+      }
+
+
     ray r( p, target );
 
     if( !intersect( r,  distance_to_mesh, closest_face_index ) )
       {
         LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction );
       }
-    auto normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
+    else normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
     return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;
   }
 
   bvh<aabox>* mesh_spatial_optimization::get_bvh()
-          {
-        return m_bvh;
-          }
+  {
+    return m_bvh;
+  }
 
   mesh& mesh_spatial_optimization::get_geometry()
   {

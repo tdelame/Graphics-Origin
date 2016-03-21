@@ -32,6 +32,14 @@ namespace geometry {
     bool intersect( const aabox& b ) const;
     bool contain( const vec3& p ) const;
     void merge( const ball& other );
+
+    /**@brief Check if this is a valid ball.
+     *
+     * Check if this ball is valid, i.e. if the values are not NaN, not infinite,
+     * not subnormal if the ball has a non negative radius.
+     * @return True if the ball is valid.
+     */
+    bool is_valid() const noexcept;
   };
 
   template<>

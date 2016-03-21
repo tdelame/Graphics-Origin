@@ -4,6 +4,8 @@
 # include "../../graphics-origin/geometry/ball.h"
 # include "../../graphics-origin/geometry/box.h"
 # include "../../graphics-origin/tools/log.h"
+
+# include <cmath>
 BEGIN_GO_NAMESPACE
 namespace geometry {
 
@@ -74,6 +76,20 @@ namespace geometry {
   {
     auto diff = vec3{ p.x - x, p.y - y, p.z };
     return dot( diff, diff ) <= w * w;
+  }
+
+  bool ball::is_valid() const noexcept
+  {
+    int ix = std::fpclassify( x ),
+        iy = std::fpclassify( y ),
+        iz = std::fpclassify( z ),
+        iw = std::fpclassify( w );
+
+    return ( ix == FP_NORMAL || ix == FP_ZERO)
+        && ( iy == FP_NORMAL || iy == FP_ZERO)
+        && ( iz == FP_NORMAL || iz == FP_ZERO)
+        && ( iw == FP_NORMAL || iw == FP_ZERO)
+        && w >= real(0);
   }
 }
 END_GO_NAMESPACE
