@@ -20,10 +20,13 @@ namespace geometry {
 
     ball( const vec3& center, const real& radius ) noexcept;
     ball( const ball&& other ) noexcept;
+    ball( const ball& other ) noexcept;
     ball( const vec4& b ) noexcept;
 
     ball&
     operator=( const ball&& other ) noexcept;
+    ball&
+    operator=( const ball& other ) noexcept;
 
     bool intersect( const ball& b ) const;
     void compute_bounding_box( aabox& b ) const;

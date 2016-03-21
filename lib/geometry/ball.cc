@@ -21,12 +21,23 @@ namespace geometry {
     : vec4{ other }
   {}
 
+  ball::ball( const ball& other ) noexcept
+    : vec4{ other }
+  {}
+
   ball::ball( const vec4& b ) noexcept
     : vec4{ b }
   {}
 
   ball&
   ball::operator=( const ball&& other ) noexcept
+  {
+    vec4::operator=( std::move( other ) );
+    return *this;
+  }
+
+  ball&
+  ball::operator=( const ball& other ) noexcept
   {
     vec4::operator=( std::move( other ) );
     return *this;
