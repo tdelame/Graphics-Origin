@@ -311,12 +311,12 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     virtual void set_point(VertexHandle _vh, const OpenMesh::Vec3f& p)
     {
-      mesh_.set_point(_vh, Point( p[0], p[1], p[3] ) );
+      mesh_.set_point(_vh, Point( p[0], p[1], p[2] ) );
     }
 
     virtual void set_normal(VertexHandle _vh, const OpenMesh::Vec3f& n )
     {
-      auto normal = Normal( n[0], n[1], n[3] );
+      auto normal = Normal( n[0], n[1], n[2] );
       if (mesh_.has_vertex_normals())
         mesh_.set_normal(_vh, normal );
 
