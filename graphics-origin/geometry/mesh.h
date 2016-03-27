@@ -4,6 +4,7 @@
 # ifndef GRAPHICS_ORIGIN_MESH_H_
 # define GRAPHICS_ORIGIN_MESH_H_
 # include "../graphics_origin.h"
+# include "triangle.h"
 # include "traits.h"
 # include "box.h"
 # include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
@@ -39,7 +40,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
     };
   }
   class ray;
-  class triangle;
 
   /**@brief A triangular mesh class.
    *
@@ -271,6 +271,26 @@ BEGIN_GO_NAMESPACE namespace geometry {
     inline const real* get_normal( const uint32_t idx ) const
     {
       return m_normals + idx * 3;
+    }
+
+    /**@brief Get the number of triangles.
+     *
+     * Get the number of triangles in the underlying mesh.
+     * @return The number of triangles.
+     */
+    inline size_t get_number_of_triangles() const noexcept
+    {
+      return m_triangles.size();
+    }
+
+    /**@brief Access to a triangle thanks to its index.
+     *
+     * Get a triangle.
+     * @param idx Index of the triangle.
+     * @return The requested triangle. */
+    inline const triangle& get_triangle( const uint32_t idx ) const
+    {
+      return m_triangles[ idx ];
     }
 
     /**@brief Get the bounding box the mesh.
