@@ -259,5 +259,11 @@ namespace geometry {
     return t >= 0;
   }
 
+  const vec3&
+  triangle::get_normal() const noexcept
+  {
+    return normal;
+  }
+
 }
 END_GO_NAMESPACE

@@ -28,6 +28,8 @@ namespace geometry {
     operator=( const triangle& t );
 
     const vec3& get_vertex( vertex_index i ) const;
+    const vec3& get_normal() const noexcept;
+
 
     void compute_bounding_box( aabox& b ) const;
     bool intersect( const aabox& b ) const;
