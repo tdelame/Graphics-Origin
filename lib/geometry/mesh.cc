@@ -623,29 +623,32 @@ BEGIN_GO_NAMESPACE namespace geometry {
           }
       }
       m_mesh.compute_bounding_box( bounding_box );
+
+      m_triangles.resize( m_mesh.n_faces() );
+      const auto nfaces  = m_triangles.size();
+      # pragma omp parallel for schedule(static)
+      for( size_t i = 0; i < nfaces; ++ i )
+        {
+          mesh::FaceVertexIter it = m_mesh.fv_begin( mesh::FaceHandle(i) );
+          auto& p1 = m_mesh.point( *it ); ++ it;
+          auto& p2 = m_mesh.point( *it ); ++ it;
+          auto& p3 = m_mesh.point( *it );
+
+          m_triangles[ i ] = triangle(
+              vec3{ p1[0], p1[1], p1[2] },
+              vec3{ p2[0], p2[1], p2[2] },
+              vec3{ p3[0], p3[1], p3[2] } );
+        }
+
+
       if( build_the_ktree ) build_kdtree();
       if( build_the_bvh ) build_bvh();
   }
   void mesh_spatial_optimization::build_bvh()
   {
-    if( m_triangles.empty() )
+    if( !m_bvh )
       {
-        m_triangles.resize( m_mesh.n_faces() );
-        const auto nfaces  = m_triangles.size();
-        # pragma omp parallel for schedule(static)
-        for( size_t i = 0; i < nfaces; ++ i )
-          {
-            mesh::FaceVertexIter it = m_mesh.fv_begin( mesh::FaceHandle(i) );
-            auto& p1 = m_mesh.point( *it ); ++ it;
-            auto& p2 = m_mesh.point( *it ); ++ it;
-            auto& p3 = m_mesh.point( *it );
-
-            m_triangles[ i ] = triangle(
-                vec3{ p1[0], p1[1], p1[2] },
-                vec3{ p2[0], p2[1], p2[2] },
-                vec3{ p3[0], p3[1], p3[2] } );
-          }
-        m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, nfaces );
+        m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, m_triangles.size() );
       }
   }
 

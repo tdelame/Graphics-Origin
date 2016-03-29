@@ -285,7 +285,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     /**@brief Access to a triangle thanks to its index.
      *
-     * Get a triangle.
+     * Get a triangle. Triangles are initialized even if the BVH is not built.
      * @param idx Index of the triangle.
      * @return The requested triangle. */
     inline const triangle& get_triangle( const uint32_t idx ) const
