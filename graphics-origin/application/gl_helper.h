@@ -76,10 +76,10 @@ void check_gl_error( const char* call, const char* file, const int line );
  * nothing when the source code is compiled in release mode.
  */
 # ifdef DEBUG
-#   define glcheck( call )                   \
-  check_previous_gl_errors();                \
-  call;                                      \
-  check_gl_error( #call, __FILE__,__LINE__ );
+#   define glcheck( call )                                                 \
+  graphics_origin::application::check_previous_gl_errors();                \
+  call;                                                                    \
+  graphics_origin::application::check_gl_error( #call, __FILE__,__LINE__ );
 # else
 #   define glcheck( call ) call;
 # endif
