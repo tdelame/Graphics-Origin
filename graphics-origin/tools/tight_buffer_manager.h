@@ -330,9 +330,9 @@ BEGIN_GO_NAMESPACE namespace tools {
       e->~element();
 
       m_next_free_handle_slot = entry_index;
-      if( --m_size && entry->index != m_size )
+      if( --m_size && entry->element_index != m_size )
         {
-          m_element_buffer[ entry->index ] = std::move( m_element_buffer[ m_size ] );
+          m_element_buffer[ entry->element_index ] = std::move( m_element_buffer[ m_size ] );
           m_handle_buffer[ m_element_to_handle[ entry->element_index ] ].element_index = entry->element_index;
         }
     }
