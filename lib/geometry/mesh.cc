@@ -555,6 +555,10 @@ BEGIN_GO_NAMESPACE namespace geometry {
         update_normals();
         return true;
       }
+    else
+      {
+        LOG( error, "an error occurred when reading mesh [" << filename << "]");
+      }
     return false;
   }
 

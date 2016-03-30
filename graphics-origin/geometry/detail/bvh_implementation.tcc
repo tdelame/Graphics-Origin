@@ -56,7 +56,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # include "../box.h"
 # include "../ball.h"
 
-# include <atomic>
 # include <thrust/sort.h>
 
 BEGIN_GO_NAMESPACE namespace geometry {
@@ -110,6 +109,12 @@ BEGIN_GO_NAMESPACE namespace geometry {
         real(0.5 * mcode_offset) / root_bounding_object.m_hsides.y,
         real(0.5 * mcode_offset) / root_bounding_object.m_hsides.z
       };
+
+      /* There are n elements, thus n leaves and n - 1 internal nodes.
+       * The node buffer is first filled with internal nodes, thus from index 0 to index n - 2.
+       * Leaves are then between indices n - 1 and n - 1 + n - 1
+       *
+       */
 
       # pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
@@ -349,32 +354,38 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
   template< typename bounding_object >
   struct determine_nodes_hierarchy {
-    int longest_common_prefix( const uint64_t& c1, int j )
+
+    int longest_common_prefix( int i, int j )
+    {
+      if( m_morton_codes[i] == m_morton_codes[j] )
+        return CLZ( i ^ j ) + 64;
+      return CLZ( m_morton_codes[i] ^ m_morton_codes[j] );
+    }
+
+    int safe_longest_common_prefix( int i, int j )
     {
       if( j >= int(0) && (size_t)j < m_number_of_leaves )
-        return CLZ( c1 ^ m_morton_codes[j] );
+        return longest_common_prefix( i, j );
       return -1;
     }
 
     uivec2 determine_range( uint32_t i )
     {
-      const auto first_code = m_morton_codes[i];
-
       // determine the direction of the range (+1 or -1)
-      int d = longest_common_prefix( first_code, i + 1 )
-            - longest_common_prefix( first_code, i - 1 ) > 0 ? 1 : -1;
+      int d = safe_longest_common_prefix( i, i + 1 )
+            - safe_longest_common_prefix( i, i - 1 ) > 0 ? 1 : -1;
 
       // compute upper bound for the length of the range
-      int d_min = longest_common_prefix( first_code, i - d );
+      int d_min = safe_longest_common_prefix( i, i - d );
       int lmax = 2;
-      while( longest_common_prefix( first_code, i + lmax * d ) > d_min )
+      while( safe_longest_common_prefix( i, i + lmax * d ) > d_min )
         lmax <<= 1;
 
       // find the other end using binary search
       uint32_t l = 0;
       for( uint32_t t = lmax >> 1; t >= 1; t >>= 1 )
         {
-          if( longest_common_prefix( first_code, i + ( l + t ) * d ) > d_min )
+          if( safe_longest_common_prefix( i, i + ( l + t ) * d ) > d_min )
             l += t;
         }
 
@@ -394,7 +405,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
       // Calculate the number of highest bits that are the same
       // for all objects, using the count-leading-zeros intrinsic.
-      int common_prefix = CLZ( first_code ^ last_code );
+      int common_prefix = longest_common_prefix( range.x, range.y );
 
       // Use binary search to find where the next bit differs.
       // Specifically, we are looking for the highest object that
@@ -408,7 +419,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
           if( new_split < range.y )
             {
-              if( CLZ( first_code ^ m_morton_codes[ new_split] ) > common_prefix )
+              if( longest_common_prefix( range.x, new_split ) > common_prefix )
                 split = new_split; // accept proposal
            }
         }
@@ -429,6 +440,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
           auto& intern = m_nodes[ i ];
           uivec2 range = determine_range( i );
           uint32_t split = find_split( range );
+//          LOG( info, "internal #" << i << " has range: [" << range.x << " , " << range.y << "] (" << morton_codes[range.x] << "," <<morton_codes[range.y] << "): " << split);
           uint32_t child_index = ( split == range.x ? split + number_of_internals : split );
           m_nodes[ child_index ].parent_index = i;
           intern.left_index = child_index;
@@ -459,7 +471,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       typename bvh<bounding_object>::node* nodes,
       uint32_t number_of_internals ) :
         m_nodes{nodes}, m_number_of_internals{ number_of_internals },
-        m_counters( number_of_internals ), variables( number_of_internals + 1 )
+        m_counters( number_of_internals ), variables( number_of_internals +1 )
     {
       init_counters();
       init_threads();
@@ -469,7 +481,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
         {
           activity = false;
           # pragma omp parallel for schedule(static)
-          for( uint32_t i = 0; i <= m_number_of_internals ; ++ i )
+          for( uint32_t i = 0; i < m_number_of_internals ; ++ i )
             {
               if( emulate_one_thread_loop( i ) )
                 activity = true;
@@ -494,16 +506,25 @@ BEGIN_GO_NAMESPACE namespace geometry {
           auto& var = variables[ i ];
           var.active = true;
           var.index = m_nodes[ i + m_number_of_internals ].parent_index;
-          var.res = m_counters[ var.index ].fetch_add(1);
+          # pragma omp atomic capture
+          {
+            var.res = m_counters[ var.index ];
+            ++m_counters[ var.index ];
+          }
         }
     }
 
     bool emulate_one_thread_loop( uint32_t tid )
     {
       auto& var = variables[ tid ];
-      if( !var.active ) return false;
+      if( !var.active )
+        {
+//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is inactive");
+          return false;
+        }
       if( !var.res )
         {
+//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is the first to arrive here");
           var.active = false;
           return false;
         }
@@ -512,6 +533,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
       node.bounding = m_nodes[ node.left_index ].bounding;
       node.bounding.merge( m_nodes[ node.right_index ].bounding );
 
+//      LOG( debug, "node #" << var.index << " just got initialized to {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} by tid " << tid );
+
       if( var.index == 0 )
         {
           var.active = false;
@@ -519,14 +542,18 @@ BEGIN_GO_NAMESPACE namespace geometry {
         }
 
       var.index = node.parent_index;
-      var.res = m_counters[ var.index ].fetch_add(1);
+      # pragma omp atomic capture
+      {
+        var.res = m_counters[ var.index ];
+        ++m_counters[ var.index ];
+      }
       return true;
     }
 
     typename bvh<bounding_object>::node* m_nodes;
     const uint32_t m_number_of_internals;
 
-    std::vector< std::atomic<int> > m_counters;
+    std::vector< int > m_counters;
     std::vector< thread_variables > variables;
   };
 

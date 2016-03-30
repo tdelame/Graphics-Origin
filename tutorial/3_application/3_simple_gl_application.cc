@@ -153,6 +153,22 @@ namespace application {
     return result;
   }
 
+  static void print_node( uint32_t node_index,
+                          const geometry::bvh<geometry::aabox>* bvh )
+  {
+    const auto& node = bvh->get_node( node_index );
+    if( bvh->is_leaf( node_index ) )
+      {
+        std::cout <<"node #" << node_index << " is a leaf around primitive #" << node.element_index << "\n";
+        std::cout <<"bounding box = {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} and father = " << node.parent_index << std::endl;
+      }
+    else
+      {
+        std::cout <<"node #" << node_index << " is internal with child node #" << node.left_index << " and node #" << node.right_index << " \n";
+        std::cout <<"bounding box = {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} and father = " << node.parent_index << std::endl;
+      }
+  }
+
   class simple_gl_window
     : public gl_window {
   public:
@@ -185,38 +201,95 @@ namespace application {
             "shaders/mesh.frag"});
 
 
-      size_t nb_balls = 0;
-      balls_renderable* brenderable = nullptr;
+      geometry::mesh mesh( "17674.ply");
+      geometry::mesh_spatial_optimization mso( mesh, true, true );
 
-      {
-        size_t nline = 0;
-        std::ifstream input( "tutorial/3_application/bumpy_torus.balls");
+//      LOG( error, "build mso and mesh");
+      auto bvh = mso.get_bvh();
+//
+//      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
+//        {
+//          print_node( i, bvh );
+//        }
+//      std::cout << "\n\n\n" << std::endl;
+//
+//      {
+//        std::cout << "BBOX = " << mso.get_bounding_box().get_min() << " , " << mso.get_bounding_box().get_max() << std::endl;
+//        print_node( 0, bvh );
+//        print_node( 131699, bvh );
+//        print_node( 131700, bvh );
+//
+//
+//        print_node( 1, bvh );
+//        print_node( 2, bvh );
+//        print_node( 57, bvh );
+//        print_node( 56, bvh );
+//      }
 
+      auto boxes_renderable = new aaboxes_renderable( box_wireframe_program, bvh->get_number_of_leaf_nodes() );
+      std::list< uint32_t > node_indices( 1, 0 );
+      uint32_t size = 0;
+      while( ! node_indices.empty() )
         {
-          std::istringstream tokenizer( get_next_line( input, nline ) );
-          tokenizer >> nb_balls;
-        }
-        brenderable = new balls_renderable( balls_program, nb_balls );
-        for( size_t i = 0; i < nb_balls; ++ i )
-          {
-            std::string line_string = get_next_line( input, nline );
-            std::istringstream tokenizer( line_string );
-            vec3 c;
-            real radius;
-            tokenizer >> c.x >> c.y >> c.z >> radius;
-            if( tokenizer.fail() )
-              {
-                LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
-              }
-            else
-              {
-                brenderable->add( geometry::ball( c, radius ) );
-              }
-          }
-        input.close();
-      }
+          auto idx = node_indices.front();
+          node_indices.pop_front();
+//          LOG( error, "examining node #" << idx );
+          if( !bvh->is_leaf( idx ) )
+            {
+              const auto& node = bvh->get_node( idx );
+//              LOG( error, "not a leaf so pushing node #" << node.left_index << " and node #" << node.right_index << " ");
+              node_indices.push_front( node.left_index );
+              node_indices.push_front( node.right_index );
+            }
+          else
+            {
+              boxes_renderable->add( bvh->get_node( idx ).bounding, get_color( size, 0, bvh->get_number_of_internal_nodes() ) );
+              ++size;
+            }
+          if( size >= bvh->get_number_of_leaf_nodes() )
+            {
+              LOG( error, "ouin");
+              break;
 
-      add_renderable( brenderable );
+            }
+
+        }
+      add_renderable( boxes_renderable );
+
+
+
+//      size_t nb_balls = 0;
+//      balls_renderable* brenderable = nullptr;
+//
+//      {
+//        size_t nline = 0;
+//        std::ifstream input( "tutorial/3_application/bumpy_torus.balls");
+//
+//        {
+//          std::istringstream tokenizer( get_next_line( input, nline ) );
+//          tokenizer >> nb_balls;
+//        }
+//        brenderable = new balls_renderable( balls_program, nb_balls );
+//        for( size_t i = 0; i < nb_balls; ++ i )
+//          {
+//            std::string line_string = get_next_line( input, nline );
+//            std::istringstream tokenizer( line_string );
+//            vec3 c;
+//            real radius;
+//            tokenizer >> c.x >> c.y >> c.z >> radius;
+//            if( tokenizer.fail() )
+//              {
+//                LOG( error, "incorrect data at line " << nline << " [" << line_string << "]");
+//              }
+//            else
+//              {
+//                brenderable->add( geometry::ball( c, radius ) );
+//              }
+//          }
+//        input.close();
+//      }
+//
+//      add_renderable( brenderable );
     }
   };
 
