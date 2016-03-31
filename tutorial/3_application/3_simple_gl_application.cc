@@ -207,32 +207,33 @@ namespace application {
 //      LOG( error, "build mso and mesh");
       auto bvh = mso.get_bvh();
 //
-//      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
-//        {
-//          print_node( i, bvh );
-//        }
-//      std::cout << "\n\n\n" << std::endl;
-//
-//      {
-//        std::cout << "BBOX = " << mso.get_bounding_box().get_min() << " , " << mso.get_bounding_box().get_max() << std::endl;
-//        print_node( 0, bvh );
-//        print_node( 131699, bvh );
-//        print_node( 131700, bvh );
-//
-//
-//        print_node( 1, bvh );
-//        print_node( 2, bvh );
-//        print_node( 57, bvh );
-//        print_node( 56, bvh );
-//      }
+      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
+        {
+          print_node( i, bvh );
+        }
+      std::cout << "\n\n\n" << std::endl;
+
+      {
+        std::cout << "BBOX = " << mso.get_bounding_box().get_min() << " , " << mso.get_bounding_box().get_max() << std::endl;
+        print_node( 0, bvh );
+        print_node( 131699, bvh );
+        print_node( 131700, bvh );
+
+
+        print_node( 1485, bvh );
+        print_node( 11104, bvh );
+        print_node( 11105, bvh );
+      }
 
       auto boxes_renderable = new aaboxes_renderable( box_wireframe_program, bvh->get_number_of_leaf_nodes() );
       std::list< uint32_t > node_indices( 1, 0 );
       uint32_t size = 0;
+      uint32_t seen = 0;
       while( ! node_indices.empty() )
         {
           auto idx = node_indices.front();
           node_indices.pop_front();
+          ++seen;
 //          LOG( error, "examining node #" << idx );
           if( !bvh->is_leaf( idx ) )
             {
@@ -246,7 +247,7 @@ namespace application {
               boxes_renderable->add( bvh->get_node( idx ).bounding, get_color( size, 0, bvh->get_number_of_internal_nodes() ) );
               ++size;
             }
-          if( size >= bvh->get_number_of_leaf_nodes() )
+          if( size >= bvh->get_number_of_leaf_nodes() + 1 || seen >= bvh->get_number_of_nodes() + 1 )
             {
               LOG( error, "ouin");
               break;

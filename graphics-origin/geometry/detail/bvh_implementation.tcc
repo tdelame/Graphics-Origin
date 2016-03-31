@@ -355,37 +355,65 @@ BEGIN_GO_NAMESPACE namespace geometry {
   template< typename bounding_object >
   struct determine_nodes_hierarchy {
 
-    int longest_common_prefix( int i, int j )
+    int safe_longest_common_prefix( const uint64_t& c, uint32_t i, uint32_t j )
     {
-      if( m_morton_codes[i] == m_morton_codes[j] )
-        return CLZ( i ^ j ) + 64;
-      return CLZ( m_morton_codes[i] ^ m_morton_codes[j] );
-    }
-
-    int safe_longest_common_prefix( int i, int j )
-    {
-      if( j >= int(0) && (size_t)j < m_number_of_leaves )
-        return longest_common_prefix( i, j );
+      if( j >= uint32_t(0) && j < m_number_of_leaves )
+        return lgp( c, i, j );
       return -1;
     }
 
+    int lgp( const uint64_t& c, uint32_t i, uint32_t j )
+    {
+      auto& code = m_morton_codes[j];
+      if( code == c )
+        return 64 + __builtin_clz( i ^ j );
+      return CLZ( code ^ c );
+    }
+
+
+    /**
+     *
+     * i is in [0, number_of_internals - 1 ]
+     * thus m_morton_codes[i+1] is always valid
+     *
+     * for i = 0, the expected result is [0, number_of_internals ]
+     * otherwise, m_morton_codes[i-1] is valid
+     *
+     * Thus, this function can be called only for i in [1, number_of_internals - 1]
+     */
     uivec2 determine_range( uint32_t i )
     {
+//      const auto& mcodei_minus = m_morton_codes[i-1];
+      const auto& mcodei       = m_morton_codes[i  ];
+//      const auto& mcodei_plus  = m_morton_codes[i+1];
+//
+//      // this case happen when there are duplicate morton codes
+//      if( mcodei_minus == mcodei && mcodei == mcodei_plus )
+//        {
+//          //look for the last equal morton code
+//          uint32_t end = i;
+//          do
+//            {
+//              ++end;
+//            }
+//          while( (end + 1 < m_number_of_leaves) && m_morton_codes[end + 1] == mcodei );
+//          return uivec2( i, end );
+//        }
+
       // determine the direction of the range (+1 or -1)
-      int d = safe_longest_common_prefix( i, i + 1 )
-            - safe_longest_common_prefix( i, i - 1 ) > 0 ? 1 : -1;
+      int d = lgp( mcodei, i, i + 1 ) - lgp( mcodei, i, i - 1 ) > 0 ? 1 : -1;
 
       // compute upper bound for the length of the range
-      int d_min = safe_longest_common_prefix( i, i - d );
+      int d_min = lgp( mcodei, i,  i - d );
       int lmax = 2;
-      while( safe_longest_common_prefix( i, i + lmax * d ) > d_min )
+      while( safe_longest_common_prefix( mcodei, i,  i + lmax * d ) > d_min )
         lmax <<= 1;
 
       // find the other end using binary search
       uint32_t l = 0;
       for( uint32_t t = lmax >> 1; t >= 1; t >>= 1 )
         {
-          if( safe_longest_common_prefix( i, i + ( l + t ) * d ) > d_min )
+          if( safe_longest_common_prefix( mcodei, i, i + ( l + t ) * d ) > d_min )
             l += t;
         }
 
@@ -400,12 +428,13 @@ BEGIN_GO_NAMESPACE namespace geometry {
       const uint64_t  last_code = m_morton_codes[ range.y ];
 
       // Identical Morton codes => split the range in the middle.
-      if( first_code == last_code )
-        return (range.x + range.y) >> 1;
+//      if( first_code == last_code )
+////        return range.x;
+//        return (range.x + range.y) >> 1;
 
       // Calculate the number of highest bits that are the same
       // for all objects, using the count-leading-zeros intrinsic.
-      int common_prefix = longest_common_prefix( range.x, range.y );
+      int common_prefix = lgp( first_code, range.x, range.y );
 
       // Use binary search to find where the next bit differs.
       // Specifically, we are looking for the highest object that
@@ -419,7 +448,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
           if( new_split < range.y )
             {
-              if( longest_common_prefix( range.x, new_split ) > common_prefix )
+              if( lgp( first_code, range.x, new_split ) > common_prefix )
                 split = new_split; // accept proposal
            }
         }
@@ -434,13 +463,24 @@ BEGIN_GO_NAMESPACE namespace geometry {
       : m_nodes{ nodes }, m_morton_codes{ morton_codes },
         m_number_of_leaves{ number_of_internals + 1 }
     {
+      //process the root independently
+      {
+        uivec2 range( 0, number_of_internals );
+        uint32_t split = find_split( range );
+        uint32_t child_index = ( split == range.x ? split + number_of_internals : split );
+        m_nodes[0].left_index = child_index;
+
+        ++split;
+        child_index = ( split == range.y ? split + number_of_internals : split );
+        m_nodes[0].right_index = child_index;
+      }
+
       # pragma omp parallel for schedule(dynamic)
-      for( uint32_t i = 0; i < number_of_internals; ++ i )
+      for( uint32_t i = 1; i < number_of_internals; ++ i )
         {
           auto& intern = m_nodes[ i ];
           uivec2 range = determine_range( i );
           uint32_t split = find_split( range );
-//          LOG( info, "internal #" << i << " has range: [" << range.x << " , " << range.y << "] (" << morton_codes[range.x] << "," <<morton_codes[range.y] << "): " << split);
           uint32_t child_index = ( split == range.x ? split + number_of_internals : split );
           m_nodes[ child_index ].parent_index = i;
           intern.left_index = child_index;
