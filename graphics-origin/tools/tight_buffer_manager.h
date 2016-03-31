@@ -249,6 +249,7 @@ BEGIN_GO_NAMESPACE namespace tools {
         }
       const auto handle_index = m_next_free_handle_slot;
       auto entry = m_handle_buffer + handle_index;
+      m_next_free_handle_slot = entry->next_free_index;
 
       // update the entry
       ++entry->counter;
@@ -266,9 +267,7 @@ BEGIN_GO_NAMESPACE namespace tools {
           m_element_buffer[m_size] };
 
       // update this
-      m_next_free_handle_slot = entry->next_free_index;
       ++m_size;
-
       return result;
     }
 
