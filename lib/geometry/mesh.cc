@@ -553,6 +553,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     if( OpenMesh::IO::IOManager().read( filename, importer,  option) )
       {
         update_normals();
+
         return true;
       }
     else
@@ -776,46 +777,68 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     auto vh = mesh::VertexHandle( closest_vertex_index );
     auto vfit = m_mesh.vf_begin( vh ), vfitend = m_mesh.vf_end( vh );
-
     size_t closest_face_index = vfit->idx();
-    vec3 target = m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V0 );
-    target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V1 );
-    target += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
-    target *= real(1.0 / 3.0);
-    target = normalize( target -  p );
+
+    // get the center of that face
+    vec3 target_direction = m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V0 );
+    target_direction += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V1 );
+    target_direction += m_triangles[ closest_face_index ].get_vertex( triangle::vertex_index::V2 );
+    target_direction *= real(1.0 / 3.0);
+
+    // compute the direction to that center while keeping the distance to it
+    target_direction -= p;
+    distance_to_mesh = length( target_direction );
+    target_direction *= real(1.0) / distance_to_mesh;
 
     auto normal = m_mesh.normal( *vfit );
-    real score = std::abs( normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] );
+    real score = std::abs( normal[0] * target_direction[0] + normal[1] * target_direction[1] + normal[2] * target_direction[2] );
     ++vfit;
     while( vfit != vfitend )
       {
         size_t fid = vfit->idx();
-        vec3 new_target = m_triangles[ fid ].get_vertex( triangle::vertex_index::V0 );
-        new_target += m_triangles[ fid ].get_vertex( triangle::vertex_index::V1 );
-        new_target += m_triangles[ fid ].get_vertex( triangle::vertex_index::V2 );
-        new_target *= real(1.0 / 3.0);
-        new_target = normalize( new_target - p );
+
+        // get the center of that face
+        vec3 new_target_direction = m_triangles[ fid ].get_vertex( triangle::vertex_index::V0 );
+        new_target_direction += m_triangles[ fid ].get_vertex( triangle::vertex_index::V1 );
+        new_target_direction += m_triangles[ fid ].get_vertex( triangle::vertex_index::V2 );
+        new_target_direction *= real(1.0 / 3.0);
+
+        // compute the direction to that center while keeping the distance to it
+        new_target_direction -= p;
+        real new_distance_to_mesh = length( new_target_direction);
+        new_target_direction *= real(1.0) / new_distance_to_mesh;
         auto new_normal = m_mesh.normal( *vfit );
         real new_score = std::abs(
-            new_normal[0] * new_target[0] + new_normal[1] * new_target[1] + new_normal[2] * new_target[2] );
+            new_normal[0] * new_target_direction[0]
+          + new_normal[1] * new_target_direction[1]
+          + new_normal[2] * new_target_direction[2] );
         if( new_score > score )
           {
             score = new_score;
-            target = new_target;
+            target_direction = new_target_direction;
             normal = new_normal;
+            distance_to_mesh = new_distance_to_mesh;
           }
         ++vfit;
       }
 
 
-    ray r( p, target );
-
-    if( !intersect( r,  distance_to_mesh, closest_face_index ) )
+    ray r( p, target_direction );
+    real distance_to_intersection = 0;
+    if( !intersect( r,  distance_to_intersection, closest_face_index ) )
       {
-        LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction );
+        LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction << ", dtm = " << distance_to_mesh);
       }
-    else normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
-    return normal[0] * target[0] + normal[1] * target[1] + normal[2] * target[2] > 0;
+    else if( distance_to_intersection < distance_to_mesh )
+      {
+        normal = m_mesh.normal( mesh::FaceHandle( closest_face_index ) );
+      }
+//    else
+//      {
+        //failed to intersect the targeted face. This occurs when the face is quite small.
+        //in this case, the normal remains the same.
+//      }
+    return normal[0] * target_direction[0] + normal[1] * target_direction[1] + normal[2] * target_direction[2] > 0;
   }
 
   bvh<aabox>* mesh_spatial_optimization::get_bvh()
