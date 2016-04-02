@@ -827,7 +827,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     real distance_to_intersection = 0;
     if( !intersect( r,  distance_to_intersection, closest_face_index ) )
       {
-        LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction << ", dtm = " << distance_to_mesh);
+//        LOG( debug, "do not really know why no intersection were found for ray " << p << " " << r.m_direction << ", dtm = " << distance_to_mesh);
       }
     else if( distance_to_intersection < distance_to_mesh )
       {
