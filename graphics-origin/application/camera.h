@@ -35,6 +35,12 @@ namespace application {
      * @return The view matrix
      */
     const gpu_mat4& get_view_matrix() const;
+    /**@brief Set the camera view matrix.
+     *
+     * Set the camera view matrix.
+     * @param view The new view matrix
+     */
+    void set_view_matrix( const gpu_mat4& view );
 
     /**@brief Read access to the camera world position.
      *

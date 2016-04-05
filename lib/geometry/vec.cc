@@ -314,7 +314,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }
@@ -322,7 +322,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }
@@ -330,7 +330,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', comma3 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> comma3 >> obj.w >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || comma3 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || comma3 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }
@@ -352,7 +352,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }
@@ -360,7 +360,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }
@@ -368,7 +368,7 @@ namespace std {
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', comma3 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> comma3 >> obj.w >> rbracket;
-    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || comma3 != ',' || rbracket != '{' )
+    if( lbracket != '{' || comma1 != ',' || comma2 != ',' || comma3 != ',' || rbracket != '}' )
       is.setstate(std::ios_base::failbit);
     return is;
   }

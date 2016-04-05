@@ -99,11 +99,11 @@ namespace application {
      glDepthFunc(GL_LESS);
      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
      do_render();
+     m_render_fbo->bindDefault();
      // We need to flush the contents to the FBO before posting the texture to the
      // other thread, otherwise, we might get unexpected results.
-     glFlush();
-
-     m_render_fbo->bindDefault();
+     //glFlush();
+     glFinish();
      std::swap( m_render_fbo, m_display_fbo );
      emit texture_ready( m_display_fbo->texture(), QSize(m_width,m_height));
   }
@@ -128,6 +128,12 @@ namespace application {
   gl_window_renderer::get_view_matrix() const
   {
     return m_camera->get_view_matrix();
+  }
+
+  void
+  gl_window_renderer::set_view_matrix( const gpu_mat4& view )
+  {
+    m_camera->set_view_matrix( view );
   }
 
   const gpu_mat4&

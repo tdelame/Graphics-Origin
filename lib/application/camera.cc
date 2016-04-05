@@ -19,6 +19,12 @@ namespace application {
     return m_view;
   }
 
+  void
+  camera::set_view_matrix( const gpu_mat4& view )
+  {
+    m_view = view;
+  }
+
   gpu_vec3
   camera::get_position() const
   {

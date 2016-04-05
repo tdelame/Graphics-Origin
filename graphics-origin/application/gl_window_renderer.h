@@ -40,6 +40,9 @@ namespace application {
     const gpu_mat4&
     get_view_matrix() const;
 
+    void
+    set_view_matrix( const gpu_mat4& view );
+
     const gpu_mat4&
     get_projection_matrix() const;
 
