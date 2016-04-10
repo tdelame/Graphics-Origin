@@ -610,23 +610,23 @@ BEGIN_GO_NAMESPACE namespace geometry {
       m_mesh{ m }, m_kdtree{ nullptr },
       m_bvh{ nullptr }
   {
-      {
-        bool ok = true;
-        const auto nvertices = m.n_vertices();
-        # pragma omp parallel for schedule(static)
-        for( size_t i = 0; i < nvertices; ++i )
-          {
-            if( !m.is_manifold( mesh::VertexHandle(i) ) )
-              {
-                ok = false;
-              }
-          }
-        if(!ok)
-          {
-            LOG( fatal, "input mesh is not manifold. Cannot build a spatial optimization");
-            throw std::runtime_error("non manifold mesh");
-          }
-      }
+    {
+      bool ok = true;
+      const size_t nvertices = m.n_vertices();
+      # pragma omp parallel for schedule(static)
+      for( size_t i = 0; i < nvertices; ++ i )
+        {
+          mesh::VertexHandle h( i );
+          if( m.is_boundary( h ) )
+            {
+              ok = false;
+            }
+        }
+      if( !ok )
+        {
+          LOG( warning, "input mesh is has boundaries: interiority test can fail");
+        }
+    }
       m_mesh.compute_bounding_box( bounding_box );
 
       m_triangles.resize( m_mesh.n_faces() );
