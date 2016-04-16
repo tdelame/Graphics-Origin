@@ -1,7 +1,7 @@
 #**********************
 # cmake configuration *
 #*******************************************************************************
-cmake_minimum_required( VERSION 2.8.11 )
+cmake_minimum_required( VERSION 3.1.0 )
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
 
@@ -87,27 +87,13 @@ else()
   endif()
 endif()
 
-#***************
-# global flags *
-#*******************************************************************************
-set( CMAKE_CXX_FLAGS 
-  "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
-  CACHE STRING "C++ compiler flags" FORCE )
-set( CMAKE_CXX_FLAGS_RELEASE 
-  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG -g" 
-  CACHE STRING "C++ compiler extra flags for release build type" FORCE )
-set( CMAKE_CXX_FLAGS_DEBUG 
-  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
-  CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
-  
-set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
-include_directories( "${GO_HEADERS_IN_DIR}" )
-  
 #*********************
 # external libraries *
 #*******************************************************************************  
 # openmesh
-find_package( OpenMesh )
+find_package( OpenMesh REQUIRED )
+include_directories( ${OPENMESH_INCLUDE_DIR} )
+link_directories( ${OPENMESH_LIBRARY_DIR} )
 
 # boost
 set( Boost_USE_MULTITHREADED ON )
@@ -117,6 +103,7 @@ find_package( Boost
   REQUIRED
   COMPONENTS serialization filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
+link_directories( ${Boost_LIBRARY_DIRS} )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 
 
@@ -134,6 +121,11 @@ if( GO_BUILD_APPLICATION )
   include_directories( ${Qt5Gui_INCLUDE_DIRS} )
   include_directories( ${Qt5Qml_INCLUDE_DIRS} )
   include_directories( ${Qt5Network_INCLUDE_DIRS} )
+  link_directories( ${Qt5Core_INCLUDE_DIRS} )
+  link_directories( ${Qt5Quick_LIBRARY_DIRS} )
+  link_directories( ${Qt5Gui_LIBRARY_DIRS} )
+  link_directories( ${Qt5Qml_LIBRARY_DIRS} )
+  link_directories( ${Qt5Network_LIBRARY_DIRS} )
   
   # glew
   find_package( GLEW REQUIRED )
@@ -163,8 +155,52 @@ endif()
 
 
 
+
+
+
 set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
 include_directories( ${GLM_INCLUDE_DIRS} )
+
+#***************
+# global flags *
+#*******************************************************************************
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+  set( CMAKE_CXX_FLAGS 
+    "-frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+    CACHE STRING "GNU C++ compiler flags" FORCE )
+  set( CMAKE_CXX_FLAGS_RELEASE 
+    "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DNO_DEBUG" 
+    CACHE STRING "GNU C++ compiler extra flags for release build type" FORCE )
+  set( CMAKE_CXX_FLAGS_DEBUG 
+    "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
+    CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
+  set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+  
+  if( ${GO_USE_CUDA} )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST" FORCE )
+  endif()
+elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
+  set( CMAKE_CXX_FLAGS
+    "/EHsc /openmp /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
+	CACHE STRING "MSVC C++ compiler flags" FORCE )
+  set( CMAKE_CXX_FLAGS_RELEASE
+    "${CMAKE_CXX_FLAGS_RELEASE} /Ox /arch:SSE2 /UDEBUG /DNDEBUG /DNO_DEBUG"
+	CACHE STRING "MSVC C++ compiler extrat flags for release build type" FORCE )
+  set( CMAKE_CXX_FLAGS_DEBUG 
+    "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
+    CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
+  if( ${GO_USE_CUDA} )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DGO_USE_CUDA /DGO_USE_CUDA_THRUST" FORCE )
+  endif()	
+else()
+  message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
+endif()
+
+
+
+  
+
+include_directories( "${GO_HEADERS_IN_DIR}" )
   
 configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
 
@@ -197,16 +233,6 @@ message(
   "GO_USE_CUDA    = ${GO_USE_CUDA}\n"
   "GO_USE_THRUST  = ${GO_USE_THRUST}\n"
 )
-
-message(
-  "CXX_FLAGS:\n"
-  "CMAKE_CXX_FLAGS         = ${CMAKE_CXX_FLAGS}\n"
-  "CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}\n"
-  "OPENGL_gl_LIBRARY       = ${OPENGL_gl_LIBRARY}\n"
-  "OPENGL_glu_LIBRARY      = ${OPENGL_glu_LIBRARY}\n"
-  "OPENGL_LIBRARIES        = ${OPENGL_LIBRARIES}"  
-  
-  )
 
 
 

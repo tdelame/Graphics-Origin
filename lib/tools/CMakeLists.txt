@@ -17,9 +17,4 @@ set( GO_TOOLS_LIBRARIES
   CACHE STRING "Libraries to link with if you want to use the tools module")
   
 install( TARGETS graphics_origin_tools
-  CONFIGURATIONS Debug
-  DESTINATION lib/debug )
-  
-install( TARGETS graphics_origin_tools
-  CONFIGURATIONS Release
-  DESTINATION lib/release )
+  DESTINATION ${GO_LIBRARY_OUT_DIR} )
