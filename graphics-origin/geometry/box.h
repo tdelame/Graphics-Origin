@@ -20,7 +20,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * vec3 upper = m_center + m_half_sides;
    * vec3 lower = m_center - m_half_sides;
    * \endcode */
-  struct aabox {
+  struct GO_API aabox {
     /**@brief Create an empty box at the origin.
      *
      * Create an empty box at the origin.*/
@@ -110,7 +110,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   };
 
   template<>
-  struct geometric_traits<aabox> {
+  struct GO_API geometric_traits<aabox> {
     static const bool is_ball_intersecter = true;
     static const bool is_bounding_box_computer = true;
     static const bool is_bounding_volume_merger = true;

@@ -25,7 +25,7 @@ namespace application {
   class gl_window;
   class renderable;
 
-  class gl_window_renderer
+  class GO_API gl_window_renderer
     : public QThread {
     Q_OBJECT
   public:

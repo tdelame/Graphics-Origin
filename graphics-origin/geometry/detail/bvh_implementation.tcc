@@ -66,7 +66,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
   static constexpr uint8_t  mcode_length = 21;
   static constexpr uint32_t mcode_offset = 1U << mcode_length;
 
-# define CLZ( a ) __builtin_clzl( a )
+# ifdef _WIN32
+#  define CLZ( a ) __lzcnt64(a)
+# else
+#  define CLZ( a ) __builtin_clzl( a )
+# endif
 
   /**@brief Order BVH leaf nodes by increasing Morton code.
    *
@@ -115,9 +119,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
        * Leaves are then between indices n - 1 and n - 1 + n - 1
        *
        */
-
-      # pragma omp parallel for schedule(static)
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
           leaf.element_index = i;
@@ -166,9 +175,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
       # pragma omp parallel
       {
         aabox thread_bounding = bounding;
-        # pragma omp for  schedule(static)
-        for( uint32_t i = 0; i <= number_of_internals; ++ i )
-          {
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
+      for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
+         {
             auto& leaf = nodes[ i + number_of_internals ];
             leaf.element_index = i;
             elements[i].compute_bounding_box( leaf.bounding );
@@ -186,8 +201,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
         real(0.5 * mcode_offset) / bounding.m_hsides.z
       };
 
-      # pragma omp parallel for schedule(static)
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
           const auto& p = leaf.bounding.m_center;
@@ -196,7 +217,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
           uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
           uint64_t c = (uint64_t)( (p.z - lower.z) * inv_extents_times_mcode_offset.z );
 
-          for( uint j = 0; j < mcode_length; ++ j )
+          for( unsigned int j = 0; j < mcode_length; ++ j )
             {
               morton_codes[i] |=
               ((((a >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 1)) |
@@ -242,9 +263,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
         real(0.5 * mcode_offset) / root_bounding_object.w,
         real(0.5 * mcode_offset) / root_bounding_object.w
       };
-
-      # pragma omp parallel for schedule(static)
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
           leaf.element_index = i;
@@ -296,8 +322,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
       # pragma omp parallel
       {
         ball thread_bounding = bounding;
-        # pragma omp for
-        for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp for
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp for
+      for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
           {
             auto& leaf = nodes[ i + number_of_internals ];
             leaf.element_index = i;
@@ -316,8 +348,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
         real(0.5 * mcode_offset) / bounding.w
       };
 
-      # pragma omp parallel for
+ 
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
           const auto& p = leaf.bounding;
@@ -366,7 +405,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
     {
       auto& code = m_morton_codes[j];
       if( code == c )
+	  # ifdef _WIN32
+		return 64 + __lzcnt( i ^ j );
+	  # else
         return 64 + __builtin_clz( i ^ j );
+	  # endif
       return CLZ( code ^ c );
     }
 
@@ -474,9 +517,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
         child_index = ( split == range.y ? split + number_of_internals : split );
         m_nodes[0].right_index = child_index;
       }
-
-      # pragma omp parallel for schedule(dynamic)
-      for( uint32_t i = 1; i < number_of_internals; ++ i )
+	  # ifdef _WIN32
+      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      #   pragma omp parallel for schedule(dynamic)
+	  for (_int32 i = 1; i < number_of_internals; ++i )
+	  # else
+	  #   pragma omp parallel for schedule(dynamic)
+	  for (uint32_t i = 1; i < number_of_internals; ++ i )
+	  # endif
         {
           auto& intern = m_nodes[ i ];
           uivec2 range = determine_range( i );
@@ -520,8 +568,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
       while( activity )
         {
           activity = false;
-          # pragma omp parallel for schedule(static)
-          for( uint32_t i = 0; i < m_number_of_internals ; ++ i )
+      # ifdef _WIN32
+      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      #   pragma omp parallel for schedule(static)
+	  for (_int32 i = 0; i < m_number_of_internals; ++i)
+	  # else
+	  #   pragma omp parallel for schedule(static)
+	  for (uint32_t i = 0; i < m_number_of_internals; ++ i )
+	  # endif
             {
               if( emulate_one_thread_loop( i ) )
                 activity = true;
@@ -531,8 +585,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_counters()
     {
-      # pragma omp parallel for schedule(static)
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i < m_number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < m_number_of_internals; ++ i )
+	  # endif
         {
           m_counters[ i ] = 0;
         }
@@ -540,17 +600,33 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_threads()
     {
-      # pragma omp parallel for schedule(static)
+	  # ifdef _WIN32
+	  #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for( _int32 i = 0; i <= m_number_of_internals; ++ i )
+	  # else
+      #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= m_number_of_internals; ++ i )
+	  # endif
         {
           auto& var = variables[ i ];
           var.active = true;
           var.index = m_nodes[ i + m_number_of_internals ].parent_index;
-          # pragma omp atomic capture
-          {
+		  # ifdef _WIN32
+	      #  pragma message ("MSVC does not support capture directive for an openMP atomic construct")
+		  # pragma omp critical
+		  {
             var.res = m_counters[ var.index ];
             ++m_counters[ var.index ];
           }
+		  # else
+          # pragma omp atomic capture
+		  {
+            var.res = m_counters[ var.index ];
+            ++m_counters[ var.index ];
+          }
+		  # endif
+
         }
     }
 
@@ -582,11 +658,21 @@ BEGIN_GO_NAMESPACE namespace geometry {
         }
 
       var.index = node.parent_index;
-      # pragma omp atomic capture
-      {
+	  # ifdef _WIN32
+	  #  pragma message ("MSVC does not support capture directive for an openMP atomic construct")
+	  #  pragma omp critical
+	  {
         var.res = m_counters[ var.index ];
         ++m_counters[ var.index ];
       }
+	  # else
+      #  pragma omp atomic capture
+	        {
+        var.res = m_counters[ var.index ];
+        ++m_counters[ var.index ];
+      }
+	  # endif
+
       return true;
     }
 

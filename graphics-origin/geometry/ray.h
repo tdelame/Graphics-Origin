@@ -18,7 +18,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * direction (normalized, pointing in the direction where the line is
    * infinite) of the ray and t >= 0.
    */
-  struct ray {
+  struct GO_API ray {
     /**@brief Build a ray.
      *
      * Build a new ray.
@@ -50,7 +50,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     vec3 m_direction;
   };
 
-  struct ray_with_inv_dir {
+  struct GO_API ray_with_inv_dir {
     ray_with_inv_dir( const ray& r )
       : m_origin{ r.m_origin },
         m_inv_direction{

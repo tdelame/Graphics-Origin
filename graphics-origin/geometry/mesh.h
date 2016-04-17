@@ -56,7 +56,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * vertices and geometry::triangle for faces. This would require to rewrite a whole
    * mesh class, which is not a priority for now.
    */
-  struct mesh
+  struct GO_API mesh
     : public OpenMesh::TriMesh_ArrayKernelT< detail::mesh_traits > {
     mesh();
     mesh( const std::string& filename );
@@ -81,7 +81,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * @param filename The file name to check.
    * @return True if the extension of the file name is either .off, or .ply or
    * .obj. */
-  bool has_a_mesh_file_extension( const std::string& filename );
+  GO_API bool has_a_mesh_file_extension( const std::string& filename );
 
   /**@brief Geometric traits specialization for the mesh class.
    *
@@ -91,7 +91,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * structure.
    */
   template <>
-  struct geometric_traits<mesh> {
+  struct GO_API geometric_traits<mesh> {
     static const bool is_bounding_box_computer = true;
   };
 
@@ -112,7 +112,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * The optimized mesh should be a manifold surface, i.e. it should represent
    * the surface of a solid object. If such condition is not met, an exception
    * is thrown at the construction. */
-  class mesh_spatial_optimization {
+  class GO_API mesh_spatial_optimization {
   public:
     /**@brief Build a spatial optimization of a mesh.
      *
@@ -352,7 +352,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   };
 
   template <>
-  struct geometric_traits<mesh_spatial_optimization> {
+  struct GO_API geometric_traits<mesh_spatial_optimization> {
     static const bool is_ray_intersecter = true;
     static const bool is_point_container = true;
   };

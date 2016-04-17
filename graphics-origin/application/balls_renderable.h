@@ -10,7 +10,7 @@
 
 namespace graphics_origin {
   namespace application {
-    class balls_renderable
+    class GO_API balls_renderable
       : public renderable {
     public:
       struct storage {

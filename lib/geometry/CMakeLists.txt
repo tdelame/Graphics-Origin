@@ -8,13 +8,9 @@ file(
   SOURCE_FILES
   "${GO_SOURCES_IN_DIR}/geometry/*.cc")
   
-add_library( 
-  graphics_origin_geometry SHARED
-  ${SOURCE_FILES} ${HEADER_FILES})
-	
-set( GO_GEOMETRY_LIBRARIES 
-  graphics_origin_geometry ${GO_TOOLS_LIBRARIES} ${CUDA_LIBRARIES} ${OPENMESH_LIBRARIES}
-  CACHE STRING "Libraries to link with if you want to use the geometry module")
+add_go_lib( geometry ${SOURCE_FILES} ${HEADER_FILES} )
+set_go_lib_properties( geometry ${GO_TOOLS_LIBRARIES} ${CUDA_LIBRARIES} ${OPENMESH_LIBRARIES} )  
+  
   
 install( TARGETS graphics_origin_geometry
   CONFIGURATIONS Debug

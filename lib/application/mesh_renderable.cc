@@ -31,8 +31,14 @@ namespace graphics_origin { namespace application {
 
     const auto nvertices = m_mesh.n_vertices();
     std::vector< gpu_real > positions_normals( nvertices * 6 ); // fvec3 + fvec3
+# ifdef _WIN32
+# pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+# pragma omp parallel for
+	for (long i = 0; i < nvertices; ++i )
+# else
     # pragma omp parallel for schedule(dynamic)
     for( size_t i = 0; i < nvertices; ++ i )
+# endif
       {
         auto vh = geometry::mesh::VertexHandle( i );
         auto& point = m_mesh.point( vh );
@@ -49,8 +55,14 @@ namespace graphics_origin { namespace application {
 
     const auto nfaces = m_mesh.n_faces();
     std::vector< unsigned int > indices( nfaces * 3 );
+# ifdef _WIN32
+# pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+# pragma omp parallel for schedule(static)
+	for (long i = 0; i < nfaces; ++i)
+# else
     # pragma omp parallel for schedule(static)
     for( size_t i = 0; i < nfaces; ++ i )
+# endif
       {
         auto fvit = m_mesh.fv_begin( geometry::mesh::FaceHandle( i ) );
         auto dst = indices.data() + 3 * i;

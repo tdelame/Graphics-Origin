@@ -32,7 +32,7 @@ namespace application {
    * in the virtual destructor is unspecified by the standard. You *SHOULD* call this
    * function yourself in the final class destructor.
    */
-  class renderable {
+  class GO_API renderable {
   public:
     renderable();
     virtual ~renderable();

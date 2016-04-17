@@ -24,13 +24,13 @@ namespace tools
   typedef boost::log::sources::severity_logger_mt< severity_level > logger_mt_type;
 
   //BOOST_LOG_GLOBAL_LOGGER(logger, logger_mt_type)
-    struct GO_API logger
+    struct logger
     {
         typedef logger_mt_type logger_type;
         enum registration_line_t { registration_line = __LINE__ };
-        static const char* registration_file() { return __FILE__; }
-        static logger_type construct_logger();
-        static inline logger_type& get()
+        static GO_API const char* registration_file() { return __FILE__; }
+        static GO_API logger_type construct_logger();
+        static GO_API inline logger_type& get()
         {
             return ::boost::log::sources::aux::logger_singleton< logger >::get();
         }

@@ -17,7 +17,7 @@
 #   include <stddef.h>
 namespace hash_tuple {
   template <typename TT>
-  struct GO_API hash
+  struct hash
   {
     size_t
     operator()(TT const& tt) const
@@ -55,7 +55,7 @@ namespace hash_tuple {
   }
 
   template <typename ... TT>
-  struct GO_API hash<std::tuple<TT...>>
+  struct hash<std::tuple<TT...>>
   {
     size_t
     operator()(std::tuple<TT...> const& tt) const

@@ -3,6 +3,7 @@
  */
 # include <graphics-origin/geometry/vec.h>
 # include <iostream>
+# include <algorithm>
 
 BEGIN_GO_NAMESPACE
   static gpu_real LUT_Color [ 256 ][ 3 ] =

@@ -38,7 +38,7 @@ namespace application {
    * constraints.
    */
 
-  class shader_program {
+  class GO_API shader_program {
   public:
     typedef int identifier;
     static const identifier null_identifier;

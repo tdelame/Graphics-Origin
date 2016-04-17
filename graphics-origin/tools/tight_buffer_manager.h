@@ -85,7 +85,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * The \a handle_type specifies the integral type that will be used to store
    * the index and the counter of an handle. Thus, it must integral and unsigned. */
   template< class element, typename handle_type, uint8_t index_bits>
-  class GO_API tight_buffer_manager {
+  class tight_buffer_manager {
     static_assert(
         std::is_default_constructible< element >::value,
         "element type is not default constructible");
@@ -109,7 +109,7 @@ BEGIN_GO_NAMESPACE namespace tools {
     static constexpr size_t max_index = (1 << index_bits) - 1;
     static constexpr size_t max_counter =  (1 << (handle_bits - index_bits - 2)) - 1;
     template< typename type >
-    class GO_API tb_iterator :
+    class tb_iterator :
         public std::iterator<
           std::random_access_iterator_tag,
           type >
@@ -154,7 +154,7 @@ BEGIN_GO_NAMESPACE namespace tools {
      * - counter, that tells the 'version' of the element at that index
      * in the tight buffer (how many time an element had been allocated
      * at this index). */
-    struct GO_API handle {
+    struct handle {
       handle_type index  : index_bits;
       handle_type counter: handle_bits - index_bits;
 
@@ -419,8 +419,14 @@ BEGIN_GO_NAMESPACE namespace tools {
           auto new_element_buffer = new element[ new_capacity ];
           auto new_element_to_handle = new size_t[ new_capacity ];
           auto new_handle_buffer = new handle_entry[ new_capacity ];
+# ifdef _WIN32
+# pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+# pragma omp parallel for
+		  for (long i = 0; i < m_capacity; ++ i )
+# else
           # pragma omp parallel for
           for( size_t i = 0; i < m_capacity; ++ i )
+# endif
             {
               new_element_buffer[ i ] = std::move( m_element_buffer[ i ] );
               new_element_to_handle[ i ] = m_element_to_handle[ i ];
@@ -434,8 +440,14 @@ BEGIN_GO_NAMESPACE namespace tools {
           m_element_to_handle = new_element_to_handle;
           m_handle_buffer = new_handle_buffer;
         }
+# ifdef _WIN32
+# pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+# pragma omp parallel for
+	  for (long i = m_capacity; i < new_capacity; ++i )
+# else
       # pragma omp parallel for
       for( size_t i = m_capacity; i < new_capacity; ++ i )
+# endif
         m_handle_buffer[ i ].next_free_index = i + 1;
       m_capacity = new_capacity;
     }

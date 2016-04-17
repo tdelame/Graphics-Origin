@@ -68,15 +68,15 @@ namespace boost {
 
 namespace std {
 
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::mat3& v);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::mat4& v);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_mat3& v);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_mat4& v);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::mat3& v);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::mat4& v);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_mat3& v);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_mat4& v);
 
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::mat3& v);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::mat4& v);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_mat3& v);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_mat4& v);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::mat3& v);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::mat4& v);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_mat3& v);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_mat4& v);
 
 }
 

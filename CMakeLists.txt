@@ -111,8 +111,11 @@ find_package( Boost
   COMPONENTS serialization filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 
+# glm
+set( GLM_INCLUDE_DIRS ""
+  CACHE PATH "path to the GLM include directories, ie., where to find glm/glm.hpp")
+include_directories( ${GLM_INCLUDE_DIRS} )
 
 if( GO_BUILD_APPLICATION )
   # qt
@@ -173,6 +176,9 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS 
     "-frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
     CACHE STRING "GNU C++ compiler flags" FORCE )
+  if( ${GO_USE_CUDA} )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST")
+  endif()	
   set( CMAKE_CXX_FLAGS_RELEASE 
     "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DNO_DEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for release build type" FORCE )
@@ -180,23 +186,21 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
   set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
-  
-  if( ${GO_USE_CUDA} )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST" FORCE )
-  endif()
+
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
-    "/DGO_EXPORTS /EHsc /openmp /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
+    "/EHsc /openmp /D_USE_MATH_DEFINES /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
 	CACHE STRING "MSVC C++ compiler flags" FORCE )
+  if( ${GO_USE_CUDA} )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DGO_USE_CUDA /DGO_USE_CUDA_THRUST")
+  endif()
   set( CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} /Ox /UDEBUG /DNDEBUG /DNO_DEBUG"
 	CACHE STRING "MSVC C++ compiler extrat flags for release build type" FORCE )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
-  if( ${GO_USE_CUDA} )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DGO_USE_CUDA /DGO_USE_CUDA_THRUST" FORCE )
-  endif()	
+	
 else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
 endif()
@@ -230,22 +234,19 @@ function( set_go_lib_properties lib_name )
     "graphics_origin_${lib_name}" ${ARGN}
 	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module"
 	FORCE )
+	
+ 
+	
+  message( STATUS
+    "shared library graphics_origin_${lib_name} is linked with ")
+  foreach( var ${ARGN})
+    message( STATUS "    library ${var}")
+  endforeach()
   
-  set( GO_${lib_name_upper}_LIBRARIES_DEBUG
-    "${GO_OUT_DIR}/Debug/lib/graphics_origin_${lib_name}" ${ARGN}
-	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Debug mode"
-	FORCE )
-  set( GO_${lib_name_upper}_LIBRARIES_RELEASE
-    "${GO_OUT_DIR}/Release/lib/graphics_origin_${lib_name}" ${ARGN}
-	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Release mode"
-	FORCE )
-  set( GO_${lib_name_upper}_LIBRARIES_RELWITHDEBINFO
-    "${GO_OUT_DIR}/RelWithDebInfo/lib/graphics_origin_${lib_name}" ${ARGN}
-	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Release mode with Debug info"
-	FORCE )	
-
   set_target_properties( graphics_origin_${lib_name}
 	PROPERTIES
+	COMPILE_DEFINITIONS "GO_EXPORTS"
+	
 	IMPORTED_LOCATION_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}/graphics_origin_${lib_name}"
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}"
@@ -261,6 +262,8 @@ function( set_go_lib_properties lib_name )
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
 	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
   )
+  
+  target_link_libraries( graphics_origin_${lib_name} ${ARGN} )
 endfunction() 
 
 function( set_go_tutorial_properties tutorial_name )

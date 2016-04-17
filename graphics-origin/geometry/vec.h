@@ -46,7 +46,7 @@ using glm::min;
  * @param a The first point
  * @param b The second point
  */
-extern
+GO_API
 real
 sdistance( const vec3& a, const vec3& b );
 
@@ -57,7 +57,7 @@ sdistance( const vec3& a, const vec3& b );
  * @param a The first point
  * @param b The second point
  */
-extern
+GO_API
 real
 sdistance( const vec2& a, const vec2& b );
 
@@ -69,7 +69,7 @@ sdistance( const vec2& a, const vec2& b );
  * @param low The lowest value for the parameters
  * @param high The highest value for the parameters
  */
-extern
+GO_API
 gpu_vec3
 get_color(
     const gpu_real& parameter,
@@ -81,7 +81,7 @@ get_color(
  * Convert a RGB color to a gray scale color.
  * @param color The RGB color to convert
  */
-extern
+GO_API
 gpu_vec3
 get_gray_scale( const gpu_vec3& color );
 
@@ -92,20 +92,20 @@ END_GO_NAMESPACE
 
 namespace std {
 
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec2& obj);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec3& obj);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec4& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec2& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec3& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::vec4& obj);
 
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec2& obj);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec3& obj);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec4& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec2& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec3& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec4& obj);
 
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec2& obj);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec3& obj);
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec4& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec2& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec3& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec4& obj);
 
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec2& obj);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec3& obj);
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec4& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec2& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec3& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec4& obj);
 }
 #endif

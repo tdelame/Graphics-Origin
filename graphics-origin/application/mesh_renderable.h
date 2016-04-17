@@ -12,7 +12,7 @@ namespace graphics_origin {
     class mesh;
   }
   namespace application {
-    class mesh_renderable
+    class GO_API mesh_renderable
       : public renderable {
     public:
       mesh_renderable(

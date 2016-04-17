@@ -23,13 +23,13 @@ namespace application {
  * If you use the macro glcheck() for all your GL API calls,
  * this function would be useless :-}.
  */
-extern
+GO_API
 void check_previous_gl_errors();
 
 /**
  * @brief Check if a GL API call produce errors and place them in the log.
  */
-extern
+GO_API
 void check_gl_error( const char* call, const char* file, const int line );
 
 /**

@@ -12,7 +12,7 @@ BEGIN_GO_NAMESPACE
 namespace geometry {
 
   class aabox;
-  struct ball
+  struct GO_API ball
     : public vec4 {
 
     /**Creates unit ball*/
@@ -46,7 +46,7 @@ namespace geometry {
   };
 
   template<>
-  struct geometric_traits<ball> {
+  struct GO_API geometric_traits<ball> {
     static const bool is_ball_intersecter = true;
     static const bool is_bounding_box_computer = true;
     static const bool is_bounding_ball_computer = true;

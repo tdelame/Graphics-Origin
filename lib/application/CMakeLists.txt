@@ -8,15 +8,10 @@ file(
   SOURCE_FILES
   "${GO_SOURCES_IN_DIR}/application/*.cc")
   
-add_library( 
-  graphics_origin_application SHARED
-  ${SOURCE_FILES} ${HEADER_FILES})
-	
-set( GO_APPLICATION_LIBRARIES 
-  graphics_origin_application ${GO_GEOMETRY_LIBRARIES} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
-  ${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES}
-  CACHE STRING "Libraries to link with if you want to use the application module")
-  
+add_go_lib( application ${SOURCE_FILES} ${HEADER_FILES} )
+set_go_lib_properties( application ${GO_GEOMETRY_LIBRARIES} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
+  ${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES} )  
+    
 install( TARGETS graphics_origin_application
   CONFIGURATIONS Debug
   DESTINATION lib/debug )

@@ -17,7 +17,7 @@ namespace application {
    * The design for this class is adapted from this article:
    * http://doc.qt.io/qt-5/qtquick-scenegraph-openglunderqml-example.html
    */
-  class gl_window :
+  class GO_API gl_window :
       public QQuickItem {
     Q_OBJECT
     Q_PROPERTY( QObject* camera READ get_camera WRITE set_camera )

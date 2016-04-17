@@ -152,7 +152,7 @@ namespace application {
 
    static bool is_supported_extension( const std::string& ext, GLenum& type )
    {
-     for( uint i = 0; i < NUMBER_OF_SHADER_TYPES; ++ i )
+     for( unsigned int i = 0; i < NUMBER_OF_SHADER_TYPES; ++ i )
        {
          if ( ext == gpu_file_extensions [ i ].extension )
            {

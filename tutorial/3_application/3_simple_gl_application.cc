@@ -201,9 +201,9 @@ namespace application {
             "shaders/mesh.geom",
             "shaders/mesh.frag"});
 
-      auto mesh = new mesh_renderable( mesh_program );
+      /*auto mesh = new mesh_renderable( mesh_program );
       mesh->load(  "17674.ply");
-      geometry::mesh_spatial_optimization mso( mesh->get_geometry(), true, true );
+      geometry::mesh_spatial_optimization mso( mesh->get_geometry(), true, true );*/
 
 //      auto bvh = mso.get_bvh();
 //      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
@@ -219,24 +219,24 @@ namespace application {
       auto points = new points_renderable( flat_program, nbpoints );
       for( size_t i = 0; i < nbpoints; ++ i )
         {
-          vec3 point = vec3{
-            (graphics_origin::tools::unit_random() - 0.5),
-            (graphics_origin::tools::unit_random() - 0.5),
-            (graphics_origin::tools::unit_random() - 0.5)
-          } * mso.get_bounding_box().m_hsides * 6.0 + mso.get_bounding_box().m_center;
+			vec3 point = vec3{
+			  (graphics_origin::tools::unit_random() - 0.5),
+			  (graphics_origin::tools::unit_random() - 0.5),
+			  (graphics_origin::tools::unit_random() - 0.5)
+			} * 6.0;// +mso.get_bounding_box().m_center;
 
-          if( mso.contain( point ) )
+          //if( mso.contain( point ) )
             {
               points->add( point, vec3{ 1, 0.2, 0.2 } );
             }
-          else
+          /*else
             {
               points->add( point, vec3{ 0.2, 1.0, 0.2 } );
-            }
+            }*/
 
         }
       add_renderable( points );
-      add_renderable( mesh );
+      //add_renderable( mesh );
 
 
 //      auto boxes_renderable = new aaboxes_renderable( box_wireframe_program, bvh->get_number_of_leaf_nodes() );

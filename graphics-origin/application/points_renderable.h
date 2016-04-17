@@ -12,7 +12,7 @@ namespace graphics_origin {
 
   namespace application {
 
-    class points_renderable
+    class GO_API points_renderable
       : public renderable {
     public:
 

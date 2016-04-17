@@ -14,7 +14,7 @@
 namespace graphics_origin {
 namespace application {
 
-  class camera
+  class GO_API camera
     : public QObject {
     Q_OBJECT
     Q_PROPERTY( qreal fov READ get_fov WRITE set_fov )

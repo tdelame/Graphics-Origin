@@ -15,7 +15,7 @@ namespace graphics_origin {
     class bvh;
   }
   namespace application {
-    class aaboxes_renderable
+    class GO_API aaboxes_renderable
       : public renderable {
 
       struct storage {

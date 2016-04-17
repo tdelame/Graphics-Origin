@@ -573,6 +573,32 @@ BEGIN_GO_NAMESPACE namespace geometry {
   void
   mesh::compute_bounding_box( aabox& b ) const
   {
+# ifdef _WIN32
+	# pragma message("MSVC does not allow custom reduction operation for OpenMP")
+    # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+    // custom reduction operations are not available on MSVC
+	mesh::Point minp = mesh::Point{ REAL_MAX,REAL_MAX,REAL_MAX };
+	mesh::Point maxp = mesh::Point{ -REAL_MAX,-REAL_MAX,-REAL_MAX };
+	const size_t size = n_vertices();
+	# pragma omp parallel
+	{
+		mesh::Point thread_minp = minp, thread_maxp = maxp;
+		# pragma omp for
+		for (long i = 0; i < size; ++i)
+		  {
+			const auto& p = point(VertexHandle(i));
+			thread_minp.minimize(p);
+			thread_maxp.maximize(p);
+		  }
+
+		# pragma omp critical
+		{
+			minp.minimize(thread_minp);
+			maxp.maximize(thread_maxp);
+		}
+	}
+	b = aabox(vec3{ minp[0], minp[1], minp[2] }, vec3{ maxp[0], maxp[1], maxp[2] });
+# else
     # pragma omp declare reduction(minmeshpoint: mesh::Point: omp_out.minimize( omp_in )) \
       initializer(omp_priv = mesh::Point{REAL_MAX,REAL_MAX,REAL_MAX})
     # pragma omp declare reduction(maxmeshpoint: mesh::Point: omp_out.maximize( omp_in )) \
@@ -588,6 +614,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
         maxp.maximize( p );
       }
     b = aabox( vec3{ minp[0], minp[1], minp[2]}, vec3{ maxp[0], maxp[1], maxp[2] } );
+# endif
   }
 
   bool
@@ -613,8 +640,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
     {
       bool ok = true;
       const size_t nvertices = m.n_vertices();
-      # pragma omp parallel for schedule(static)
-      for( size_t i = 0; i < nvertices; ++ i )
+      # ifdef _WIN32
+      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      #   pragma omp parallel for schedule(static)
+	  for (long i = 0; i < nvertices; ++i)
+	  # else
+	  #   pragma omp parallel for schedule(static)
+	  for (size_t i = 0; i < nvertices; ++ i )
+	  # endif
         {
           mesh::VertexHandle h( i );
           if( m.is_boundary( h ) )
@@ -631,8 +664,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
       m_triangles.resize( m_mesh.n_faces() );
       const auto nfaces  = m_triangles.size();
-      # pragma omp parallel for schedule(static)
-      for( size_t i = 0; i < nfaces; ++ i )
+	  # ifdef _WIN32
+      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+	  #   pragma omp parallel for schedule(static)
+	  for (long i = 0; i < nfaces; ++i)
+	  # else
+	  #   pragma omp parallel for schedule(static)
+	  for (size_t i = 0; i < nfaces; ++i)
+	  # endif
         {
           mesh::FaceVertexIter it = m_mesh.fv_begin( mesh::FaceHandle(i) );
           auto& p1 = m_mesh.point( *it ); ++ it;
