@@ -12,7 +12,7 @@ set( Graphics-Origin_VERSION_MINOR 0 )
 
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE "Release" 
-    CACHE STRING "Choose the type of build, options are: Debug Release." FORCE)
+    CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 #****************************
@@ -23,15 +23,22 @@ set( GO_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
 set( GO_TUTORIAL_IN_DIR "${CMAKE_SOURCE_DIR}/tutorial" )
 set( GO_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
 set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
+set( GO_OUT_DIR "${CMAKE_BINARY_DIR}")
 
-set( GO_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
-set( GO_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
-set( GO_TUTORIAL_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/tutorial" )
-set( GO_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
+set( GO_LIBRARY_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/lib" )
+set( GO_APPLICATION_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/bin" )
+set( GO_TUTORIAL_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/tutorial" )
+set( GO_TEST_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/test" )
 
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GO_LIBRARY_OUT_DIR} )
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GO_EXECUTABLE_OUT_DIR} )
+set( GO_LIBRARY_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/lib" )
+set( GO_APPLICATION_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/bin" )
+set( GO_TUTORIAL_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/tutorial" )
+set( GO_TEST_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/test" )
+
+set( GO_LIBRARY_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/lib" )
+set( GO_APPLICATION_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/bin" )
+set( GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/tutorial" )
+set( GO_TEST_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/test" )
 
 #*********************
 # projection options *
@@ -146,8 +153,6 @@ if( GO_USE_CUDA )
     set( CUDA_LIBRARIES 
       "${CUDA_CUDA_LIBRARY}" "${CUDA_CUDART_LIBRARY}"
       CACHE STRING "Libraries to link with if you want to use CUDA")
-    set( CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST") 
   endif()
 endif() 
 
@@ -181,10 +186,10 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   endif()
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
-    "/EHsc /openmp /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
+    "/DGO_EXPORTS /EHsc /openmp /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
 	CACHE STRING "MSVC C++ compiler flags" FORCE )
   set( CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} /Ox /arch:SSE2 /UDEBUG /DNDEBUG /DNO_DEBUG"
+    "${CMAKE_CXX_FLAGS_RELEASE} /Ox /UDEBUG /DNDEBUG /DNO_DEBUG"
 	CACHE STRING "MSVC C++ compiler extrat flags for release build type" FORCE )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
@@ -201,12 +206,79 @@ endif()
   
 
 include_directories( "${GO_HEADERS_IN_DIR}" )
-  
 configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
 
 install( DIRECTORY graphics-origin DESTINATION include )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
 
+
+function( add_go_lib lib_name)
+  add_library( 
+    graphics_origin_${lib_name} SHARED ${ARGN} )
+ 
+  message( STATUS
+    "new shared library: graphics_origin_${lib_name} from")
+  foreach( var ${ARGN})
+    message( STATUS "   file ${var}")
+  endforeach()
+endfunction()
+
+function( set_go_lib_properties lib_name )
+  string( TOUPPER ${lib_name} lib_name_upper )
+  
+  set( GO_${lib_name_upper}_LIBRARIES
+    "graphics_origin_${lib_name}" ${ARGN}
+	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module"
+	FORCE )
+  
+  set( GO_${lib_name_upper}_LIBRARIES_DEBUG
+    "${GO_OUT_DIR}/Debug/lib/graphics_origin_${lib_name}" ${ARGN}
+	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Debug mode"
+	FORCE )
+  set( GO_${lib_name_upper}_LIBRARIES_RELEASE
+    "${GO_OUT_DIR}/Release/lib/graphics_origin_${lib_name}" ${ARGN}
+	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Release mode"
+	FORCE )
+  set( GO_${lib_name_upper}_LIBRARIES_RELWITHDEBINFO
+    "${GO_OUT_DIR}/RelWithDebInfo/lib/graphics_origin_${lib_name}" ${ARGN}
+	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module in Release mode with Debug info"
+	FORCE )	
+
+  set_target_properties( graphics_origin_${lib_name}
+	PROPERTIES
+	IMPORTED_LOCATION_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}/graphics_origin_${lib_name}"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${GO_LIBRARY_OUT_DIR_RELEASE}"
+    
+	IMPORTED_LOCATION_DEBUG "${GO_LIBRARY_OUT_DIR_DEBUG}/graphics_origin_${lib_name}"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${GO_LIBRARY_OUT_DIR_DEBUG}"
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${GO_LIBRARY_OUT_DIR_DEBUG}"
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG "${GO_LIBRARY_OUT_DIR_DEBUG}"
+	
+    IMPORTED_LOCATION_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}/graphics_origin_${lib_name}"
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+  )
+endfunction() 
+
+function( set_go_tutorial_properties tutorial_name )
+  set_target_properties( ${tutorial_name}
+	PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${GO_TUTORIAL_OUT_DIR_RELEASE}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${GO_TUTORIAL_OUT_DIR_RELEASE}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${GO_TUTORIAL_OUT_DIR_RELEASE}"
+
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${GO_TUTORIAL_OUT_DIR_DEBUG}"
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${GO_TUTORIAL_OUT_DIR_DEBUG}"
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG "${GO_TUTORIAL_OUT_DIR_DEBUG}"
+  
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO}"
+	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO}"
+  )
+endfunction() 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
 add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
@@ -233,10 +305,3 @@ message(
   "GO_USE_CUDA    = ${GO_USE_CUDA}\n"
   "GO_USE_THRUST  = ${GO_USE_THRUST}\n"
 )
-
-
-
-
-
-
-

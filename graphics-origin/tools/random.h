@@ -8,7 +8,7 @@
 
 BEGIN_GO_NAMESPACE namespace tools {
 
-  real unit_random();
+  GO_API real unit_random();
 
 } END_GO_NAMESPACE
 # endif 

@@ -24,7 +24,7 @@ BEGIN_GO_NAMESPACE namespace tools {
  * }
  * \endcode
  */
-class fps_counter
+class GO_API fps_counter
 {
 public:
   /** @brief Build a FPS counter with a specific refresh interval.

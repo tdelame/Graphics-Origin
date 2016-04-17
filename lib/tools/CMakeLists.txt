@@ -8,13 +8,5 @@ file(
   SOURCE_FILES
   "${GO_SOURCES_IN_DIR}/tools/*.cc")
   
-add_library( 
-  graphics_origin_tools SHARED
-  ${SOURCE_FILES} ${HEADER_FILES})
-	
-set( GO_TOOLS_LIBRARIES 
-  graphics_origin_tools ${Boost_LIBRARIES} 
-  CACHE STRING "Libraries to link with if you want to use the tools module")
-  
-install( TARGETS graphics_origin_tools
-  DESTINATION ${GO_LIBRARY_OUT_DIR} )
+add_go_lib( tools ${SOURCE_FILES} ${HEADER_FILES} )
+set_go_lib_properties( tools ${Boost_LIBRARIES} )	

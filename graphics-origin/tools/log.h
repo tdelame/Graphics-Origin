@@ -23,16 +23,27 @@ namespace tools
 
   typedef boost::log::sources::severity_logger_mt< severity_level > logger_mt_type;
 
-  BOOST_LOG_GLOBAL_LOGGER(logger, logger_mt_type)
+  //BOOST_LOG_GLOBAL_LOGGER(logger, logger_mt_type)
+    struct GO_API logger
+    {
+        typedef logger_mt_type logger_type;
+        enum registration_line_t { registration_line = __LINE__ };
+        static const char* registration_file() { return __FILE__; }
+        static logger_type construct_logger();
+        static inline logger_type& get()
+        {
+            return ::boost::log::sources::aux::logger_singleton< logger >::get();
+        }
+    };
 
-  extern void
+  GO_API void
   init_log( const std::string& log_filename );
 
   /**
    * This function will flush all log entry to its destination. It could be used
    * when an exception has been caught, just before exiting the application.
    */
-  extern void
+  GO_API void
   flush_log();
 
   /**

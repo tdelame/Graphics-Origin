@@ -17,7 +17,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * manager is reached during the creation of an element. This maximal
    * capacity is fixed by the number of bits used to store the index of
    * an element in a handle. */
-  struct tight_buffer_manager_buffer_overflow
+  struct GO_API tight_buffer_manager_buffer_overflow
       : public std::runtime_error
   {
     tight_buffer_manager_buffer_overflow( const std::string& file, size_t line )
@@ -35,7 +35,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * element is pointed by an handle with the same index has been created)
    * - there is no allocated memory pointed by such handle (meaning the element
    * pointed by the handle has been deleted). */
-  struct tight_buffer_manager_invalid_handle
+  struct GO_API tight_buffer_manager_invalid_handle
       : public std::runtime_error
   {
     tight_buffer_manager_invalid_handle( const std::string& file, size_t line )
@@ -49,7 +49,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * Such an exception occurs when the memory pointed by a pointer is outside
    * of the element buffer or if it is not correctly aligned inside the memory
    * of the element buffer. */
-  struct tight_buffer_manager_invalid_element_pointer
+  struct GO_API tight_buffer_manager_invalid_element_pointer
       : public std::runtime_error
   {
     tight_buffer_manager_invalid_element_pointer( const std::string& file, size_t line )
@@ -62,7 +62,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    *
    * Such an exception occurs when an index i does not correspond to a valid element
    * element_buffer[i] of the element buffer. */
-  struct tight_buffer_manager_invalid_element_index
+  struct GO_API tight_buffer_manager_invalid_element_index
       : public std::runtime_error
   {
     tight_buffer_manager_invalid_element_index( const std::string& file, size_t line )
@@ -85,7 +85,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * The \a handle_type specifies the integral type that will be used to store
    * the index and the counter of an handle. Thus, it must integral and unsigned. */
   template< class element, typename handle_type, uint8_t index_bits>
-  class tight_buffer_manager {
+  class GO_API tight_buffer_manager {
     static_assert(
         std::is_default_constructible< element >::value,
         "element type is not default constructible");
@@ -109,7 +109,7 @@ BEGIN_GO_NAMESPACE namespace tools {
     static constexpr size_t max_index = (1 << index_bits) - 1;
     static constexpr size_t max_counter =  (1 << (handle_bits - index_bits - 2)) - 1;
     template< typename type >
-    class tb_iterator :
+    class GO_API tb_iterator :
         public std::iterator<
           std::random_access_iterator_tag,
           type >
@@ -154,7 +154,7 @@ BEGIN_GO_NAMESPACE namespace tools {
      * - counter, that tells the 'version' of the element at that index
      * in the tight buffer (how many time an element had been allocated
      * at this index). */
-    struct handle {
+    struct GO_API handle {
       handle_type index  : index_bits;
       handle_type counter: handle_bits - index_bits;
 

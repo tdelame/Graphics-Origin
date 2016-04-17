@@ -6,12 +6,6 @@
 # define GRAPHICS_ORIGIN_ANY_H_
 /** @file */
 # include "../graphics_origin.h"
-#   ifdef __CUDACC__
-BEGIN_GO_NAMESPACE namespace tools {
-  typedef void* any;
-} END_GO_NAMESPACE
-#   else
-
 # include <string>
 # include <typeindex>
 # include <unordered_map>
@@ -64,7 +58,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    * //var should contains now int(2)
    * \endcode
    */
-  struct any
+  struct GO_API any
      : public boost::spirit::hold_any
    {
       /**@name Construction/Destruction*/
@@ -171,12 +165,11 @@ BEGIN_GO_NAMESPACE namespace tools {
      };
   }
 
-  extern std::unordered_map < std::type_index, std::string >& get_type_to_name();
-  extern std::unordered_map < std::string, detail::serialize_any_base* >& get_name_to_serializer();
+  GO_API std::unordered_map < std::type_index, std::string >& get_type_to_name();
+  GO_API std::unordered_map < std::string, detail::serialize_any_base* >& get_name_to_serializer();
 
 }
 END_GO_NAMESPACE
 
 # include "./detail/any.tcc"
-# endif
 # endif

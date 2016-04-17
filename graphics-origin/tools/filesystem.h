@@ -20,41 +20,41 @@ BEGIN_GO_NAMESPACE namespace tools {
  * <tt>get_basename( "/etc/pacman.conf" )</tt> returns "pacman.conf"
  * @param filename The file name
  **/
-extern
+GO_API
 std::string get_basename( const std::string& filename );
 
 /** Extract the stem of a file name, e.g.:
  * <tt>get_basename( "/etc/pacman.conf" )</tt> returns "pacman"
  * @param filename The file name
  */
-extern
+GO_API
 std::string get_stem(const std::string& filename );
 
 /** Extract the extension of a file name, e.g.:
  * <tt>get_basename( "/etc/pacman.conf" )</tt> returns ".conf"
  * @param filename The file name
  */
-extern
+GO_API
 std::string get_extension( const std::string& filename );
 
 /** Extract the directory of a file name, e.g.:
  * <tt>get_basename( "/etc/pacman.conf" )</tt> returns "/etc/"
  * @param filename The file name
  */
-extern
+GO_API
 std::string get_directory_name( const std::string& filename );
 
 /** Change the extension of a file name, e.g.:
  * \li <tt>change_extension( "/etc/pacman.conf", "old") </tt> returns "/etc/pacman.old"
  * \li <tt>change_extension( "/etc/pacman.conf", ".new")</tt> returns "/etc/pacman.new"
  */
-extern
+GO_API
 std::string change_extension( const std::string& file, const std::string& new_extension);
 
 /** Tells if a (regular) file exist.
  * @param filename The file name
  */
-extern
+GO_API
 bool file_exist(const std::string& filename);
 
 } END_GO_NAMESPACE
