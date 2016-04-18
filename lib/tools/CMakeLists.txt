@@ -10,3 +10,15 @@ file(
   
 add_go_lib( tools ${SOURCE_FILES} ${HEADER_FILES} )
 set_go_lib_properties( tools ${Boost_LIBRARIES} )	
+
+install( TARGETS graphics_origin_tools
+  CONFIGURATIONS Debug
+  DESTINATION lib/debug )
+  
+install( TARGETS graphics_origin_tools
+  CONFIGURATIONS Release
+  DESTINATION lib/release )  
+
+install( TARGETS graphics_origin_tools
+  CONFIGURATIONS RelWithDebInfo
+  DESTINATION lib/relwithdebinfo )  

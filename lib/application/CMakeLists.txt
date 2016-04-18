@@ -19,3 +19,7 @@ install( TARGETS graphics_origin_application
 install( TARGETS graphics_origin_application
   CONFIGURATIONS Release
   DESTINATION lib/release )
+
+install( TARGETS graphics_origin_application
+  CONFIGURATIONS RelWithDebInfo
+  DESTINATION lib/relwithdebinfo )  

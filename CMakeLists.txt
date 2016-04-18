@@ -1,3 +1,12 @@
+#************
+# variables *
+#******************************************************************************
+# CMAKE_BUILD_TYPE
+#   possible values are Debug, Release and RelWithDebInfo
+#
+#
+
+
 #**********************
 # cmake configuration *
 #*******************************************************************************
@@ -10,10 +19,12 @@ project( Graphics-Origin )
 set( Graphics-Origin_VERSION_MAJOR 1 )
 set( Graphics-Origin_VERSION_MINOR 0 )
 
-if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE "Release" 
-    CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+# set the build type by default on GNU/Linux
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+	if( NOT CMAKE_BUILD_TYPE )
+		set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
+	endif(NOT CMAKE_BUILD_TYPE)
+endif()
 
 #****************************
 # directories configuration *
