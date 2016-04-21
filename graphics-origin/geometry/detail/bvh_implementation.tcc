@@ -354,6 +354,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  #   pragma omp parallel for schedule(static)
 	  for( _int32 i = 0; i <= number_of_internals; ++ i )
 	  # else
+	    //fixme: Use _Pragma( #pragma omp parallel for schedule(static)
       #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
 	  # endif
