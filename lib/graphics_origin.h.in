@@ -28,4 +28,7 @@ BEGIN_GO_NAMESPACE
 typedef double real;
 typedef float gpu_real;
 END_GO_NAMESPACE
+
+#cmakedefine GO_USE_OPENMP
+#cmakedefine GO_USE_OPENCL
 # endif

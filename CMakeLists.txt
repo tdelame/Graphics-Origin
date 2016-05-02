@@ -1,3 +1,18 @@
+#****
+#
+#*
+# Options
+# -------
+#   GO_USE_OPENMP                 Set to ON to enable parallelization with OpenMP
+#   GO_USE_OPENCL                 Set to ON to enable parallelization with OpenCL
+#   GO_BUILD_APPLICATION          Set to ON to build the application library
+#   GO_BUILD_TOOLS_TUTORIAL       Set to ON to build the tutorial for the tools library
+#   GO_BUILD_APPLICATION_TUTORIAL Set to ON to build the tutorial for the application library
+#   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the gutorial for the geometry library
+# Filepath
+# --------
+#   HEADER_ONLY_INCLUDE_DIRS Path of the header-only libraries needed by GO (default extlibs/)
+
 #**********************
 # cmake configuration *
 #*******************************************************************************
@@ -44,29 +59,18 @@ set( GO_TEST_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/test" )
 # projection options *
 #*******************************************************************************
 option(
-  GO_USE_CGAL
-  "Use CGAL libraries"
+  GO_USE_OPENMP
+  "Set to ON to enable parallelization with OpenMP"
   ON)
   
 option(
-  GO_USE_QT
-  "Set to ON to use QT libraries. If set to false, the application library cannot be built"
-  ON)  
-  
-option(
-  GO_USE_CUDA
-  "Set to ON to use CUDA libraries. If set to false, some functionnalities won't be available"
-  ON)  
-  
-option(
-  GO_USE_THRUST
-  "Set to ON to use CUDA Thrust library. If set to false, parallel versions of some algorithms might not be available"
+  GO_USE_OPENCL
+  "Set to ON to enable parallelization with OpenCL"
   ON)
-  
+
 option(
   GO_BUILD_APPLICATION
-  "Set to ON to build the application library. Since this library depends on the QT framework,
-  it will be built if both BUILD_APPLICATION and USE_QT are set to ON"
+  "Set to ON to build the application library."
   ON)
 
 option(
@@ -80,23 +84,42 @@ option(
   ON)
   
 option(
-	GO_BUILD_GEOMETRY_TUTORIAL
-	"Set to ON to build the tutorial for the geometry library."
-	ON)
-
-if( NOT GO_USE_QT )
-  set( GO_BUILD_APPLICATION OFF)
-  set( GO_BUILD_APPLICATION_TUTORIAL OFF )
-else()
-  if( NOT GO_BUILD_APPLICATION )
-    set( GO_USE_QT OFF )
-    set( GO_BUILD_APPLICATION_TUTORIAL OFF)
-  endif()
-endif()
+  GO_BUILD_GEOMETRY_TUTORIAL
+  "Set to ON to build the tutorial for the geometry library."
+  ON)
 
 #*********************
 # external libraries *
-#*******************************************************************************  
+#*******************************************************************************
+# reset flags
+set( CMAKE_CXX_FLAGS "" )
+  
+# OpenMP
+#   OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
+#   OPENMP_FOUND - true if openmp is detected
+if( GO_USE_OPENMP )
+  find_package( OpenMP )
+  if( OPENMP_FOUND )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+  else()
+    message( SEND_ERROR "Cannot find OpenMP to parallelize code. Disable OpenMP or help cmake to find it." )
+  endif()
+endif()
+
+# OpenCL
+#   OpenCL_FOUND          - True if OpenCL was found
+#   OpenCL_INCLUDE_DIRS   - include directories for OpenCL
+#   OpenCL_LIBRARIES      - link against this library to use OpenCL
+if( GO_USE_OPENCL )
+  find_package( OpenCL )
+  if( OpenCL_FOUND )
+    include_directories( ${OpenCL_INCLUDE_DIRS} )
+    link_directories( ${OpenCL_LIBRARIES} )
+  else()
+    message( SEND_ERROR "Cannot find OpenCL to parallelize code. Disable OpenCL or help cmake to find it." )
+  endif()
+endif()
+
 # openmesh
 find_package( OpenMesh REQUIRED )
 include_directories( ${OPENMESH_INCLUDE_DIR} )
@@ -112,10 +135,10 @@ find_package( Boost
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
-# glm
-set( GLM_INCLUDE_DIRS ""
-  CACHE PATH "path to the GLM include directories, ie., where to find glm/glm.hpp")
-include_directories( ${GLM_INCLUDE_DIRS} )
+# find header-only libraries: glm, nanoflann, spectra
+set( HEADER_ONLY_INCLUDE_DIRS "${GO_EXTLIBS_DIR}"
+   CACHE PATH "Path of the header-only libraries needed by GO (default extlibs/")
+include_directories( ${HEADER_ONLY_INCLUDE_DIRS} )
 
 if( GO_BUILD_APPLICATION )
   # qt
@@ -146,53 +169,29 @@ if( GO_BUILD_APPLICATION )
   include_directories( ${OPENGL_INCLUDE_DIR} )
 endif()
 
-# cuda
-if( GO_USE_CUDA )
-  find_package( CUDA REQUIRED )
-  if( NOT CUDA_FOUND )
-    set( GO_USE_CUDA OFF )
-  else()
-    include_directories( ${CUDA_TOOLKIT_INCLUDE} )
-    set( CUDA_LIBRARIES 
-      "${CUDA_CUDA_LIBRARY}" "${CUDA_CUDART_LIBRARY}"
-      CACHE STRING "Libraries to link with if you want to use CUDA")
-  endif()
-endif() 
-
-
-
-
-
-
-
-
-set( GLM_INCLUDE_DIRS "${GO_EXTLIBS_DIR}" ) 
-include_directories( ${GLM_INCLUDE_DIRS} )
-
 #***************
 # global flags *
 #*******************************************************************************
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS 
-    "-frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+    "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
     CACHE STRING "GNU C++ compiler flags" FORCE )
-  if( ${GO_USE_CUDA} )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA -DGO_USE_CUDA_THRUST")
-  endif()	
   set( CMAKE_CXX_FLAGS_RELEASE 
     "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DNO_DEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for release build type" FORCE )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
-  set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+  if( GO_USE_OPENMP )
+  	set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+  endif()
 
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
     "/EHsc /openmp /D_USE_MATH_DEFINES /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
 	CACHE STRING "MSVC C++ compiler flags" FORCE )
   if( ${GO_USE_CUDA} )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DGO_USE_CUDA /DGO_USE_CUDA_THRUST")
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif()
   set( CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} /Ox /UDEBUG /DNDEBUG /DNO_DEBUG"
@@ -200,26 +199,22 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
-	
 else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
 endif()
 
-
-
+#*********
+# macros *
+#*******************************************************************************
+# in order to add a library, one should do the following
+#  add_go_lib( lib_name list_of_sources )
+#  set_go_lib_properties( lib_name list_of_libraries )
   
-
-include_directories( "${GO_HEADERS_IN_DIR}" )
-configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
-
-install( DIRECTORY graphics-origin DESTINATION include )
-install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
-
-
+# add_go_lib new_library_name list_of_sources
+#   create a new library from a list of sources/headers
 function( add_go_lib lib_name)
   add_library( 
     graphics_origin_${lib_name} SHARED ${ARGN} )
- 
   message( STATUS
     "new shared library: graphics_origin_${lib_name} from")
   foreach( var ${ARGN})
@@ -227,16 +222,15 @@ function( add_go_lib lib_name)
   endforeach()
 endfunction()
 
+# set_go_lib_properties library_name list_of_libraries_to_link
+#   set the necessary properties of a library
+#   link the library with required libraries
 function( set_go_lib_properties lib_name )
   string( TOUPPER ${lib_name} lib_name_upper )
-  
   set( GO_${lib_name_upper}_LIBRARIES
     "graphics_origin_${lib_name}" ${ARGN}
 	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module"
 	FORCE )
-	
- 
-	
   message( STATUS
     "shared library graphics_origin_${lib_name} is linked with ")
   foreach( var ${ARGN})
@@ -266,6 +260,7 @@ function( set_go_lib_properties lib_name )
   target_link_libraries( graphics_origin_${lib_name} ${ARGN} )
 endfunction() 
 
+# set_go_tutorial_properties tutorial_name
 function( set_go_tutorial_properties tutorial_name )
   set_target_properties( ${tutorial_name}
 	PROPERTIES
@@ -282,6 +277,15 @@ function( set_go_tutorial_properties tutorial_name )
 	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO}"
   )
 endfunction() 
+
+
+
+include_directories( "${GO_HEADERS_IN_DIR}" )
+configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR}/graphics-origin/graphics_origin.h")
+
+install( DIRECTORY graphics-origin DESTINATION include )
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
+
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
 add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
@@ -303,8 +307,10 @@ endif()
 
 message(
   "Graphics-Origin Options:\n"
-  "GO_USE_CGAL    = ${GO_USE_CGAL}\n"
-  "GO_USE_QT      = ${GO_USE_QT}\n"
-  "GO_USE_CUDA    = ${GO_USE_CUDA}\n"
-  "GO_USE_THRUST  = ${GO_USE_THRUST}\n"
+  "GO_USE_OPENMP                 = ${GO_USE_OPENMP}\n"
+  "GO_USE_OPENCL                 = ${GO_USE_OPENCL}\n"
+  "GO_BUILD_APPLICATION          = ${GO_BUILD_APPLICATION}\n"
+  "GO_BUILD_TOOLS_TUTORIAL       = ${GO_BUILD_TOOLS_TUTORIAL}\n"
+  "GO_BUILD_APPLICATION_TUTORIAL = ${GO_BUILD_APPLICATION_TUTORIAL}\n"
+  "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}"
 )
