@@ -154,22 +154,6 @@ namespace application {
     return result;
   }
 
-  static void print_node( uint32_t node_index,
-                          const geometry::bvh<geometry::aabox>* bvh )
-  {
-    const auto& node = bvh->get_node( node_index );
-    if( bvh->is_leaf( node_index ) )
-      {
-        std::cout <<"node #" << node_index << " is a leaf around primitive #" << node.element_index << "\n";
-        std::cout <<"bounding box = {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} and father = " << node.parent_index << std::endl;
-      }
-    else
-      {
-        std::cout <<"node #" << node_index << " is internal with child node #" << node.left_index << " and node #" << node.right_index << " \n";
-        std::cout <<"bounding box = {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} and father = " << node.parent_index << std::endl;
-      }
-  }
-
   class simple_gl_window
     : public gl_window {
   public:
@@ -201,11 +185,7 @@ namespace application {
             "shaders/mesh.geom",
             "shaders/mesh.frag"});
 
-      /*auto mesh = new mesh_renderable( mesh_program );
-      mesh->load(  "17674.ply");
-      geometry::mesh_spatial_optimization mso( mesh->get_geometry(), true, true );*/
 
-//      auto bvh = mso.get_bvh();
 //      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
 //        {
 //          print_node( i, bvh );
@@ -215,61 +195,34 @@ namespace application {
 
 
 
-      const size_t nbpoints = 100000;
-      auto points = new points_renderable( flat_program, nbpoints );
-      for( size_t i = 0; i < nbpoints; ++ i )
-        {
-			vec3 point = vec3{
-			  (graphics_origin::tools::unit_random() - 0.5),
-			  (graphics_origin::tools::unit_random() - 0.5),
-			  (graphics_origin::tools::unit_random() - 0.5)
-			} * 6.0;// +mso.get_bounding_box().m_center;
-
-          //if( mso.contain( point ) )
-            {
-              points->add( point, vec3{ 1, 0.2, 0.2 } );
-            }
-          /*else
-            {
-              points->add( point, vec3{ 0.2, 1.0, 0.2 } );
-            }*/
-
-        }
-      add_renderable( points );
-      //add_renderable( mesh );
-
-
-//      auto boxes_renderable = new aaboxes_renderable( box_wireframe_program, bvh->get_number_of_leaf_nodes() );
-//      std::list< uint32_t > node_indices( 1, 0 );
-//      uint32_t size = 0;
-//      uint32_t seen = 0;
-//      while( ! node_indices.empty() )
+//      const size_t nbpoints = 100000;
+//      auto points = new points_renderable( flat_program, nbpoints );
+//      for( size_t i = 0; i < nbpoints; ++ i )
 //        {
-//          auto idx = node_indices.front();
-//          node_indices.pop_front();
-//          ++seen;
-////          LOG( error, "examining node #" << idx );
-//          if( !bvh->is_leaf( idx ) )
-//            {
-//              const auto& node = bvh->get_node( idx );
-////              LOG( error, "not a leaf so pushing node #" << node.left_index << " and node #" << node.right_index << " ");
-//              node_indices.push_front( node.left_index );
-//              node_indices.push_front( node.right_index );
-//            }
-//          else
-//            {
-//              boxes_renderable->add( bvh->get_node( idx ).bounding, get_color( size, 0, bvh->get_number_of_internal_nodes() ) );
-//              ++size;
-//            }
-//          if( size >= bvh->get_number_of_leaf_nodes() + 1 || seen >= bvh->get_number_of_nodes() + 1 )
-//            {
-//              LOG( error, "ouin");
-//              break;
+//			vec3 point = vec3{
+//			  (graphics_origin::tools::unit_random() - 0.5),
+//			  (graphics_origin::tools::unit_random() - 0.5),
+//			  (graphics_origin::tools::unit_random() - 0.5)
+//			} * 6.0;// +mso.get_bounding_box().m_center;
 //
+//          //if( mso.contain( point ) )
+//            {
+//              points->add( point, vec3{ 1, 0.2, 0.2 } );
 //            }
+//          /*else
+//            {
+//              points->add( point, vec3{ 0.2, 1.0, 0.2 } );
+//            }*/
 //
 //        }
-//      add_renderable( boxes_renderable );
+//      add_renderable( points );
+
+      auto mesh = new mesh_renderable( mesh_program );
+      mesh->load(  "armadillo.off" );
+      geometry::mesh_spatial_optimization mso( mesh->get_geometry(), true, true );
+      add_renderable( mesh );
+      auto boxes_renderable = aaboxes_renderable_from_box_bvh( box_wireframe_program, *mso.get_bvh() );
+      add_renderable( boxes_renderable );
     }
   };
 
@@ -310,7 +263,7 @@ int main( int argc, char* argv[] )
 {
   QGuiApplication qgui( argc, argv );
   graphics_origin::application::test_application app;
-  app.setSource(QUrl::fromLocalFile("tutorial/3_application/3_simple_gl_application.qml"));
+  app.setSource(QUrl::fromLocalFile("3_simple_gl_application.qml"));
   app.show();
   app.raise();
   return qgui.exec();
