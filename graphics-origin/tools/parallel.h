@@ -7,6 +7,14 @@
 # ifdef GO_USE_OPENMP
 #  include <omp.h>
 # endif
+# ifdef GO_USE_OPENCL
+#  include <CL/cl.h>
+
+GO_API
+void check_cl_error( const char* call, const char* file, const int line, cl_int error );
+
+#  define clcheck( call ) check_cl_error( #call, __FILE__, __LINE__, call )
+# endif
 
 BEGIN_GO_NAMESPACE namespace tools {
 

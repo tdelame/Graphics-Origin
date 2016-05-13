@@ -9,4 +9,4 @@ file(
   "${GO_SOURCES_IN_DIR}/tools/*.cc")
   
 add_go_lib( tools ${SOURCE_FILES} ${HEADER_FILES} )
-set_go_lib_properties( tools ${Boost_LIBRARIES} )	
+set_go_lib_properties( tools ${Boost_LIBRARIES} ${OpenCL_LIBRARIES} )	
