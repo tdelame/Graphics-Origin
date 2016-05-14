@@ -53,48 +53,36 @@ BEGIN_GO_NAMESPACE namespace tools {
   // Original source:
   // * http://stackoverflow.com/questions/17240071/what-is-the-right-way-to-call-clgetplatforminfo
   // * Banger, R, Bhattacharyya .K. "OpenCL Programming by Example". 2013. Packt publishing​. p43
-#   define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 
-  static const cl_platform_info cl_attribute_types[5] = {
+
+  static constexpr unsigned int cl_number_of_platform_attributes = 5;
+
+  static const cl_platform_info cl_platform_attribute_types[ cl_number_of_platform_attributes ] = {
       CL_PLATFORM_NAME,
       CL_PLATFORM_VENDOR,
       CL_PLATFORM_VERSION,
       CL_PLATFORM_PROFILE,
       CL_PLATFORM_EXTENSIONS
   };
-
-  static const char* const attributeNames[] = {
-      "CL_PLATFORM_NAME",
-      "CL_PLATFORM_VENDOR",
-      "CL_PLATFORM_VERSION",
-      "CL_PLATFORM_PROFILE",
-      "CL_PLATFORM_EXTENSIONS"
+  static const char* const cl_platform_attribute_names[ cl_number_of_platform_attributes ] = {
+      "Name      : ",
+      "Vendor    : ",
+      "Version   : ",
+      "Profile   : ",
+      "Extensions: "
   };
-
-  static void log_cl_device_info(cl_device_id device)
-  {
-      char queryBuffer[1024];
-      int queryInt;
-      clcheck( clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(queryBuffer), &queryBuffer, NULL) );
-      LOG( info, "   + CL_DEVICE_NAME: " << queryBuffer);
-      queryBuffer[0] = '\0';
-
-      clcheck(clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(queryBuffer), &queryBuffer, NULL));
-      LOG( info, "   + CL_DEVICE_VENDOR: " << queryBuffer);
-      queryBuffer[0] = '\0';
-
-      clcheck(clGetDeviceInfo(device, CL_DRIVER_VERSION, sizeof(queryBuffer), &queryBuffer, NULL));
-      LOG( info, "   + CL_DRIVER_VERSION: " << queryBuffer);
-      queryBuffer[0] = '\0';
-
-      clcheck(clGetDeviceInfo(device, CL_DEVICE_VERSION, sizeof(queryBuffer), &queryBuffer, NULL));
-      LOG( info, "   + CL_DEVICE_VERSION: " << queryBuffer);
-      queryBuffer[0] = '\0';
-
-      clcheck(clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(int), &queryInt, NULL));
-      LOG( info, "   + CL_DEVICE_MAX_COMPUTE_UNITS: " << queryInt);
-  }
   //end
+
+  std::vector< cl::Platform >& g_cl_platforms()
+  {
+    static std::vector< cl::Platform > platforms;
+    return platforms;
+  }
+
+  const std::vector< cl::Platform >& get_cl_platforms()
+  {
+    return g_cl_platforms();
+  }
 
 # endif
 
@@ -107,41 +95,72 @@ BEGIN_GO_NAMESPACE namespace tools {
 # endif
 # ifdef GO_USE_OPENCL
     {
-      cl_uint nb_platforms = 0;
-      clcheck(  clGetPlatformIDs( 0, 0, &nb_platforms ) );
-      LOG( info, "[OpenCL] number of platforms: " <<  nb_platforms);
+      std::vector< cl::Platform >& platforms = g_cl_platforms();
+      clcheck( cl::Platform::get( &platforms ));
+      LOG( info, "[OpenCL] number of platforms: " << platforms.size() );
 
-      std::vector<cl_platform_id> platform_ids( nb_platforms );
-      clcheck( clGetPlatformIDs( nb_platforms, platform_ids.data(), &nb_platforms));
-
-      // for each platform print all attributes
-      int num_attributes = NELEMS(cl_attribute_types);
-      for( cl_uint i = 0; i < nb_platforms; ++i)
+      for( unsigned int i = 0; i < platforms.size();  )
         {
-          LOG( info, "[OpenCL] Platform #" << i + 1 );
-          for( int j = 0; j < num_attributes; ++j)
-            {
-              // get platform attribute value size
-              size_t info_size = 0;
-              clGetPlatformInfo(platform_ids[i], cl_attribute_types[j], 0, NULL, &info_size);
-              char* info = (char*) malloc(info_size);
-              // get platform attribute value
-              clGetPlatformInfo(platform_ids[i], cl_attribute_types[j], info_size, info, NULL);
-//              printf("  %d.%d %-11s: %s\n", i+1, j+1, attributeNames[j], info);
-              free( info );
-            }
-          //Get the devices list and choose the device you want to run on
-          cl_uint num_devices = 0;
-          clcheck(clGetDeviceIDs( platform_ids[i], CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices));
+          LOG( info, "[OpenCL] Platform #" << i );
 
-          cl_device_id* device_list = device_list = (cl_device_id *) malloc(sizeof(cl_device_id)*num_devices);
-          clcheck(clGetDeviceIDs( platform_ids[i], CL_DEVICE_TYPE_ALL, num_devices, device_list, NULL));
-          for( cl_uint k = 0; k < num_devices; ++k )
+          std::string info;
+          for( unsigned int platform_attribute_number = 0;
+              platform_attribute_number < cl_number_of_platform_attributes;
+              ++platform_attribute_number )
             {
-              log_cl_device_info( device_list[k] );
+              clcheck(platforms[i].getInfo( cl_platform_attribute_types[ platform_attribute_number ], &info ));
+              LOG( info, "  + " << cl_platform_attribute_names[ platform_attribute_number ] << info );
             }
-          free(device_list);
-      }
+
+          std::vector< cl::Device > devices;
+          platforms[i].getDevices( CL_DEVICE_TYPE_ALL , &devices);
+
+          for( unsigned int device_number = 0; device_number < devices.size(); ++ device_number )
+            {
+              LOG( info, "  + Device #" << device_number );
+
+              clcheck(devices[device_number].getInfo( CL_DEVICE_NAME, &info ));
+              LOG( info, "    - Name: " << info );
+
+              clcheck(devices[device_number].getInfo( CL_DEVICE_VENDOR, &info ));
+              LOG( info, "    - Vendor: " << info );
+
+              clcheck(devices[device_number].getInfo( CL_DRIVER_VERSION, &info ));
+              LOG( info, "    - Driver: " << info );
+
+              clcheck(devices[device_number].getInfo( CL_DEVICE_VERSION, &info ));
+              LOG( info, "    - Version: " << info );
+
+              cl_uint max_compute_units = 0;
+              clcheck(devices[device_number].getInfo( CL_DEVICE_MAX_COMPUTE_UNITS, &max_compute_units ));
+              LOG( info, "    - Max Compute Units: " << max_compute_units );
+
+              size_t max_group_size = 0;
+              clcheck(devices[device_number].getInfo( CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_group_size ));
+              LOG( info, "    - Max Work Group Size: " << max_group_size );
+
+              cl_uint dimension = 0;
+              clcheck(devices[device_number].getInfo( CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, &dimension ));
+              LOG( info, "    - Max Work Item Dim: " << dimension );
+
+              std::vector< size_t > max_work_item_sizes;
+              clcheck(devices[device_number].getInfo( CL_DEVICE_MAX_WORK_ITEM_SIZES, &max_work_item_sizes ));
+
+              info = "(";
+              for( unsigned int j = 0; j + 1 < max_work_item_sizes.size(); ++ j )
+                {
+                  info += std::to_string( max_work_item_sizes[j] ) + ", ";
+                }
+              LOG( info, "    - Max Work Item Sizes: " << info << max_work_item_sizes.back() << ')');
+            }
+          if( devices.empty() )
+            {
+              LOG( info, "  + Failed to get devices for this platform. Removing it from the list...");
+              std::swap( platforms[i], platforms.back() );
+              platforms.pop_back();
+            }
+          else ++ i;
+        }
     }
 # endif
   }

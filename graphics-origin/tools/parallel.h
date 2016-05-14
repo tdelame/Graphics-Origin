@@ -8,7 +8,7 @@
 #  include <omp.h>
 # endif
 # ifdef GO_USE_OPENCL
-#  include <CL/cl.h>
+#  include <CL/cl.hpp>
 
 GO_API
 void check_cl_error( const char* call, const char* file, const int line, cl_int error );
@@ -71,6 +71,10 @@ BEGIN_GO_NAMESPACE namespace tools {
    * @param setup The new current setup.
    */
   void set_parallelization_setup( parallelization_setup setup );
+
+# ifdef GO_USE_OPENCL
+  const std::vector< cl::Platform >& get_cl_platforms();
+# endif
 
 } END_GO_NAMESPACE
 
