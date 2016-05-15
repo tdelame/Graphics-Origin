@@ -64,15 +64,18 @@ BEGIN_GO_NAMESPACE namespace tools {
    * Access to the current parallelization setup.
    * @return The current parallelization setup.
    */
+  GO_API
   parallelization_setup get_parallelization_setup();
 
   /**
    * Set the current parallelization setup.
    * @param setup The new current setup.
    */
+  GO_API
   void set_parallelization_setup( parallelization_setup setup );
 
 # ifdef GO_USE_OPENCL
+  GO_API
   const std::vector< cl::Platform >& get_cl_platforms();
 # endif
 
