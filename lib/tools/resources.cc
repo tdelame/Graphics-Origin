@@ -47,14 +47,11 @@ BEGIN_GO_NAMESPACE
       m_paths[resource_name] = ensure_last_char_is_slash(resource_path);
     }
 
-
     path_manager& get_path_manager()
     {
       static path_manager instance;
       return instance;
     }
-
-
   }
 END_GO_NAMESPACE
 

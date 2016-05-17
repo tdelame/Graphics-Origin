@@ -1,6 +1,12 @@
 pragma Singleton
 import QtQuick 2.3
 
+
+// This is a nice way to define properties in QML. You have then just one file 
+// where all the style is defined and can replace its content with another one
+// when needed. Then, in other qml files, you just have to type 
+// Style.main_window.initial_width for example to use the value defined in this
+// style file.
 QtObject {
   property QtObject main_window: QtObject {
     property int initial_width: 800

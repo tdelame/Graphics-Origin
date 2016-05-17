@@ -78,6 +78,11 @@ BEGIN_GO_NAMESPACE namespace tools {
     std::unordered_map< std::string, std::string > m_paths;
   };
 
+  /**@brief Get the singleton of path manager.
+   *
+   * Access to a unique instance of a path manager, i.e. a singleton.
+   * @return The unique instance.
+   */
   GO_API
   path_manager& get_path_manager();
 
