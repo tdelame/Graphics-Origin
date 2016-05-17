@@ -5,6 +5,13 @@
 BEGIN_GO_NAMESPACE
   namespace tools
   {
+    static std::string ensure_last_char_is_slash( const std::string& path )
+    {
+      if( path.empty() || path.back() == '/' )
+        return path;
+      return path + '/';
+    }
+
     std::string
     path_manager::get_root_directory () const noexcept
     {
@@ -14,7 +21,7 @@ BEGIN_GO_NAMESPACE
     void
     path_manager::set_root_directory( const std::string& root ) noexcept
     {
-      m_root_directory = root;
+      m_root_directory = ensure_last_char_is_slash(root);
     }
 
     std::string
@@ -22,7 +29,7 @@ BEGIN_GO_NAMESPACE
     {
       auto find = m_paths.find( resource_name );
       if( find == m_paths.end() )
-        return m_root_directory + resource_name;
+        return m_root_directory + resource_name + '/';
       return find->second;
     }
 
@@ -37,7 +44,7 @@ BEGIN_GO_NAMESPACE
         const std::string& resource_name,
         const std::string& resource_path ) noexcept
     {
-      m_paths[resource_name] = resource_path;
+      m_paths[resource_name] = ensure_last_char_is_slash(resource_path);
     }
 
 

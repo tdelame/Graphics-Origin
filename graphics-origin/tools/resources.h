@@ -4,6 +4,8 @@
 # ifndef RESOURCES_H_
 # define RESOURCES_H_
 # include "../graphics_origin.h"
+# include <string>
+# include <unordered_map>
 
 BEGIN_GO_NAMESPACE namespace tools {
 

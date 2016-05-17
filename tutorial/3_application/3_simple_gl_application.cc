@@ -1,158 +1,24 @@
 /*  Created on: Feb 14, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include <GL/glew.h>
-
-# include "../../graphics-origin/application/camera.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/gl_window.h"
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/aaboxes_renderable.h"
-# include "../../graphics-origin/application/points_renderable.h"
 # include "../../graphics-origin/application/mesh_renderable.h"
-# include "../../graphics-origin/application/lines_renderable.h"
-# include "../../graphics-origin/application/balls_renderable.h"
-# include "../../graphics-origin/tools/log.h"
 # include "../../graphics-origin/tools/random.h"
-
-# include "../../graphics-origin/geometry/ball.h"
+# include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/geometry/bvh.h"
-# include "../../graphics-origin/geometry/ray.h"
 
-# include "../../graphics-origin/tools/tight_buffer_manager.h"
-# include "3_simple_gl_application.h"
-
-# include <omp.h>
+# include "simple_camera.h"
+# include "simple_gl_renderer.h"
+# include "simple_qml_application.h"
 
 # include <QGuiApplication>
-# include <QtGui/QSurfaceFormat>
-# include <QtCore/QThread>
-
-# include <list>
-# include <fstream>
-# include <sstream>
 
 namespace graphics_origin {
 namespace application {
-
-    simple_camera::simple_camera( QObject* parent )
-      : camera{ parent }, m_direction{},
-        m_update_time{ omp_get_wtime() },
-        m_forward{false}, m_left{false}, m_right{false},
-        m_backward{false}, m_up{false}, m_down{false}
-    {}
-
-    void simple_camera::set_go_left( bool left )
-    {
-      m_left = left;
-      if( m_left )
-        m_direction.x = 1.0;
-      else if( m_right )
-        m_direction.x = -1.0;
-      else m_direction.x = 0;
-    }
-    void simple_camera::set_go_right( bool right )
-    {
-      m_right = right;
-      if( m_right )
-        m_direction.x = -1.0;
-      else if( m_left )
-        m_direction.x = 1.0;
-      else m_direction.x = 0;
-    }
-     void simple_camera::set_go_forward( bool forward )
-    {
-      m_forward = forward;
-      if( m_forward )
-        m_direction.z = 1.0;
-      else if( m_backward )
-        m_direction.z = -1.0;
-      else m_direction.z = 0;
-    }
-    void simple_camera::set_go_backward( bool backward )
-    {
-      m_backward = backward;
-      if( m_backward )
-        m_direction.z = -1.0;
-      else if( m_forward )
-        m_direction.z = 1.0;
-      else m_direction.z = 0;
-    }
-
-    void simple_camera::do_update()
-    {
-      if( m_forward || m_left || m_right || m_backward )
-        {
-          gpu_real factor = glm::length( m_direction );
-          if( factor > 0.01 )
-            {
-              factor = gpu_real((omp_get_wtime() - m_update_time)* 0.5 ) / factor;
-              gpu_vec3 shift = factor * m_direction;
-              m_view[3][0] += shift.x;
-              m_view[3][1] += shift.y;
-              m_view[3][2] += shift.z;
-
-              emit position_changed();
-            }
-        }
-      m_update_time = omp_get_wtime();
-    }
-
-  simple_gl_renderer::~simple_gl_renderer()
-  {}
-
-  void simple_gl_renderer::do_add( renderable* r )
-  {
-    m_renderables.push_back( r );
-  }
-
-  void simple_gl_renderer::do_render()
-  {
-    m_camera->update();
-    for( auto& r : m_renderables )
-      {
-        r->get_shader_program()->bind();
-        r->render();
-      }
-  }
-
-  void simple_gl_renderer::do_shut_down()
-  {
-    while( !m_renderables.empty() )
-      {
-        auto r = m_renderables.front();
-        delete r;
-        m_renderables.pop_front();
-      }
-  }
-
-  std::string get_next_line( std::ifstream& file, size_t& cline )
-  {
-    std::string result = "";
-    do
-      {
-        if (file.eof() || file.fail())
-          return "";
-        getline(file, result);
-        ++cline;
-
-        std::string::size_type pos = 0;
-        for( auto c : result )
-          {
-            if( c == ' ' || c == '\t' )
-              ++pos;
-            else break;
-          }
-        result = result.substr( pos );
-
-      }
-    while (result == "" || result[0] == '#');
-    size_t found = result.find('#');
-    if (found != std::string::npos)
-      result = result.substr(0, found);
-    return result;
-  }
 
   class simple_gl_window
     : public gl_window {
@@ -162,63 +28,23 @@ namespace application {
     {
       initialize_renderer( new simple_gl_renderer );
 
+      std::string shader_directory = tools::get_path_manager().get_resource_directory( "shaders" );
+      std::string mesh_directory = tools::get_path_manager().get_resource_directory( "meshes" );
+
       shader_program_ptr box_wireframe_program =
           std::make_shared<shader_program>( std::list<std::string>{
-            "shaders/aabox.vert",
-            "shaders/aabox.geom",
-            "shaders/aabox.frag"});
-
-      shader_program_ptr balls_program =
-          std::make_shared<shader_program>( std::list<std::string>{
-            "shaders/balls.vert",
-            "shaders/balls.geom",
-            "shaders/balls.frag"});
-
-      shader_program_ptr flat_program =
-          std::make_shared<shader_program>( std::list<std::string>{
-            "shaders/flat.vert",
-            "shaders/flat.frag"});
+            shader_directory + "aabox.vert",
+            shader_directory + "aabox.geom",
+            shader_directory + "aabox.frag"});
 
       shader_program_ptr mesh_program =
           std::make_shared<shader_program>( std::list<std::string>{
-            "shaders/mesh.vert",
-            "shaders/mesh.geom",
-            "shaders/mesh.frag"});
-
-
-//      for( size_t i = 0; i < bvh->get_number_of_internal_nodes() + bvh->get_number_of_leaf_nodes(); ++ i )
-//        {
-//          print_node( i, bvh );
-//        }
-//      std::cout << "\n\n\n" << std::endl;
-//      std::cout << "BBOX = " << mso.get_bounding_box().get_min() << " , " << mso.get_bounding_box().get_max() << std::endl;
-
-
-
-//      const size_t nbpoints = 100000;
-//      auto points = new points_renderable( flat_program, nbpoints );
-//      for( size_t i = 0; i < nbpoints; ++ i )
-//        {
-//			vec3 point = vec3{
-//			  (graphics_origin::tools::unit_random() - 0.5),
-//			  (graphics_origin::tools::unit_random() - 0.5),
-//			  (graphics_origin::tools::unit_random() - 0.5)
-//			} * 6.0;// +mso.get_bounding_box().m_center;
-//
-//          //if( mso.contain( point ) )
-//            {
-//              points->add( point, vec3{ 1, 0.2, 0.2 } );
-//            }
-//          /*else
-//            {
-//              points->add( point, vec3{ 0.2, 1.0, 0.2 } );
-//            }*/
-//
-//        }
-//      add_renderable( points );
+            shader_directory + "mesh.vert",
+            shader_directory + "mesh.geom",
+            shader_directory + "mesh.frag"});
 
       auto mesh = new mesh_renderable( mesh_program );
-      mesh->load(  "armadillo.off" );
+      mesh->load( mesh_directory + "armadillo.off" );
       geometry::mesh_spatial_optimization mso( mesh->get_geometry(), true, true );
       add_renderable( mesh );
       auto boxes_renderable = aaboxes_renderable_from_box_bvh( box_wireframe_program, *mso.get_bvh() );
@@ -226,44 +52,22 @@ namespace application {
     }
   };
 
-  test_application::test_application( QWindow* parent )
-    : QQuickView( parent )
-  {
-    qmlRegisterType<simple_gl_window>( "GraphicsOrigin", 1, 0, "GLWindow" );
-    qmlRegisterType<simple_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
-
-    QSurfaceFormat format;
-    format.setMajorVersion( 4 );
-    format.setMinorVersion( 4 );
-    setFormat( format );
-    setResizeMode(QQuickView::SizeRootObjectToView );
-    // Rendering in a thread introduces a slightly more complicated cleanup
-    // so we ensure that no cleanup of graphics resources happen until the
-    // application is shutting down.
-    setPersistentOpenGLContext(true);
-    setPersistentSceneGraph(true);
-  }
-
-
-  test_application::~test_application()
-  {
-    // As the render threads make use of our QGuiApplication object
-    // to clean up gracefully, wait for them to finish before
-    // QGuiApp is taken off the heap.
-    foreach(gl_window* w, gl_window::g_gl_windows)
-      {
-        w->pause();
-        delete w;
-      }
-  }
 }
 }
 
 int main( int argc, char* argv[] )
 {
+  // This is typically the place where you will analyze command-line arguments
+  // such as to set a resources root directory.
+
   QGuiApplication qgui( argc, argv );
-  graphics_origin::application::test_application app;
-  app.setSource(QUrl::fromLocalFile("3_simple_gl_application.qml"));
+  qmlRegisterType<graphics_origin::application::simple_gl_window>( "GraphicsOrigin", 1, 0, "GLWindow" );
+  qmlRegisterType<graphics_origin::application::simple_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
+
+  std::string input_qml = graphics_origin::tools::get_path_manager().get_resource_directory( "qml" ) + "3_simple_gl_application.qml";
+  graphics_origin::application::simple_qml_application app;
+  app.setSource(QUrl::fromLocalFile( input_qml.c_str()));
+
   app.show();
   app.raise();
   return qgui.exec();
