@@ -230,6 +230,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     typedef typename mesh::Normal      Normal;
     typedef typename mesh::Color       Color;
     typedef typename mesh::TexCoord2D  TexCoord2D;
+    typedef typename mesh::TexCoord3D  TexCoord3D;
     typedef typename mesh::VertexHandle VertexHandle;
     typedef typename mesh::EdgeHandle EdgeHandle;
     typedef typename mesh::HalfedgeHandle HalfedgeHandle;
@@ -239,6 +240,22 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     ImporterT(mesh& _mesh) : mesh_(_mesh), halfedgeNormals_() {}
 
+    virtual void add_face_texcoords( FaceHandle _fh, VertexHandle _vh, const std::vector<OpenMesh::Vec3f>& _face_texcoords)
+    {
+      // get first halfedge handle
+      HalfedgeHandle cur_heh   = mesh_.halfedge_handle(_fh);
+      HalfedgeHandle end_heh   = mesh_.prev_halfedge_handle(cur_heh);
+
+      // find start heh
+      while( mesh_.to_vertex_handle(cur_heh) != _vh && cur_heh != end_heh )
+        cur_heh = mesh_.next_halfedge_handle( cur_heh);
+
+      for(unsigned int i=0; i<_face_texcoords.size(); ++i)
+      {
+        set_texcoord( cur_heh, _face_texcoords[i]);
+        cur_heh = mesh_.next_halfedge_handle( cur_heh);
+      }
+    }
 
     virtual VertexHandle add_vertex(const OpenMesh::Vec3f& p)
     {
@@ -360,6 +377,18 @@ BEGIN_GO_NAMESPACE namespace geometry {
     {
       if (mesh_.has_halfedge_texcoords2D())
         mesh_.set_texcoord2D(_heh, _texcoord );
+    }
+
+    virtual void set_texcoord(VertexHandle _vh, const OpenMesh::Vec3f& _texcoord)
+    {
+      if (mesh_.has_vertex_texcoords3D())
+        mesh_.set_texcoord3D(_vh, OpenMesh::vector_cast<TexCoord3D>(_texcoord));
+    }
+
+    virtual void set_texcoord(HalfedgeHandle _heh, const OpenMesh::Vec3f& _texcoord)
+    {
+      if (mesh_.has_halfedge_texcoords3D())
+        mesh_.set_texcoord3D(_heh, OpenMesh::vector_cast<TexCoord3D>(_texcoord));
     }
 
     // edge attributes

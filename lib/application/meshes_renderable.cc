@@ -52,12 +52,23 @@ namespace graphics_origin {
     }
 
     void
+    meshes_renderable::remove_gpu_data()
+    {
+	  storage* data = m_meshes.data();
+	  for( size_t i = 0; i < m_meshes.get_size(); ++i, ++data )
+	    {
+		  glcheck(glDeleteVertexArrays(1, &data->vao));
+		  glcheck(glDeleteBuffers( number_of_buffers, data->buffer_ids));
+	    }
+    }
+
+    void
     meshes_renderable::update_gpu_data()
     {
       std::vector< gpu_real > positions_normals;
       std::vector< unsigned int > indices;
       storage* data = m_meshes.data();
-      for( size_t i = 0; i < m_meshes.get_size(); )
+      for( size_t i = 0; i < m_meshes.get_size(); ++i, ++data)
         {
           if( data->destroyed )
             {
@@ -144,8 +155,6 @@ namespace graphics_origin {
                 }
 
             }
-          ++i;
-          ++data;
         }
     }
 
