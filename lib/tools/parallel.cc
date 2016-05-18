@@ -20,7 +20,6 @@ BEGIN_GO_NAMESPACE namespace tools {
     parallelization_setup_mutex.lock();
       g_parallelization_setup = setup;
 
-# ifdef GO_USE_OPENMP
       if( g_parallelization_setup == parallelization_setup::none )
         {
           omp_set_num_threads( 1 );
@@ -29,7 +28,6 @@ BEGIN_GO_NAMESPACE namespace tools {
         {
           omp_set_num_threads( omp_get_num_procs() );
         }
-# endif
     parallelization_setup_mutex.unlock();
   }
 
@@ -88,11 +86,9 @@ BEGIN_GO_NAMESPACE namespace tools {
 
   void initialize_parallel_setup()
   {
-# ifdef GO_USE_OPENMP
     LOG( info, "[OpenMP] number of devices: " << omp_get_num_devices() );
     LOG( info, "[OpenMP] default device: " << omp_get_default_device() );
     LOG( info, "[OpenMP] maximum threads to use on default device: " << omp_get_num_procs() )
-# endif
 # ifdef GO_USE_OPENCL
     {
       std::vector< cl::Platform >& platforms = g_cl_platforms();

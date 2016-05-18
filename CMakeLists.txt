@@ -3,15 +3,11 @@
 #*
 # Options
 # -------
-#   GO_USE_OPENMP                 Set to ON to enable parallelization with OpenMP
 #   GO_USE_OPENCL                 Set to ON to enable parallelization with OpenCL
 #   GO_BUILD_APPLICATION          Set to ON to build the application library
 #   GO_BUILD_TOOLS_TUTORIAL       Set to ON to build the tutorial for the tools library
 #   GO_BUILD_APPLICATION_TUTORIAL Set to ON to build the tutorial for the application library
 #   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the gutorial for the geometry library
-# Filepath
-# --------
-#   HEADER_ONLY_INCLUDE_DIRS Path of the header-only libraries needed by GO (default extlibs/)
 
 #**********************
 # cmake configuration *
@@ -37,32 +33,26 @@ set( GO_HEADERS_IN_DIR "${CMAKE_SOURCE_DIR}" )
 set( GO_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
 set( GO_TUTORIAL_IN_DIR "${CMAKE_SOURCE_DIR}/tutorial" )
 set( GO_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
-set( GO_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
 set( GO_OUT_DIR "${CMAKE_BINARY_DIR}")
 
-set( GO_LIBRARY_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/lib" )
-set( GO_APPLICATION_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/bin" )
-set( GO_TUTORIAL_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/tutorial" )
-set( GO_TEST_OUT_DIR_DEBUG "${GO_OUT_DIR}/Debug/test" )
+set( GO_LIBRARY_OUT_DIR_DEBUG "${GO_OUT_DIR}/debug/lib" )
+set( GO_APPLICATION_OUT_DIR_DEBUG "${GO_OUT_DIR}/debug/bin" )
+set( GO_TUTORIAL_OUT_DIR_DEBUG "${GO_OUT_DIR}/debug/tutorial" )
+set( GO_TEST_OUT_DIR_DEBUG "${GO_OUT_DIR}/debug/test" )
 
-set( GO_LIBRARY_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/lib" )
-set( GO_APPLICATION_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/bin" )
-set( GO_TUTORIAL_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/tutorial" )
-set( GO_TEST_OUT_DIR_RELEASE "${GO_OUT_DIR}/Release/test" )
+set( GO_LIBRARY_OUT_DIR_RELEASE "${GO_OUT_DIR}/release/lib" )
+set( GO_APPLICATION_OUT_DIR_RELEASE "${GO_OUT_DIR}/release/bin" )
+set( GO_TUTORIAL_OUT_DIR_RELEASE "${GO_OUT_DIR}/release/tutorial" )
+set( GO_TEST_OUT_DIR_RELEASE "${GO_OUT_DIR}/release/test" )
 
-set( GO_LIBRARY_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/lib" )
-set( GO_APPLICATION_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/bin" )
-set( GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/tutorial" )
-set( GO_TEST_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/RelWithDebInfo/test" )
+set( GO_LIBRARY_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/relwithdebinfo/lib" )
+set( GO_APPLICATION_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/relwithdebinfo/bin" )
+set( GO_TUTORIAL_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/relwithdebinfo/tutorial" )
+set( GO_TEST_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/relwithdebinfo/test" )
 
 #*********************
 # projection options *
 #*******************************************************************************
-option(
-  GO_USE_OPENMP
-  "Set to ON to enable parallelization with OpenMP"
-  ON)
-  
 option(
   GO_USE_OPENCL
   "Set to ON to enable parallelization with OpenCL"
@@ -93,17 +83,18 @@ option(
 #*******************************************************************************
 # reset flags
 set( CMAKE_CXX_FLAGS "" )
+
+# external header-only libraries: glm, nanoflann, spectra, Cuda/Thrust
+include_directories( "${CMAKE_SOURCE_DIR}/graphics-origin/extlibs" )
   
 # OpenMP
 #   OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
 #   OPENMP_FOUND - true if openmp is detected
-if( GO_USE_OPENMP )
-  find_package( OpenMP )
-  if( OPENMP_FOUND )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-  else()
-    message( SEND_ERROR "Cannot find OpenMP to parallelize code. Disable OpenMP or help cmake to find it." )
-  endif()
+find_package( OpenMP )
+if( OPENMP_FOUND )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+else()
+  message( SEND_ERROR "Cannot find OpenMP to parallelize code. Disable OpenMP or help cmake to find it." )
 endif()
 
 # OpenCL
@@ -134,10 +125,8 @@ find_package( Boost
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
-# find header-only libraries: glm, nanoflann, spectra
-set( HEADER_ONLY_INCLUDE_DIRS "${GO_EXTLIBS_DIR}"
-   CACHE PATH "Path of the header-only libraries needed by GO (default extlibs/")
-include_directories( ${HEADER_ONLY_INCLUDE_DIRS} )
+
+
 
 if( GO_BUILD_APPLICATION )
   # qt
@@ -181,9 +170,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
-  if( GO_USE_OPENMP )
-  	set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
-  endif()
+ 	set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
@@ -195,7 +182,6 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
-    
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
 else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
@@ -305,7 +291,6 @@ endif()
 
 message(
   "Graphics-Origin Options:\n"
-  "GO_USE_OPENMP                 = ${GO_USE_OPENMP}\n"
   "GO_USE_OPENCL                 = ${GO_USE_OPENCL}\n"
   "GO_BUILD_APPLICATION          = ${GO_BUILD_APPLICATION}\n"
   "GO_BUILD_TOOLS_TUTORIAL       = ${GO_BUILD_TOOLS_TUTORIAL}\n"

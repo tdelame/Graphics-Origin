@@ -11,7 +11,7 @@
 # include <OpenMesh/Core/IO/exporter/BaseExporter.hh>
 # include <OpenMesh/Core/IO/IOManager.hh>
 
-# include "../../extlibs/nanoflann.h"
+# include "../../graphics-origin/extlibs/nanoflann.h"
 
 BEGIN_GO_NAMESPACE namespace geometry {
   static const std::string obj_file_extension = ".obj";

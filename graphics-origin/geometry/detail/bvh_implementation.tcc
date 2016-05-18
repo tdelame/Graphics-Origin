@@ -55,8 +55,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # include "../box.h"
 # include "../ball.h"
-# include "../../../extlibs/thrust/sort.h"
-# include "../../../extlibs/thrust/system/omp/execution_policy.h"
+# include "../../../graphics-origin/extlibs/thrust/sort.h"
+# include "../../../graphics-origin/extlibs/thrust/system/omp/execution_policy.h"
 
 BEGIN_GO_NAMESPACE namespace geometry {
 

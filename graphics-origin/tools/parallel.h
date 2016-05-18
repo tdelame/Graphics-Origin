@@ -4,9 +4,7 @@
 # ifndef GRAPHICS_ORIGIN_PARALLEL_H_
 # define GRAPHICS_ORIGIN_PARALLEL_H_
 # include "../graphics_origin.h"
-# ifdef GO_USE_OPENMP
-#  include <omp.h>
-# endif
+# include <omp.h>
 # ifdef GO_USE_OPENCL
 #  include <CL/cl.hpp>
 
@@ -23,20 +21,12 @@ BEGIN_GO_NAMESPACE namespace tools {
    * - OpenCL (CPU/GPU)
    * - OpenMP (CPU only)
    * - none.
-   * Originally, it was CUDA only, but it was not general enough.
    *
-   * Code for OpenMP can be reused when no parallelization is requested:
-   * - if the system does not have OpenMP, pragmas are ignored
-   * - if the system does have OpenMP, we can set the max number of threads
-   * to 1.
-   *
-   * Still, some code might require including OpenMP header or use specific
-   * functions. Thus, we need to be careful and use:
-   * # ifdef GO_USE_OPENMP
-   * //... do something
-   * # endif
-   *
-   * A similar macro is available for OpenCL:
+   * Code for OpenMP can be reused when no parallelization is requested: we can
+   * just set the max number of threads to 1. Since OpenMP is a feature of a
+   * compiler, we can assume that the library is available. However, for OpenCL,
+   * libraries are required to be installed. Thus, specific headers and functions
+   * might not be available at compilation, this is way we have the following macro:
    * # ifdef GO_USE_OPENCL
    * //... do something with OpenCL
    * # endif
@@ -52,9 +42,7 @@ BEGIN_GO_NAMESPACE namespace tools {
    */
   typedef enum {
     none,
-# ifdef GO_USE_OPENMP
     openmp,
-# endif
 # ifdef GO_USE_OPENCL
     opencl
 # endif
