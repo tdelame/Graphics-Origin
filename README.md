@@ -1,6 +1,6 @@
-Graphics-Origin
+# Graphics-Origin
 
-# What is it
+## What is it
 This project contains three libraries to develop Computer Graphics applications:
 - tools, for the utilities commonly used in an application (e.g. log, simple 
 file system functions, ...)
@@ -20,15 +20,29 @@ People looking for a professional solution (much more features, better
 performance, support and so on), are advised to read about projects such as 
 [Ogre](http://www.ogre3d.org/) or [Unity](https://unity3d.com/).
 
-# Configuration
-The code has only been tested on GNU/Linux platforms, compiled with gcc 5.2. to
-5.3. It has also been tested on Windows 64 bits with Visual Studio 14.
+## Configuration
+The code has been tested on a limited set of platforms, including:
+- GNU/Linux platforms, compiled with gcc 5.2, 5.3 and 6.1
+- Windows 64 bits, with Visual Studio 14
 
-# Installation
-This will be added soon with the set of dependencies.
-    
-# Licensing
+## Installation
+A documentation about installation will be added soon for both GNU/Linux and 
+Windows. In the meantime, here are the set of external libraries required:
+- mandatory (only to parallelize things)
+  - OpenMP
+  - OpenCL. On GNU/Linux platforms, be sure to install OpenCL development headers.
+    Indeed, when Cuda is installed, the include directory of cuda is used instead of
+    the one of OpenCL. Thus, there will be a conflict between the Cuda/Thrust headers
+    included in the sources and those from the cuda installation.
+- required
+  - OpenMesh (for the geometry library)
+  - Boost 
+- required for graphic applications
+  - Qt 5
+  - GLEW & OpenGL
+
+## Licensing
 This code is release under the MIT Licence. Please see the file called LICENCE.
 
-# Contacts
+## Contacts
 Thomas Delame, tdelame@gmail.com
