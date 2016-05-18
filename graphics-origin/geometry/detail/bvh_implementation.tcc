@@ -55,8 +55,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # include "../box.h"
 # include "../ball.h"
-
-# include <thrust/sort.h>
+# include "../../../extlibs/thrust/sort.h"
+# include "../../../extlibs/thrust/system/omp/execution_policy.h"
 
 BEGIN_GO_NAMESPACE namespace geometry {
 
@@ -71,21 +71,6 @@ BEGIN_GO_NAMESPACE namespace geometry {
 # else
 #  define CLZ( a ) __builtin_clzl( a )
 # endif
-
-  /**@brief Order BVH leaf nodes by increasing Morton code.
-   *
-   * This structure orders BVH leaf nodes by increasing Morton code. It is
-   * used by set_leaf_nodes. */
-  template< typename bounding_object >
-  struct morton_code_order {
-    bool
-    operator()( const thrust::tuple< const typename bvh<bounding_object>::node&, uint64_t>& a,
-                const thrust::tuple< const typename bvh<bounding_object>::node&, uint64_t>& b ) const
-    {
-      return a.tail < b.tail;
-    }
-  };
-
 
   template< typename bounding_object >
   bvh<bounding_object>::node::node()
@@ -146,21 +131,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
             }
         }
 
-   # ifdef GO_USE_CUDA_THRUST
-      thrust::sort(
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + number_of_internals,
-                  morton_codes.data() ) ),
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + nodes.size(),
-                  morton_codes.data() + morton_codes.size() )),
-          morton_code_order<aabox>{});
-  # else
-      static_assert( false,
-                     "the implementation without Cuda/Thrust of this part is not available yet");
-  # endif
+	    thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
     }
 
     set_leaf_nodes(
@@ -225,21 +196,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
-    # ifdef GO_USE_CUDA_THRUST
-      thrust::sort(
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + number_of_internals,
-                  morton_codes.data() ) ),
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + nodes.size(),
-                  morton_codes.data() + morton_codes.size() )),
-          morton_code_order<aabox>{});
-    # else
-       static_assert( false,
-                      "the implementation without Cuda/Thrust of this part is not available yet");
-    # endif
+	  thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
     }
   };
 
@@ -289,21 +246,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
-# ifdef GO_USE_CUDA_THRUST
-      thrust::sort(
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + number_of_internals,
-                  morton_codes.data() ) ),
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + nodes.size(),
-                  morton_codes.data() + morton_codes.size() )),
-          morton_code_order<ball>{});
-# else
-       static_assert( false,
-                  "the implementation without Cuda/Thrust of this part is not available yet");
-# endif
+	  thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
+
     }
 
     set_leaf_nodes(
@@ -374,21 +318,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
-      # ifdef GO_USE_CUDA_THRUST
-      thrust::sort(
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + number_of_internals,
-                  morton_codes.data() ) ),
-          thrust::make_zip_iterator(
-              thrust::make_tuple(
-                  nodes.data() + nodes.size(),
-                  morton_codes.data() + morton_codes.size() )),
-          morton_code_order<ball>{});
-      # else
-       static_assert( false,
-                  "the implementation without Cuda/Thrust of this part is not available yet");
-      # endif
+	  thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
+
     }
   };
 

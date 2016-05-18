@@ -13,7 +13,7 @@ namespace application {
     GLenum error;
     while( ( error=glGetError() ) != GL_NO_ERROR )
       {
-        LOG_WITH_LINE_FILE( error, "[GL] previous error discovered: "
+        LOG_WITH_LINE_FILE( error, "[OpenGL] previous error discovered: "
           << gluErrorString(error), __LINE__, __FILE__ );
         error = glGetError();
       }
@@ -25,7 +25,7 @@ namespace application {
     GLenum error = glGetError();
     if( error != GL_NO_ERROR )
       {
-        LOG_WITH_LINE_FILE( error, "[GL] Error discovered when calling "
+        LOG_WITH_LINE_FILE( error, "[OpenGL] Error discovered when calling "
           << call << ": " << gluErrorString(error), line, file );
       }
   }
