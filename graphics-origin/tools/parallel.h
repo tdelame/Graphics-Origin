@@ -6,7 +6,7 @@
 # include "../graphics_origin.h"
 # include <omp.h>
 # ifdef GO_USE_OPENCL
-#  include <CL/cl.hpp>
+#  include <CL/cl2.hpp>
 
 GO_API
 void check_cl_error( const char* call, const char* file, const int line, cl_int error );
@@ -63,8 +63,30 @@ BEGIN_GO_NAMESPACE namespace tools {
   void set_parallelization_setup( parallelization_setup setup );
 
 # ifdef GO_USE_OPENCL
+  /**@brief Access to all relevant OpenCL platforms.
+   *
+   * This function get the list of OpenCL platforms that has at least one
+   * recognized device.
+   * @return The list of relevant platforms.
+   */
   GO_API
   const std::vector< cl::Platform >& get_cl_platforms();
+
+  /**@brief Access to all OpenCL CPU devices.
+   *
+   * This function get the list of CPU OpenCL devices.
+   * @return The list of CPU devices.
+   */
+  GO_API;
+  const std::vector< cl::Device >& get_cl_cpu_devices();
+
+  /**@brief Access to all OpenCL GPU devices.
+   *
+   * This function get the list of GPU OpenCL devices.
+   * @return The list of GPU devices.
+   */
+  GO_API
+  const std::vector< cl::Device >& get_cl_gpu_devices();
 # endif
 
 } END_GO_NAMESPACE

@@ -7,7 +7,8 @@
 #   GO_BUILD_APPLICATION          Set to ON to build the application library
 #   GO_BUILD_TOOLS_TUTORIAL       Set to ON to build the tutorial for the tools library
 #   GO_BUILD_APPLICATION_TUTORIAL Set to ON to build the tutorial for the application library
-#   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the gutorial for the geometry library
+#   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the tutorial for the geometry library
+#   GO_BUILD_TEST                 Set to ON to build tests
 
 #**********************
 # cmake configuration *
@@ -262,6 +263,23 @@ function( set_go_tutorial_properties tutorial_name )
   )
 endfunction() 
 
+# set_go_test_properties test_name
+function( set_go_test_properties test_name )
+  set_target_properties( ${test_name}
+	PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${GO_TEST_OUT_DIR_RELEASE}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${GO_TEST_OUT_DIR_RELEASE}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${GO_TEST_OUT_DIR_RELEASE}"
+
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${GO_TEST_OUT_DIR_DEBUG}"
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${GO_TEST_OUT_DIR_DEBUG}"
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG "${GO_TEST_OUT_DIR_DEBUG}"
+  
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TEST_OUT_DIR_RELWITHDEBINFO}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TEST_OUT_DIR_RELWITHDEBINFO}"
+	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${GO_TEST_OUT_DIR_RELWITHDEBINFO}"
+  )
+endfunction() 
 
 
 include_directories( "${GO_HEADERS_IN_DIR}" )
@@ -289,11 +307,16 @@ if( GO_BUILD_APPLICATION_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
 endif()
 
+if( GO_BUILD_TEST )
+  add_subdirectory( "${GO_TEST_IN_DIR}" )
+endif()
+
 message(
   "Graphics-Origin Options:\n"
   "GO_USE_OPENCL                 = ${GO_USE_OPENCL}\n"
   "GO_BUILD_APPLICATION          = ${GO_BUILD_APPLICATION}\n"
   "GO_BUILD_TOOLS_TUTORIAL       = ${GO_BUILD_TOOLS_TUTORIAL}\n"
   "GO_BUILD_APPLICATION_TUTORIAL = ${GO_BUILD_APPLICATION_TUTORIAL}\n"
-  "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}"
+  "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}\n"
+  "GO_BUILD_TEST                 = ${GO_BUILD_TEST}"
 )

@@ -77,9 +77,53 @@ BEGIN_GO_NAMESPACE namespace tools {
     return platforms;
   }
 
+  std::vector< cl::Device >& g_cl_cpu_devices()
+  {
+    static std::vector< cl::Device > cpus;
+    return cpus;
+  }
+
+  std::vector< cl::Device >& g_cl_gpu_devices()
+  {
+    static std::vector< cl::Device > gpus;
+    return gpus;
+  }
+
   const std::vector< cl::Platform >& get_cl_platforms()
   {
     return g_cl_platforms();
+  }
+
+  const std::vector< cl::Device >& get_cl_cpu_devices()
+  {
+    return g_cl_cpu_devices();
+  }
+
+  const std::vector< cl::Device >& get_cl_gpu_devices()
+  {
+    return g_cl_gpu_devices();
+  }
+
+
+
+  static std::string get_cl_device_type_string( cl_device_type type )
+  {
+    std::string result = "unknown";
+    if( type & CL_DEVICE_TYPE_CPU )
+      {
+        result = "CPU";
+      }
+    else if( type & CL_DEVICE_TYPE_GPU )
+      {
+        result = "GPU";
+      }
+    else if( type & CL_DEVICE_TYPE_ACCELERATOR )
+      {
+        result = "accelerator";
+      }
+
+    if( type & CL_DEVICE_TYPE_DEFAULT )
+      result += " [default]";
   }
 
 # endif
@@ -126,6 +170,14 @@ BEGIN_GO_NAMESPACE namespace tools {
 
               clcheck(devices[device_number].getInfo( CL_DEVICE_VERSION, &info ));
               LOG( info, "    - Version: " << info );
+
+              cl_device_type type;
+              clcheck(devices[device_number].getInfo( CL_DEVICE_TYPE, &type ));
+              LOG( info, "    - Type: " << get_cl_device_type_string( type ) );
+              if( type & CL_DEVICE_TYPE_GPU )
+                g_cl_gpu_devices().push_back( devices[device_number] );
+              else if( type & CL_DEVICE_TYPE_CPU )
+                g_cl_cpu_devices().push_back( devices[device_number] );
 
               cl_uint max_compute_units = 0;
               clcheck(devices[device_number].getInfo( CL_DEVICE_MAX_COMPUTE_UNITS, &max_compute_units ));
