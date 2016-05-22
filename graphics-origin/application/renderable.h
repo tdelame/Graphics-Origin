@@ -39,7 +39,23 @@ namespace application {
     void render();
 
     shader_program_ptr get_shader_program() const;
+
+    /** Get the model matrix of this renderable.
+     *
+     * Read-only access to the model matrix of this renderable. This matrix
+     * position the renderable relatively to the world, i.e. it transforms
+     * local coordinates to world coordinates.
+     * @return The model matrix.
+     */
     const gpu_mat4& get_model_matrix() const;
+
+    /** Set the model matrix of this renderable.
+     *
+     * Write the model matrix of this renderable. If you write an incorrect
+     * model matrix, you might be unable to see the renderable on the screen.
+     * @param model The new model matrix.
+     */
+    void set_model_matrix( const gpu_mat4& model );
 
     void set_renderer( gl_window_renderer* renderer );
   private:
