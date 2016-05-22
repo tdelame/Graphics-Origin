@@ -30,11 +30,27 @@
 # include <QGuiApplication>
 
 
-
-
 namespace graphics_origin {
 namespace application {
 
+  /**@brief A collection of transparent windows to render.
+   *
+   * A transparent window is a quad that let the light go through it. As such,
+   * we can see any opaque object that lies behind a transparent window. We show
+   * in this tutorial how to do it.
+   *
+   * First, a window is defined by its center, and two vectors that goes from
+   * the center to two consecutive corners of that window. Those two vectors
+   * are named v1 and v2, and should not be colinear (otherwise, you have a
+   * zero-sized window by definition). Then, a window has a RGBA color.
+   *
+   * It should be noted that the current code can handle any orientation of the
+   * corners. But if face culling is activated, some holes can appear depending
+   * on the view point.
+   *
+   * A window has no thickness, but you can either add another parallel
+   * window or modify the code to render a box instead of a quad.
+   */
   class transparent_windows_renderable
     : public graphics_origin::application::renderable {
 
@@ -62,6 +78,20 @@ namespace application {
         22 > windows_buffer;
 
   public:
+    /**@brief Create a new collection of transparent windows.
+     *
+     * Build an instance of a transparent windows renderable.
+     * @param program The shader program used to render a window. This shader
+     * should have the following attributes:
+     * - center (vec3) for the center of a window
+     * - v1 (vec3) to go from the center to a corner
+     * - v2 (vec3) to go from the center to a consecutive corner
+     * - color (vec4) for the color of the window.
+     * The shader should also have a uniform named vp (mat4) to receive the
+     * product between the projection matrix and the view matrix.
+     * @param expected_number_of_windows A guess about the final number of windows
+     * stored in the instance. A correct guess avoids resizing internal buffer.
+     */
     transparent_windows_renderable(
         shader_program_ptr program,
         size_t expected_number_of_windows = 0 )
@@ -76,6 +106,14 @@ namespace application {
       remove_gpu_data();
     }
 
+    /**@brief Add another transparent window to render.
+     *
+     * Add one more transparent window to this instance.
+     * @param center Center of the window.
+     * @param v1 Vector that goes from the center to one corner of the window.
+     * @param v2 Vector that goes from the center to the next corner of the window.
+     * @param color Color of the window.
+     */
     windows_buffer::handle add(
         const gpu_vec3& center,
         const gpu_vec3& v1,
@@ -208,6 +246,9 @@ namespace application {
           delete r;
           m_renderables.pop_front();
         }
+
+      //fixme: now need to sort the tight_buffer according to some function
+
       while( !m_windows.empty() )
         {
           auto r = m_windows.front();
@@ -249,6 +290,8 @@ namespace application {
 
       auto windows = new transparent_windows_renderable( transparent_program );
       windows->add( gpu_vec3{2,0,0}, gpu_vec3{0,0.3,-0.3}, gpu_vec3{0,-0.3,-0.3}, gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
+
+      windows->add( gpu_vec3{1.9,1,0}, gpu_vec3{0,1,-1}, gpu_vec3{0,-1,-1}, gpu_vec4( 0.2, 0.4, 0.8, 0.68 ) );
       add_renderable( windows );
     }
   };
