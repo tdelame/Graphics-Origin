@@ -39,14 +39,16 @@ namespace application {
     : public graphics_origin::application::renderable {
 
     struct storage {
-      gpu_mat4 model;
+      gpu_vec3 center;
+      gpu_vec3 v1;
+      gpu_vec3 v2;
       gpu_vec4 color;
-      storage( const gpu_mat4& model, const gpu_vec4& color )
-        : model{ model }, color{ color }
-      {}
+
       storage& operator=( storage&& other )
       {
-        model = other.model;
+        center = other.center;
+        v1 = other.v1;
+        v2 = other.v2;
         color = other.color;
         return *this;
       }
@@ -75,12 +77,16 @@ namespace application {
     }
 
     windows_buffer::handle add(
-        const gpu_mat4& model,
+        const gpu_vec3& center,
+        const gpu_vec3& v1,
+        const gpu_vec3& v2,
         const gpu_vec4& color )
     {
       m_dirty = true;
       auto pair = m_windows.create();
-      pair.second.model = model;
+      pair.second.center = center;
+      pair.second.v1 = v1;
+      pair.second.v2 = v2;
       pair.second.color = color;
       return pair.first;
     }
@@ -94,21 +100,33 @@ namespace application {
           glcheck(glGenBuffers( number_of_vbos, m_vbos ));
         }
 
-      int model_location = m_program->get_attribute_location( "model" );
+      int center_location = m_program->get_attribute_location( "center" );
+      int v1_location = m_program->get_attribute_location( "v1" );
+      int v2_location = m_program->get_attribute_location( "v2" );
       int color_location = m_program->get_attribute_location( "color" );
 
       glcheck(glBindVertexArray( m_vao ));
         glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
         glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_STATIC_DRAW));
 
-        for( unsigned int i = 0; i < 4; ++ i )
-          {
-            glcheck(glEnableVertexAttribArray( model_location + i ));
-            glcheck(glVertexAttribPointer( model_location + i,
-              4, GL_FLOAT, GL_FALSE,
-              sizeof(storage),
-              reinterpret_cast<void*>(offsetof(storage,model)+ i * sizeof(gpu_vec4))));
-          }
+        glcheck(glEnableVertexAttribArray( center_location ));
+        glcheck(glVertexAttribPointer( center_location,        // format of center:
+          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+          sizeof(storage),                                     // each attribute has the size of storage
+          reinterpret_cast<void*>(offsetof(storage,center)))); // offset of the center inside an attribute
+
+        glcheck(glEnableVertexAttribArray( v1_location ));
+        glcheck(glVertexAttribPointer( v1_location,            // format of v1:
+          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+          sizeof(storage),                                     // each attribute has the size of storage
+          reinterpret_cast<void*>(offsetof(storage,v1))));     // offset of the v1 inside an attribute
+
+        glcheck(glEnableVertexAttribArray( v2_location ));
+        glcheck(glVertexAttribPointer( v2_location,            // format of v1:
+          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
+          sizeof(storage),                                     // each attribute has the size of storage
+          reinterpret_cast<void*>(offsetof(storage,v2))));     // offset of the v1 inside an attribute
+
         glcheck(glEnableVertexAttribArray( color_location ));
         glcheck(glVertexAttribPointer( color_location,        // format of color:
           4, GL_FLOAT, GL_FALSE,                              // 4 unnormalized floats
@@ -229,10 +247,8 @@ namespace application {
       mesh->set_model_matrix( glm::rotate( -gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
       add_renderable( mesh );
 
-      //TODO: add windows
-
       auto windows = new transparent_windows_renderable( transparent_program );
-      windows->add( glm::scale(gpu_vec3{0.3,0.3,0.3} ) * glm::translate( gpu_vec3(2,0,0 ) ), gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
+      windows->add( gpu_vec3{2,0,0}, gpu_vec3{0,0.3,-0.3}, gpu_vec3{0,-0.3,-0.3}, gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
       add_renderable( windows );
     }
   };

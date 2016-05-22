@@ -134,6 +134,7 @@ BEGIN_GO_NAMESPACE namespace tools {
     LOG( info, "[OpenMP] default device: " << omp_get_default_device() );
     LOG( info, "[OpenMP] maximum threads to use on default device: " << omp_get_num_procs() )
 # ifdef GO_USE_OPENCL
+    //fixme: why in debug mode, this code crashes?
     {
       std::vector< cl::Platform >& platforms = g_cl_platforms();
       clcheck( cl::Platform::get( &platforms ));
