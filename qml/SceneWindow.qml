@@ -9,6 +9,8 @@ Item {
   height: Style.scene_window.initial_width
   z: Style.z.scene_window
   
+  property alias cam1: cam1
+  
   /****************************************************************************
   * State Management
   *****************************************************************************/
@@ -241,7 +243,7 @@ Item {
       	  event.accepted = true
   	    }
       }
-      
+       
       Keys.onReleased: {
       	if( event.key == Qt.Key_Q ) {
       	  cam1.set_go_left( false );
