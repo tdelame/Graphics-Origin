@@ -8,6 +8,7 @@
 #   GO_BUILD_TOOLS_TUTORIAL       Set to ON to build the tutorial for the tools library
 #   GO_BUILD_APPLICATION_TUTORIAL Set to ON to build the tutorial for the application library
 #   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the tutorial for the geometry library
+#   GO_BUILD_GRAPHICS_TUTORIAL    Set to ON to build tutorials on Computer Graphics with GO libraries
 #   GO_BUILD_TEST                 Set to ON to build tests
 
 #**********************
@@ -34,6 +35,9 @@ set( GO_HEADERS_IN_DIR "${CMAKE_SOURCE_DIR}" )
 set( GO_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
 set( GO_TUTORIAL_IN_DIR "${CMAKE_SOURCE_DIR}/tutorial" )
 set( GO_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
+set( GO_SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders" )
+set( GO_MESHES_DIR "${CMAKE_SOURCE_DIR}/meshes" )
+set( GO_QML_DIR "${CMAKE_SOURCE_DIR}/qml" )
 set( GO_OUT_DIR "${CMAKE_BINARY_DIR}")
 
 set( GO_LIBRARY_OUT_DIR_DEBUG "${GO_OUT_DIR}/debug/lib" )
@@ -73,6 +77,11 @@ option(
   GO_BUILD_APPLICATION_TUTORIAL
   "Set to ON to build the tutorial for the application library."
   ON)
+  
+option(
+  GO_BUILD_GRAPHICS_TUTORIAL
+  "Set to ON to build tutorials about Computer Graphics with GO libraries."
+  ON)  
   
 option(
   GO_BUILD_GEOMETRY_TUTORIAL
@@ -307,6 +316,11 @@ if( GO_BUILD_APPLICATION_TUTORIAL )
   add_subdirectory( "${GO_TUTORIAL_IN_DIR}/3_application" )
 endif()
 
+if( GO_BUILD_GRAPHICS_TUTORIAL )
+  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/graphics" )
+endif()
+
+
 if( GO_BUILD_TEST )
   add_subdirectory( "${GO_TEST_IN_DIR}" )
 endif()
@@ -318,5 +332,6 @@ message(
   "GO_BUILD_TOOLS_TUTORIAL       = ${GO_BUILD_TOOLS_TUTORIAL}\n"
   "GO_BUILD_APPLICATION_TUTORIAL = ${GO_BUILD_APPLICATION_TUTORIAL}\n"
   "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}\n"
+  "GO_BUILD_GRAPHICS_TUTORIAL    = ${GO_BUILD_GRAPHICS_TUTORIAL}\n"
   "GO_BUILD_TEST                 = ${GO_BUILD_TEST}"
 )

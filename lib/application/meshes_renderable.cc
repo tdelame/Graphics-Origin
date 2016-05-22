@@ -161,7 +161,9 @@ namespace graphics_origin {
     void
     meshes_renderable::do_render()
     {
-      glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
+      shader_program::identifier location = m_program->get_uniform_location( "window_dimensions");
+      if( location != shader_program::null_identifier )
+        glcheck(glUniform2fv( location, 1, glm::value_ptr( m_renderer->get_window_dimensions())));
       glcheck(glUniform3fv( m_program->get_uniform_location( "light_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position() )));
       glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
       glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));

@@ -67,8 +67,8 @@ namespace application {
       shader_program_ptr mesh_program =
           std::make_shared<shader_program>( std::list<std::string>{
             shader_directory + "mesh.vert",
-            shader_directory + "mesh.geom",
-            shader_directory + "mesh.frag"});
+            shader_directory + "mesh_wireframe.geom",
+            shader_directory + "mesh_wireframe.frag"});
 
       /**
        * Load a mesh from the mesh directory, the armadillo in this case.
