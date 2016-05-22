@@ -86,13 +86,6 @@ namespace application {
         for( int j = 0; j < 3; ++ j )
           m_view[3][i] -= m_view[j][i] * pos[j];
       }
-//
-//    if( std::isnan( m_view[3][0] )
-//     || std::isnan( m_view[3][1] )
-//     || std::isnan( m_view[3][2] ) )
-//    {
-//        LOG( error, "IS NAN from " << pos );
-//    }
   }
 
   void
@@ -137,10 +130,10 @@ namespace application {
   void camera::set_forward( const gpu_vec3& forward )
   {
     gpu_vec3 pos = -gpu_vec3( m_view[3] ) * gpu_mat3( m_view );
-    m_view[0][0] = -forward.x;
-    m_view[1][0] = -forward.y;
-    m_view[2][0] = -forward.z;
-    m_view[3][0] = dot( forward, pos );
+    m_view[0][2] = -forward.x;
+    m_view[1][2] = -forward.y;
+    m_view[2][2] = -forward.z;
+    m_view[3][2] = dot( forward, pos );
   }
 
   void camera::qml_set_forward( const QVector3D& forward )
