@@ -20,6 +20,12 @@ namespace application {
   }
 
   void
+  renderable::set_dirty()
+  {
+    m_dirty = true;
+  }
+
+  void
   renderable::render()
   {
     if( m_dirty )

@@ -58,6 +58,13 @@ namespace application {
     void set_model_matrix( const gpu_mat4& model );
 
     void set_renderer( gl_window_renderer* renderer );
+
+    /**@brief Notify a modification in data used for the rendering.
+     *
+     * Notify the renderable that the data used for its rendering has been
+     * changed and thus require an update on the gpu.
+     */
+    void set_dirty();
   private:
     /** Update the data on the gpu.
      *

@@ -60,8 +60,8 @@ set( GO_TEST_OUT_DIR_RELWITHDEBINFO "${GO_OUT_DIR}/relwithdebinfo/test" )
 #*******************************************************************************
 option(
   GO_USE_OPENCL
-  "Set to ON to enable parallelization with OpenCL"
-  ON)
+  "Set to ON to enable parallelization with OpenCL (not recommended for now)."
+  OFF)
 
 option(
   GO_BUILD_APPLICATION
@@ -317,7 +317,7 @@ if( GO_BUILD_APPLICATION_TUTORIAL )
 endif()
 
 if( GO_BUILD_GRAPHICS_TUTORIAL )
-  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/graphics" )
+  add_subdirectory( "${GO_TUTORIAL_IN_DIR}/4_graphics" )
 endif()
 
 

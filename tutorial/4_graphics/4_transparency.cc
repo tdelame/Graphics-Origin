@@ -21,6 +21,7 @@
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/mesh_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
+# include "../../graphics-origin/tools/log.h"
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
 # include <GL/glew.h>
 
@@ -50,6 +51,14 @@ namespace application {
    *
    * A window has no thickness, but you can either add another parallel
    * window or modify the code to render a box instead of a quad.
+   *
+   * This code has a limitation related to the difficulty of performing transparency:
+   * put the camera between the mesh and the windows, and look at the windows.
+   * You will see that depending on the viewing angle, the transparency is not
+   * ok. This is due to the simple depth sorting made here: we assume that all
+   * quad fragments have the same depth as the center. There exist more evolved
+   * methods to address this issue.
+   * TODO: make a simple implementation of a complex method.
    */
   class transparent_windows_renderable
     : public graphics_origin::application::renderable {
@@ -59,6 +68,22 @@ namespace application {
       gpu_vec3 v1;
       gpu_vec3 v2;
       gpu_vec4 color;
+      gpu_real depth;
+
+      storage( const storage& other )
+         : center{ other.center }, v1{ other.v1 }, v2{ other.v2 },
+           color{ other.color }, depth{ other.depth }
+       {}
+
+      storage& operator=( const storage& other )
+      {
+        center = other.center;
+        v1 = other.v1;
+        v2 = other.v2;
+        color = other.color;
+        depth = other.depth;
+        return *this;
+      }
 
       storage& operator=( storage&& other )
       {
@@ -66,9 +91,11 @@ namespace application {
         v1 = other.v1;
         v2 = other.v2;
         color = other.color;
+        depth = other.depth;
         return *this;
       }
       storage()
+        : depth{0}
       {}
     };
 
@@ -77,7 +104,28 @@ namespace application {
         uint32_t,
         22 > windows_buffer;
 
+    struct storage_depth_computation {
+      storage_depth_computation( const camera* camera )
+        : eye{ camera->get_position() }, forward{ camera->get_forward() }
+      {}
+      void operator()( storage& s ) const
+      {
+        s.depth = dot( forward, s.center - eye );
+      }
+      const gpu_vec3 eye;
+      const gpu_vec3 forward;
+    };
+
+    struct storage_depth_ordering {
+      bool operator()( const storage& a, const storage& b ) const
+      {
+        return a.depth > b.depth;
+      }
+    };
+
   public:
+    typedef windows_buffer::handle handle;
+
     /**@brief Create a new collection of transparent windows.
      *
      * Build an instance of a transparent windows renderable.
@@ -113,8 +161,9 @@ namespace application {
      * @param v1 Vector that goes from the center to one corner of the window.
      * @param v2 Vector that goes from the center to the next corner of the window.
      * @param color Color of the window.
+     * @return Handle to the newly created window.
      */
-    windows_buffer::handle add(
+    handle add(
         const gpu_vec3& center,
         const gpu_vec3& v1,
         const gpu_vec3& v2,
@@ -127,6 +176,26 @@ namespace application {
       pair.second.v2 = v2;
       pair.second.color = color;
       return pair.first;
+    }
+
+    /**@brief Get an existing window.
+     *
+     * Access to a window that was previously created by add(). If you modify
+     * the data of a window, be sure to notify
+     * @param h Handle of the existing window.
+     * @return The window pointed by the handle h.
+     */
+    storage& get( handle h )
+    {
+      return m_windows.get( h );
+    }
+
+    void sort()
+    {
+      m_windows.process( storage_depth_computation{m_renderer->get_camera()} );
+      m_windows.sort( storage_depth_ordering{} );
+      glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
+      glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_DYNAMIC_DRAW));
     }
 
   private:
@@ -145,7 +214,7 @@ namespace application {
 
       glcheck(glBindVertexArray( m_vao ));
         glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
-        glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_STATIC_DRAW));
+        glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_DYNAMIC_DRAW));
 
         glcheck(glEnableVertexAttribArray( center_location ));
         glcheck(glVertexAttribPointer( center_location,        // format of center:
@@ -213,7 +282,13 @@ namespace application {
       transparent_windows_renderable* windows = dynamic_cast< transparent_windows_renderable* >( r );
       if( windows )
         {
-          m_windows.push_back( windows );
+          if( m_windows )
+            {
+              LOG( info, "cannot have more than one set of windows. Deleting previous one.");
+              delete m_windows;
+              m_windows = nullptr;
+            }
+          m_windows = windows;
         }
       else m_renderables.push_back( r );
     }
@@ -227,15 +302,15 @@ namespace application {
           r->render();
         }
 
-      glcheck(glEnable(GL_BLEND));
-      glcheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-      for( auto& r : m_windows )
+      if( m_windows )
         {
-          r->get_shader_program()->bind();
-          r->render();
+          glcheck(glEnable(GL_BLEND));
+          glcheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+            m_windows->sort();
+            m_windows->get_shader_program()->bind();
+            m_windows->render();
+          glcheck(glDisable(GL_BLEND));
         }
-      glcheck(glDisable(GL_BLEND));
     }
 
     void do_shut_down() override
@@ -246,19 +321,14 @@ namespace application {
           delete r;
           m_renderables.pop_front();
         }
-
-      //fixme: now need to sort the tight_buffer according to some function
-
-      while( !m_windows.empty() )
+      if( m_windows )
         {
-          auto r = m_windows.front();
-          delete r;
-          m_windows.pop_front();
+          delete m_windows;
+          m_windows = nullptr;
         }
     }
-
     std::list< graphics_origin::application::renderable* > m_renderables;
-    std::list< graphics_origin::application::transparent_windows_renderable* > m_windows;
+    graphics_origin::application::transparent_windows_renderable* m_windows;
   };
 
   class simple_gl_window
@@ -312,7 +382,7 @@ int main( int argc, char* argv[] )
   qmlRegisterType<graphics_origin::application::simple_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
 
   // Load the main QML describing the main window into the simple QML application.
-  std::string input_qml = graphics_origin::tools::get_path_manager().get_resource_directory( "qml" ) + "graphics_transparency.qml";
+  std::string input_qml = graphics_origin::tools::get_path_manager().get_resource_directory( "qml" ) + "4_transparency.qml";
   graphics_origin::application::simple_qml_application app;
   app.setSource(QUrl::fromLocalFile( input_qml.c_str()));
 

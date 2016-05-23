@@ -5,6 +5,8 @@
 # define GRAPHICS_ORIGIN_TIGHT_BUFFER_MANAGER_H_
 
 # include "../graphics_origin.h"
+# include "../extlibs/thrust/sort.h"
+# include "../extlibs/thrust/system/omp/execution_policy.h"
 
 # include <type_traits>
 # include <stdexcept>
@@ -145,6 +147,21 @@ BEGIN_GO_NAMESPACE namespace tools {
   private:
       type* _ptr;
     };
+
+    template< typename strict_weak_ordering >
+    struct tuple_comparison {
+      tuple_comparison( const strict_weak_ordering& ordering )
+        : f{ ordering }
+      {}
+      bool operator()(
+          const thrust::tuple< element, size_t >& a,
+          const thrust::tuple< element, size_t >& b ) const
+      {
+        return f(thrust::get<0>(a), thrust::get<0>(b));
+      }
+      const strict_weak_ordering& f;
+    };
+
   public:
     /**@brief An handle to designate an element.
      *
@@ -373,6 +390,62 @@ BEGIN_GO_NAMESPACE namespace tools {
         throw tight_buffer_manager_invalid_element_index( __FILE__, __LINE__ );
       auto handle_index = m_element_to_handle[ index ];
       return handle( handle_index, m_handle_buffer[ handle_index ].counter );
+    }
+
+
+    /**@brief Process elements.
+     *
+     * Process elements
+     *
+     */
+    template< typename process_function >
+    void process( process_function&& f )
+    {
+# ifdef _WIN32
+      # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      # pragma omp parallel for
+      for (long i = 0; i < m_size; ++ i )
+# else
+      # pragma omp parallel for
+      for( size_t i = 0; i < m_size; ++ i )
+# endif
+        {
+          f( m_element_buffer[i] );
+        }
+    }
+
+    /**@brief Sort elements.
+     *
+     * Sort elements according to a comparison function
+     */
+    template< typename strict_weak_ordering >
+    void sort( const strict_weak_ordering& f )
+    {
+      static_assert(
+          std::is_copy_constructible< element >::value,
+          "element is not copy constructible: cannot use thrust::sort");
+      static_assert(
+          std::is_copy_assignable< element >::value,
+          "element is not copy assignable: cannot use thrust::sort");
+
+      thrust::sort(
+          thrust::omp::par,
+          thrust::make_zip_iterator( thrust::make_tuple( m_element_buffer, m_element_to_handle )),
+          thrust::make_zip_iterator( thrust::make_tuple( m_element_buffer + m_size, m_element_to_handle + m_size )),
+          tuple_comparison<strict_weak_ordering>(f)
+      );
+
+# ifdef _WIN32
+      # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      # pragma omp parallel for
+      for (long i = 0; i < m_size; ++ i )
+# else
+      # pragma omp parallel for
+      for( size_t i = 0; i < m_size; ++ i )
+# endif
+        {
+          m_handle_buffer[ m_element_to_handle[ i ] ].element_index = i;
+        }
     }
 
     element* data()
