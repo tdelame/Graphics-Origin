@@ -24,4 +24,5 @@ add_custom_command( TARGET 3_simple_gl_application
     COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:3_simple_gl_application>/meshes
     COMMAND ${CMAKE_COMMAND} -E copy ${GO_MESHES_DIR}/armadillo.off $<TARGET_FILE_DIR:3_simple_gl_application>/meshes
 )
+
   
