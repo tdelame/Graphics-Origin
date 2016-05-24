@@ -61,7 +61,10 @@ include_directories( ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS})
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCGAL_DISABLE_ROUNDING_MATH_CHECK ${TBB_DEFINITIONS}")
 set( GO_CGAL_LIBRARIES ${GMP_LIBRARIES} ${MPFR_LIBRARIES} -lCGAL -lCGAL_Core ${TBB_LIBRARIES} ${CGAL_CORE_LIBRARY})
 
-target_link_libraries( 4_island_map ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES})
+# get it here: https://github.com/qknight/libnoise
+find_package( LibNoise REQUIRED )
+include_directories( ${LIBNOISE_INCLUDE_DIR} )
+target_link_libraries( 4_island_map ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES})
 set_go_tutorial_properties( 4_island_map )
 add_custom_command( TARGET 4_island_map
   POST_BUILD

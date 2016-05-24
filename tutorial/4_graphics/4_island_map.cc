@@ -1,7 +1,6 @@
 /* Created on: May 23, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
-
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/gl_window.h"
 # include "../../graphics-origin/application/renderable.h"
@@ -10,12 +9,15 @@
 # include "../../graphics-origin/application/lines_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/random.h"
+# include "../../graphics-origin/tools/log.h"
 
 # include <GL/glew.h>
 
 # include "simple_camera.h"
 # include "simple_qml_application.h"
 # include "simple_gl_renderer.h"
+
+# include <chrono>
 
 # include <QGuiApplication>
 
@@ -26,21 +28,23 @@
 # include <CGAL/Triangulation_face_base_with_info_2.h>
 # include <CGAL/Delaunay_triangulation_2.h>
 
+# include <noise/noise.h>
+# include <noise/noiseutils.h>
+
 namespace graphics_origin {
   namespace application {
-
-
 
     class island_map {
       struct vertex_info {
         vertex_info()
-          : elevation{ 0 }, index{ 0 }
+          : elevation{ 0 }, index{ 0 }, land{ false }
         {}
         vertex_info( size_t i )
-          : elevation{ 0 }, index{ i }
+          : elevation{ 0 }, index{ i }, land{ false }
         {}
         gpu_real elevation;
         size_t index;
+        bool land;
       };
 
       struct face_info {
@@ -57,10 +61,12 @@ namespace graphics_origin {
     public:
       struct generation_parameters {
         generation_parameters()
-          : m_map_radius{ 5 }, m_number_of_input_samples{10000},
+          : m_map_radius{ 5 },m_land_density{ 0.3 },
+            m_number_of_input_samples{10000},
             m_lloyds_relaxations{ 2 }
         {}
         gpu_real m_map_radius;
+        gpu_real m_land_density; // should be positive, and less than 1.0
         size_t m_number_of_input_samples;
         uint8_t m_lloyds_relaxations;
       };
@@ -121,6 +127,30 @@ namespace graphics_origin {
                 m_delaunay.move_if_no_collision( it, input_points[ it->info().index ] );
               }
           }
+
+        noise::module::Perlin land_generator;
+        land_generator.SetFrequency( 1.0 );
+        land_generator.SetOctaveCount( 6 );
+        land_generator.SetSeed( std::chrono::system_clock::now().time_since_epoch().count() );
+        land_generator.SetNoiseQuality( noise::NoiseQuality::QUALITY_STD );
+
+        const float invr2 = float(1.0) / (params.m_map_radius * params.m_map_radius);
+        # pragma omp parallel
+        # pragma omp single
+        {
+          for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
+             it != end; ++ it )
+           {
+             # pragma omp task firstprivate(it)
+             {
+               dt::Point p = it->point();
+               float x = p.x();
+               float y = p.y();
+               float threshold = params.m_land_density + (x*x + y*y) * invr2;
+               it->info().land = land_generator.GetValue( x, y, 0 ) * 0.5f + 0.5f > threshold;
+             }
+           }
+        }
       }
 
       void load( points_renderable& points, lines_renderable& lines )
@@ -129,19 +159,34 @@ namespace graphics_origin {
         for( auto eit = m_delaunay.finite_edges_begin(), end = m_delaunay.finite_edges_end();
             eit != end; ++ eit )
           {
-            CGAL::Object o = m_delaunay.dual( eit );
-            if( CGAL::assign( s, o ) )
+            bool take = false;
+            for( int i = 0; i < 3; ++ i )
               {
-                auto source = s.source(), target = s.target();
-                lines.add( gpu_vec3{ source.x(), source.y(), 0 }, gpu_vec3{0,1,0},
-                           gpu_vec3{ target.x(), target.y(), 0 }, gpu_vec3{0,1,0} );
+                if( i != eit->second && eit->first->vertex( i )->info().land )
+                  {
+                    take = true;
+                    break;
+                  }
+              }
+            if( take )
+              {
+                CGAL::Object o = m_delaunay.dual( eit );
+                if( CGAL::assign( s, o ) )
+                  {
+                    auto source = s.source(), target = s.target();
+                    lines.add( gpu_vec3{ source.x(), source.y(), 0 }, gpu_vec3{0,1,0},
+                               gpu_vec3{ target.x(), target.y(), 0 }, gpu_vec3{0,1,0} );
+                  }
               }
           }
         for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
             it != end; ++ it )
           {
-            auto point = it->point();
-            points.add( gpu_vec3{ point.x(), point.y(), 0 }, gpu_vec3{1,0,0});
+            if( it->info().land )
+              {
+                auto point = it->point();
+                points.add( gpu_vec3{ point.x(), point.y(), 0 }, gpu_vec3{1,0,0});
+              }
           }
 
       }

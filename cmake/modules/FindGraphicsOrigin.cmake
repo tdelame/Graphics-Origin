@@ -14,7 +14,7 @@
 # Variables defined
 # -----------------
 # GRAPHICS_ORIGIN_FOUND:        true if Graphics-Origin was found
-# GRAPHICS_ORIGIN_INCLUDE_DIR:  include directory for Graphics-Origin directories
+# GRAPHICS_ORIGIN_INCLUDE_DIR:  include directory for Graphics-Origin headers
 # GRAPHICS_ORIGIN_LIBRARY_DIR:  Graphics-Origin libraries directory
 #
 # GRAPHICS_ORIGIN_INCLUDE_DIRS: include directories (include dependencies)
