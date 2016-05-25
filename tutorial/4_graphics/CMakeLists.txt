@@ -1,55 +1,92 @@
-set( SHADERS 
-  ${GO_SHADERS_DIR}/mesh.vert ${GO_SHADERS_DIR}/mesh.frag
-  ${GO_SHADERS_DIR}/transparent_window.vert ${GO_SHADERS_DIR}/transparent_window.geom ${GO_SHADERS_DIR}/transparent_window.frag
-)
+# NAME name of the graphics tutorial
+#   There should be a NAME.cc file and a NAME/ directory in the current source directory.
+#   All common sources, sources in NAME/ and NAME.cc are automatically taken into account.
+#   QML and Shader files in the NAME/ directory will be copied to the binary directory.
+#
+# SHADERS list of shaders outside of the NAME/ directory required to launch the tutorial
+#
+# MESHES list of mesh files required for this tutorial
+#
+# LIBRARIES list of libraries to link the tutorial with
+function(add_graphics_tutorial)
+  set(options "")
+  set(oneValueArgs NAME)
+  set(multiValueArgs SHADERS MESHES LIBRARIES)
+  cmake_parse_arguments( AGT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
-add_executable( 4_transparency
-  4_transparency.cc
-  simple_camera.h simple_camera.cc
-  simple_qml_application.h simple_qml_application.cc
-  ${SHADERS} )
-
-target_link_libraries( 4_transparency ${GO_APPLICATION_LIBRARIES})
-
-set_go_tutorial_properties( 4_transparency )
-
-add_custom_command( TARGET 4_transparency 
-  POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:4_transparency>/qml
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GO_QML_DIR} $<TARGET_FILE_DIR:4_transparency>/qml
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/4_transparency.qml $<TARGET_FILE_DIR:4_transparency>/qml
-
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:4_transparency>/shaders
-  	COMMAND ${CMAKE_COMMAND} -E copy ${SHADERS} $<TARGET_FILE_DIR:4_transparency>/shaders
-
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:4_transparency>/meshes
-    COMMAND ${CMAKE_COMMAND} -E copy ${GO_MESHES_DIR}/armadillo.off $<TARGET_FILE_DIR:4_transparency>/meshes
-)
+  file(GLOB_RECURSE TUTORIAL_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/*.h
+    ${AGT_NAME}.cc
+  )
+  file(GLOB_RECURSE TUTORIAL_QML
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.qml
+    ${GO_QML_DIR}/*.qml
+    ${GO_QML_DIR}/qmldir
+  )
+  file(GLOB_RECURSE TUTORIAL_SHADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.geom
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.frag
+  )
+  set( tutorial_name 4_${AGT_NAME})
+  set( ${TUTORIAL_SHADERS} "${TUTORIAL_SHADERS} ${AGT_SHADERS}" )
+  set( ${TUTORIAL_MESHES} "${AGT_MESHES}" )
   
   
-set( SHADERS
-	${GO_SHADERS_DIR}/flat.vert ${GO_SHADERS_DIR}/flat.frag
-)
-set( QML
-	${CMAKE_CURRENT_SOURCE_DIR}/4_island_map.qml
-)
+  add_executable( ${tutorial_name}
+    ${TUTORIAL_SOURCES} ${TUTORIAL_QML} ${TUTORIAL_SHADERS} ${TUTORIAL_MESHES}
+  )
+ 
+  target_link_libraries( ${tutorial_name} ${AGT_LIBRARIES} )
+  
+  set_go_tutorial_properties( ${tutorial_name} )
+  
+  if( "${TUTORIAL_QML}" )
+    add_custom_command( TARGET ${tutorial_name}
+      POST_BUILD
+        COMMENT "Copying QML files to binary directory" 
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/qml
+        COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_QML} $<TARGET_FILE_DIR:${tutorial_name}>/qml
+    )
+  endif()
+  
+  if( "${TUTORIAL_SHADERS}" )
+    add_custom_command( TARGET ${tutorial_name}
+      COMMENT "Copying GLSL Shaders to binary directory"
+      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/shaders
+      COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_SHADERS} $<TARGET_FILE_DIR:${tutorial_name}>/shaders
+    )
+  endif()
+  
+  if( "${TUTORIAL_MESHES}" ) 
+    add_custom_command( TARGET ${tutorial_name}
+      COMMENT "Copying mesh files to binary directory"
+      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/meshes 
+      COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_MESHES} $<TARGET_FILE_DIR:${tutorial_name}>/meshes
+    )
+  endif()
+endfunction()
 
-add_executable( 4_island_map
-	4_island_map.cc
-	simple_camera.h simple_camera.cc simple_qml_application.h simple_qml_application.cc simple_gl_renderer.h
-	${SHADERS} ${QML}
+add_graphics_tutorial(
+  NAME transparency
+  SHADERS 
+    ${GO_SHADERS_DIR}/mesh.vert ${GO_SHADERS_DIR}/mesh.frag
+    ${GO_SHADERS_DIR}/transparent_window.vert ${GO_SHADERS_DIR}/transparent_window.geom ${GO_SHADERS_DIR}/transparent_window.frag
+  MESHES
+    ${GO_MESHES_DIR}/armadillo.off
+  LIBRARIES
+    ${GO_APPLICATION_LIBRARIES}
 )
 
 set( CGAL_CORE_PACKAGE_DIR "/usr"
 	CACHE FILEPATH "Variable to try to find CGAL_CORE package i.e. the directory where include/CGAL/CORE can be found" )
 
-#TODO: I have done quite a mess to compile with the CGAL libraries. 
-#TODO: clean that by using the cmake files given by CGAL or write another find package file for cgal
-
 find_package( GMP REQUIRED )
 find_package( MPFR REQUIRED )
 find_package( TBB REQUIRED COMPONENTS tbbmalloc )
-	
 if( NOT GMP_FOUND )
   message( fatal "GMP not found")
 endif()
@@ -64,15 +101,12 @@ set( GO_CGAL_LIBRARIES ${GMP_LIBRARIES} ${MPFR_LIBRARIES} -lCGAL -lCGAL_Core ${T
 # get it here: https://github.com/qknight/libnoise
 find_package( LibNoise REQUIRED )
 include_directories( ${LIBNOISE_INCLUDE_DIR} )
-target_link_libraries( 4_island_map ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES})
-set_go_tutorial_properties( 4_island_map )
-add_custom_command( TARGET 4_island_map
-  POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:4_island_map>/qml
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GO_QML_DIR} $<TARGET_FILE_DIR:4_island_map>/qml
-    COMMAND ${CMAKE_COMMAND} -E copy ${QML} $<TARGET_FILE_DIR:4_island_map>/qml
 
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:4_island_map>/shaders
-  	COMMAND ${CMAKE_COMMAND} -E copy ${SHADERS} $<TARGET_FILE_DIR:4_island_map>/shaders
+add_graphics_tutorial(
+  NAME island_map
+  SHADERS
+    ${GO_SHADERS_DIR}/flat.vert ${GO_SHADERS_DIR}/flat.frag
+  LIBRARIES
+    ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES}
 )
   

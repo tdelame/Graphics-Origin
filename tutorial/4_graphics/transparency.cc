@@ -25,8 +25,8 @@
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
 # include <GL/glew.h>
 
-# include "simple_camera.h"
-# include "simple_qml_application.h"
+# include "common/simple_camera.h"
+# include "common/simple_qml_application.h"
 
 # include <QGuiApplication>
 

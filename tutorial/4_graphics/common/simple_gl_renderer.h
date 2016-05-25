@@ -3,9 +3,9 @@
  */
 # ifndef TUTORIAL_SIMPLE_GL_RENDERER_H_
 # define TURORIAL_SIMPLE_GL_RENDERER_H_
-# include "../../graphics-origin/application/camera.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
-# include "../../graphics-origin/application/renderable.h"
+# include "../../../graphics-origin/application/camera.h"
+# include "../../../graphics-origin/application/gl_window_renderer.h"
+# include "../../../graphics-origin/application/renderable.h"
 # include <list>
 
 namespace graphics_origin { namespace application {

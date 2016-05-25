@@ -209,11 +209,6 @@ endif()
 function( add_go_lib lib_name)
   add_library( 
     graphics_origin_${lib_name} SHARED ${ARGN} )
-  message( STATUS
-    "new shared library: graphics_origin_${lib_name} from")
-  foreach( var ${ARGN})
-    message( STATUS "   file ${var}")
-  endforeach()
 endfunction()
 
 # set_go_lib_properties library_name list_of_libraries_to_link
@@ -225,11 +220,6 @@ function( set_go_lib_properties lib_name )
     "graphics_origin_${lib_name}" ${ARGN}
 	CACHE STRING "Libraries to link with if you want to use the ${lib_name} module"
 	FORCE )
-  message( STATUS
-    "shared library graphics_origin_${lib_name} is linked with ")
-  foreach( var ${ARGN})
-    message( STATUS "    library ${var}")
-  endforeach()
   
   set_target_properties( graphics_origin_${lib_name}
 	PROPERTIES

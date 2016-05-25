@@ -4,7 +4,7 @@
 
 # include "simple_qml_application.h"
 
-# include "../../graphics-origin/application/gl_window.h"
+# include "../../../graphics-origin/application/gl_window.h"
 
 # include <QtGui/QSurfaceFormat>
 

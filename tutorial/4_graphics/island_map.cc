@@ -13,9 +13,9 @@
 
 # include <GL/glew.h>
 
-# include "simple_camera.h"
-# include "simple_qml_application.h"
-# include "simple_gl_renderer.h"
+# include "common/simple_camera.h"
+# include "common/simple_qml_application.h"
+# include "common/simple_gl_renderer.h"
 
 # include <chrono>
 
@@ -61,8 +61,8 @@ namespace graphics_origin {
     public:
       struct generation_parameters {
         generation_parameters()
-          : m_map_radius{ 5 },m_land_density{ 0.3 },
-            m_number_of_input_samples{10000},
+          : m_map_radius{ 6 },m_land_density{ 0.1 },
+            m_number_of_input_samples{100000},
             m_lloyds_relaxations{ 2 }
         {}
         gpu_real m_map_radius;
@@ -130,7 +130,7 @@ namespace graphics_origin {
 
         noise::module::Perlin land_generator;
         land_generator.SetFrequency( 1.0 );
-        land_generator.SetOctaveCount( 6 );
+        land_generator.SetOctaveCount( 4 );
         land_generator.SetSeed( std::chrono::system_clock::now().time_since_epoch().count() );
         land_generator.SetNoiseQuality( noise::NoiseQuality::QUALITY_STD );
 

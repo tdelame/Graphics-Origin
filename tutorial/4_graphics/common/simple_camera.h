@@ -4,7 +4,7 @@
 
 # ifndef TUTORIAL_SIMPLE_CAMERA_H_
 # define TUTORIAL_SIMPLE_CAMERA_H_
-# include "../../graphics-origin/application/camera.h"
+# include "../../../graphics-origin/application/camera.h"
 
 namespace graphics_origin { namespace application {
 
