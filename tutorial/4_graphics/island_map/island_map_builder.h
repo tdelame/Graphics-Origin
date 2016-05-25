@@ -43,6 +43,11 @@ namespace graphics_origin {
          * Number of octaves in the land module. The default value is 4.
          */
         int m_land_octaves;
+        /**
+         * Seed for the land module. The default value is initialized thanks to
+         * the clock time.
+         */
+        int m_land_seed;
 
         /**
          * Radius of the map, in kilometer. The default value is 5.

@@ -20,8 +20,6 @@
 # include "island_map/island_map_builder.h"
 # include "island_map/island_map.h"
 
-# include <chrono>
-
 # include <QGuiApplication>
 
 //# define CGAL_LINKED_WITH_TBB

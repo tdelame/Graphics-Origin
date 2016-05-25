@@ -2,6 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com) */
 # include "island_map_builder.h"
 # include <noise/noiseutils.h>
+# include <chrono>
 namespace graphics_origin {
   namespace application {
 
@@ -79,7 +80,7 @@ namespace graphics_origin {
       : m_radius{ 5 },
 
         m_land_frequency{ 1.0 }, m_land_lacunarity{ 2.0 }, m_land_persistance{ 0.5 },
-        m_land_threshold{ 0.1 }, m_land_octaves{ 4 }
+        m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() )
     {}
 
     island_map_builder::island_map_builder( const parameters& params, island_map& output )
@@ -91,6 +92,7 @@ namespace graphics_origin {
       land.SetLacunarity( m_params.m_land_lacunarity );
       land.SetPersistence( m_params.m_land_persistance );
       land.SetOctaveCount( m_params.m_land_octaves );
+      land.SetSeed( m_params.m_land_seed );
 
       // this module can be seen as the probability to have land depending on
       // the distance to the center: the closer to the center we are, the more
