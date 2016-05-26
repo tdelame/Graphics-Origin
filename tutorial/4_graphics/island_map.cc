@@ -18,7 +18,7 @@
 # include "common/simple_gl_renderer.h"
 
 # include "island_map/island_map_builder.h"
-# include "island_map/island_map.h"
+# include "island_map/island.h"
 
 # include <QGuiApplication>
 
@@ -207,7 +207,7 @@ namespace graphics_origin {
               shader_directory + "flat.vert",
               shader_directory + "flat.frag"});
 
-        island_map map;
+        island map();
         island_map_builder( island_map_builder::parameters{}, map );
 
 //        island_map map( island_map::generation_parameters{} );

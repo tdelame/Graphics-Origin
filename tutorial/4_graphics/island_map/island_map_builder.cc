@@ -83,7 +83,7 @@ namespace graphics_origin {
         m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() )
     {}
 
-    island_map_builder::island_map_builder( const parameters& params, island_map& output )
+    island_map_builder::island_map_builder( const parameters& params, island& output )
       : m_params{ params }, m_output{ output }
     {
       // land: a perlin noise

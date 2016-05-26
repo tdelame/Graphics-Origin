@@ -8,7 +8,7 @@
 namespace graphics_origin {
   namespace application {
 
-    class island_map;
+    class island;
 
     /**
      * A dummy builder for now.
@@ -57,14 +57,14 @@ namespace graphics_origin {
 
       island_map_builder(
         const parameters& params,
-        island_map& output );
+        island& output );
 
 
     private:
       void output_results();
 
       const parameters& m_params;
-      island_map& m_output;
+      island& m_output;
     };
 
   }
