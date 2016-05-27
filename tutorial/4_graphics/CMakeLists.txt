@@ -28,45 +28,47 @@ function(add_graphics_tutorial)
   )
   file(GLOB_RECURSE TUTORIAL_SHADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.tes
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.tcs
     ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.geom
     ${CMAKE_CURRENT_SOURCE_DIR}/${AGT_NAME}/*.frag
+    ${AGT_SHADERS}
   )
-  set( tutorial_name 4_${AGT_NAME})
-  set( ${TUTORIAL_SHADERS} "${TUTORIAL_SHADERS} ${AGT_SHADERS}" )
-  set( ${TUTORIAL_MESHES} "${AGT_MESHES}" )
+  set( tutorial_name ${AGT_NAME})
+  set( TUTORIAL_MESHES "${AGT_MESHES}" )
   
-  
-  add_executable( ${tutorial_name}
-    ${TUTORIAL_SOURCES} ${TUTORIAL_QML} ${TUTORIAL_SHADERS} ${TUTORIAL_MESHES}
-  )
- 
+  add_executable( ${tutorial_name} ${TUTORIAL_SOURCES} )
   target_link_libraries( ${tutorial_name} ${AGT_LIBRARIES} )
-  
   set_go_tutorial_properties( ${tutorial_name} )
   
-  if( "${TUTORIAL_QML}" )
+  if( NOT "${TUTORIAL_QML}" STREQUAL "" )
+    set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/qml )
     add_custom_command( TARGET ${tutorial_name}
-      POST_BUILD
-        COMMENT "Copying QML files to binary directory" 
-        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/qml
-        COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_QML} $<TARGET_FILE_DIR:${tutorial_name}>/qml
+        DEPENDS ${TUTORIAL_QML}
+        COMMENT "Copying QML files for tutorial ${tutorial_name}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_QML} ${_destination}
+      )
+  endif()
+  
+  if( NOT "${TUTORIAL_SHADERS}" STREQUAL "" )
+    set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/shaders )
+    add_custom_command( TARGET ${tutorial_name}
+        DEPENDS ${TUTORIAL_SHADERS}
+        COMMENT "Copying shader files for tutorial ${tutorial_name}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_SHADERS} ${_file} ${_destination}
     )
   endif()
   
-  if( "${TUTORIAL_SHADERS}" )
+  if( NOT "${TUTORIAL_MESHES}" STREQUAL "" ) 
+    set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/meshes )
     add_custom_command( TARGET ${tutorial_name}
-      COMMENT "Copying GLSL Shaders to binary directory"
-      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/shaders
-      COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_SHADERS} $<TARGET_FILE_DIR:${tutorial_name}>/shaders
-    )
-  endif()
-  
-  if( "${TUTORIAL_MESHES}" ) 
-    add_custom_command( TARGET ${tutorial_name}
-      COMMENT "Copying mesh files to binary directory"
-      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${tutorial_name}>/meshes 
-      COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_MESHES} $<TARGET_FILE_DIR:${tutorial_name}>/meshes
-    )
+        DEPENDS ${TUTORIAL_MESHES}
+        COMMENT "Copying mesh files for tutorial ${tutorial_name}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+        COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_MESHES} ${_destination}
+      )
   endif()
 endfunction()
 

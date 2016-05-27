@@ -22,13 +22,23 @@ namespace graphics_origin
         noise::module::Module& land_generator,
         shader_program_ptr program,
         gpu_real resolution_in_km = 0.001,
-        gpu_real map_radius,
+        gpu_real map_radius = 5,
         unsigned int texture_size = 2048 );
+
+      island();
 
       ~island()
       {
         remove_gpu_data();
       }
+
+      void
+      set_resolution( gpu_real resolution_in_km = 0.001 );
+
+      void
+      set_heightmap(
+        noise::module::Module& land_generator,
+        unsigned int texture_size = 2048 );
 
       void
       set_radius(
@@ -60,6 +70,7 @@ namespace graphics_origin
       gpu_real m_map_radius;
       gpu_real m_resolution;
       unsigned int m_texture_size;
+      unsigned int m_number_of_patches;
 
       enum
       {
@@ -67,6 +78,7 @@ namespace graphics_origin
       };
       unsigned int m_vao;
       unsigned int m_vbos[number_of_vbos];
+      unsigned int m_texture_id;
     };
   }
 }

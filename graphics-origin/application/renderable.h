@@ -38,6 +38,16 @@ namespace application {
     virtual ~renderable();
     void render();
 
+    /**@brief Set a new shader program for this renderable.
+     *
+     * Set a new shader program for this renderable.
+     * @param program The new shader program. */
+    void set_shader_program( shader_program_ptr program );
+
+    /**@brief Get the shader program currently used by this renderable.
+     *
+     * Read-only access to the shader program used by this renderable.
+     * @return The shader program. */
     shader_program_ptr get_shader_program() const;
 
     /** Get the model matrix of this renderable.

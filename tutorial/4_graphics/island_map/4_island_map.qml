@@ -29,8 +29,8 @@ Rectangle {
       w.cam1.zfar  = 15.0
       w.cam1.position = Qt.vector3d( 0, 0, 10 )
       w.cam1.forward  = Qt.vector3d( 0, 0, -1 )
-      w.cam1.up       = Qt.vector3d(-1, 0,  0 )
-      w.cam1.right    = Qt.vector3d( 0,-1,  0 )
+      w.cam1.up       = Qt.vector3d( 0, 1,  0 )
+      w.cam1.right    = Qt.vector3d( 1, 0,  0 )
       w.state = "FULLSCREEN"
     }
 }

@@ -1,0 +1,21 @@
+# version 440
+layout(quads, fractional_odd_spacing, ccw) in;
+out float depth;
+
+uniform sampler2D terrain;
+uniform mat4 mvp;
+uniform float inv_radius;
+
+void main(){
+    float u = gl_TessCoord.x;
+    float v = gl_TessCoord.y;
+
+    vec4 a = mix(gl_in[1].gl_Position, gl_in[0].gl_Position, u);
+    vec4 b = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, u);
+    vec4 position = mix(a, b, v);
+    vec2 tex_coordinates = position.xy * inv_radius * 0.5f + 0.5f;
+    float height = texture(terrain, tex_coordinates).a;
+    gl_Position = mvp * vec4(position.xy, height, 1.0);
+    depth = gl_Position.z;
+    depth = height;
+}

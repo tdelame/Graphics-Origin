@@ -53,6 +53,8 @@ namespace graphics_origin {
          * Radius of the map, in kilometer. The default value is 5.
          */
         float m_radius;
+
+        unsigned int m_heightmap_size;
       };
 
       island_map_builder(

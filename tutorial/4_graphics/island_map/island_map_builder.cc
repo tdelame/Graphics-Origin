@@ -1,6 +1,7 @@
 /*  Created on: May 25, 2016
  *      Author: T. Delame (tdelame@gmail.com) */
 # include "island_map_builder.h"
+# include "island.h"
 # include <noise/noiseutils.h>
 # include <chrono>
 namespace graphics_origin {
@@ -48,7 +49,7 @@ namespace graphics_origin {
       noise::utils::NoiseMapBuilderPlane noise_map_builder;
       noise_map_builder.SetSourceModule( module );
       noise_map_builder.SetDestNoiseMap( noise_map );
-      noise_map_builder.SetDestSize( 2048, 2048 );
+      noise_map_builder.SetDestSize( 4096, 4096 );
       noise_map_builder.SetBounds( -radius, radius, -radius, radius );
       noise_map_builder.Build();
 
@@ -80,7 +81,9 @@ namespace graphics_origin {
       : m_radius{ 5 },
 
         m_land_frequency{ 1.0 }, m_land_lacunarity{ 2.0 }, m_land_persistance{ 0.5 },
-        m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() )
+        m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() ),
+
+        m_heightmap_size{ 4096 }
     {}
 
     island_map_builder::island_map_builder( const parameters& params, island& output )
@@ -124,7 +127,13 @@ namespace graphics_origin {
       land_selector.SetControlModule( control_module );
       land_selector.SetBounds( 0, 5 );
 
-      debug_noise( land_selector, params.m_radius, "land.bmp");
+      output.set_radius( m_params.m_radius );
+      output.set_heightmap( control_module, m_params.m_heightmap_size );//and_selector, m_params.m_heightmap_size );
+      output.set_resolution( 0.05 );
+
+
+//      debug_noise( control_module, params.m_radius, "land.bmp");
+//      debug_noise( land_selector, params.m_radius, "land.bmp");
     }
 
     void island_map_builder::output_results()

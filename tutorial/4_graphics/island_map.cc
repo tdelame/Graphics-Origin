@@ -202,13 +202,31 @@ namespace graphics_origin {
       {
         initialize_renderer( new simple_gl_renderer );
         std::string shader_directory = tools::get_path_manager().get_resource_directory( "shaders" );
-        shader_program_ptr samples_program =
+        shader_program_ptr island_program =
+            std::make_shared<shader_program>( std::list<std::string>{
+              shader_directory + "island.vert",
+              shader_directory + "island.tcs",
+              shader_directory + "island.tes",
+              shader_directory + "island.frag"});
+
+        shader_program_ptr flat_program =
             std::make_shared<shader_program>( std::list<std::string>{
               shader_directory + "flat.vert",
               shader_directory + "flat.frag"});
 
-        island map();
-        island_map_builder( island_map_builder::parameters{}, map );
+        island* map = new island{};
+        island_map_builder( island_map_builder::parameters{}, *map );
+        map->set_shader_program( island_program );
+        add_renderable( map );
+
+
+        points_renderable* points = new points_renderable( flat_program, 4 );
+        points->add( gpu_vec3{-5,-5,0}, gpu_vec3{1,0,0});
+        points->add( gpu_vec3{ 5,-5,0}, gpu_vec3{1,0,0});
+        points->add( gpu_vec3{-5, 5,0}, gpu_vec3{1,0,0});
+        points->add( gpu_vec3{ 5, 5,0}, gpu_vec3{1,0,0});
+        points->add( gpu_vec3{ 6, 0,0}, gpu_vec3{0,0,1});
+        add_renderable( points );
 
 //        island_map map( island_map::generation_parameters{} );
 //        points_renderable* points = new points_renderable( samples_program, island_map::generation_parameters{}.m_number_of_input_samples );

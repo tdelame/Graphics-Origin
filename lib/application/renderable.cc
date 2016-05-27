@@ -20,6 +20,13 @@ namespace application {
   }
 
   void
+  renderable::set_shader_program( shader_program_ptr program )
+  {
+    m_program = program;
+    set_dirty();
+  }
+
+  void
   renderable::set_dirty()
   {
     m_dirty = true;
