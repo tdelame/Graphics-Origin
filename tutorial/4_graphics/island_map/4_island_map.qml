@@ -5,32 +5,124 @@ import GraphicsOrigin 1.0 // This "library" is defined from the C++ side and con
 import "." //QTBUG-34418, singletons require explicit import to load qmldir file
 
 Rectangle {
-    id: main
-    width: 1000
-    height: 1000
-    color: Style.main_window.background
-    visible: true
+  id: main
+  width: 1000
+  height: 1000
+  color: Style.main_window.background
+  visible: true
     
-    // Executed when the component is loaded.
-    Component.onCompleted: {
-      // Test if we can build a SceneWindow, that is the component described in SceneWindow.qml
-      var component = Qt.createComponent("SceneWindow.qml");
-      if( component.status != Component.Ready ) {
-  			if( component.status == Component.Error )
-          console.debug("Error:"+ component.errorString() );
-        return; // or maybe throw
-      }
-
-	  // Apparently, we can create a SceneWindow, so we create one:
-	  // it will be a child of "main" and we define its position to (50,10)      
-      var w = component.createObject(main,{"x":50,"y":10});
-      
-      w.cam1.znear = 0.0001
-      w.cam1.zfar  = 15.0
-      w.cam1.position = Qt.vector3d( 0, 0, 10 )
-      w.cam1.forward  = Qt.vector3d( 0, 0, -1 )
-      w.cam1.up       = Qt.vector3d( 0, 1,  0 )
-      w.cam1.right    = Qt.vector3d( 1, 0,  0 )
-      w.state = "FULLSCREEN"
+  GLCamera {
+    id: cam1
+    ratio: main.height > 0 ? main.width / main.height : 1
+    translation_speed : 0.0015
+  }
+    
+  GLWindow {
+    id: glwindow
+    width: main.width
+    height: main.height
+    anchors.centerIn: main
+    camera: cam1
+    
+    property bool move_fast : false
+    property bool move_human : true
+    
+    focus: true
+    Keys.onPressed: {
+      if( event.key == Qt.Key_Q ) {
+        cam1.set_go_left( true );
+        event.accepted = true;
+      } else if( event.key == Qt.Key_D ) {
+        cam1.set_go_right( true );
+		event.accepted = true;
+      } else if( event.key == Qt.Key_Z ) {
+        cam1.set_go_forward( true );
+        event.accepted = true;
+      } else if( event.key == Qt.Key_S ) {
+        cam1.set_go_backward( true );
+        event.accepted = true
+  	  } else if( event.key == Qt.Key_Space ) {
+  	    move_fast = true
+  	    event.accepted = true
+  	    cam1.translation_speed = move_human ? 0.01 : 4.0
+  	  } else if( event.key == Qt.Key_Shift ) {
+  	    move_human = false
+  	    event.accepted = true
+  	    cam1.translation_speed = move_fast ? 4.0 : 2.0
+  	  }
     }
+       
+    Keys.onReleased: {
+      if( event.key == Qt.Key_Q ) {
+        cam1.set_go_left( false );
+        event.accepted = true;
+      } else if( event.key == Qt.Key_D ) {
+        cam1.set_go_right( false );
+		event.accepted = true;
+      } else if( event.key == Qt.Key_Z ) {
+        cam1.set_go_forward( false );
+        event.accepted = true;
+      } else if( event.key == Qt.Key_S ) {
+        cam1.set_go_backward( false );
+        event.accepted = true
+  	  } else if( event.key == Qt.Key_Space ) {
+  	    move_fast = false
+  	    event.accepted = true
+  	    cam1.translation_speed = move_human ? 0.0015 : 2.0
+  	  } else if( event.key == Qt.Key_Shift ) {
+  	    move_human = true
+  	    event.accepted = true
+  	    cam1.translation_speed = move_fast ? 0.01 : 0.0015
+  	  }
+    }
+    
+    MouseArea {
+      anchors.fill:parent
+      acceptedButtons: Qt.LeftButton | Qt.RightButton
+      
+      property int prevX: -1
+      property int prevY: -1
+      
+      onPositionChanged: {
+        if ( pressedButtons & Qt.RightButton) {
+          
+          var dx = 0;
+          var dy = 0;
+          if( prevX > -1 ) {
+            dx = 0.01 * (mouse.x - prevX)
+          }
+          if( prevY > -1 ) {
+            dy = 0.01 * (mouse.y - prevY)
+          }
+          cam1.spaceship_rotate( dx, dy )
+          prevX = mouse.x
+          prevY = mouse.y
+        }
+      }
+      
+      onReleased: { prevX = -1; prevY = -1; }
+    }    
+  }
+  
+  // Executed when everything is loaded
+  Component.onCompleted: {
+    cam1.znear = 0.0001
+    cam1.zfar  = 15.0
+    cam1.position = Qt.vector3d( 0, 0, 10 )
+    cam1.forward  = Qt.vector3d( 0, 0, -1 )
+    cam1.up       = Qt.vector3d( 0, 1,  0 )
+    cam1.right    = Qt.vector3d( 1, 0,  0 )
+    cam1.translation_speed = 0.0015
+  }
+  
+  Text {
+    id: fps
+    anchors.top: parent.top
+    anchors.right: parent.right
+  }  
+  
+  Timer {
+    interval: 2000; running: true; repeat: true
+    onTriggered: fps.text = "FPS: " + glwindow.get_fps().toFixed(2);
+  }
 }

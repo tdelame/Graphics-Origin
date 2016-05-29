@@ -11,6 +11,7 @@ namespace graphics_origin { namespace application {
   class simple_camera
     : public graphics_origin::application::camera {
     Q_OBJECT
+    Q_PROPERTY( qreal translation_speed READ qml_get_translation_speed WRITE qml_set_translation_speed )
   public:
     explicit simple_camera( QObject* parent = nullptr );
 
@@ -21,6 +22,12 @@ namespace graphics_origin { namespace application {
     Q_INVOKABLE void set_go_up( bool up );
     Q_INVOKABLE void set_go_down( bool down );
     Q_INVOKABLE void mouse_rotation( qreal dx, qreal dy );
+
+    void set_translation_speed( gpu_real speed );
+    void qml_set_translation_speed( qreal speed );
+
+    gpu_real get_translation_speed() const;
+    qreal qml_get_translation_speed() const;
 
   private:
     void do_update() override;
@@ -39,6 +46,7 @@ namespace graphics_origin { namespace application {
     move m_move;
     gpu_real m_mouse_dx;
     gpu_real m_mouse_dy;
+    gpu_real m_translation_speed;
     bool m_mouse_moved;
   };
 

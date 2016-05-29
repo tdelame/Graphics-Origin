@@ -12,8 +12,25 @@ namespace graphics_origin { namespace application {
   simple_camera::simple_camera( QObject* parent )
     : graphics_origin::application::camera{ parent },
       m_last_update_time{ omp_get_wtime() },
-      m_mouse_dx{0}, m_mouse_dy{0}, m_mouse_moved{ false }
+      m_mouse_dx{0}, m_mouse_dy{0}, m_translation_speed{0.5}, m_mouse_moved{ false }
   {}
+
+  void simple_camera::set_translation_speed( gpu_real speed )
+  {
+    m_translation_speed = speed;
+  }
+  void simple_camera::qml_set_translation_speed( qreal speed )
+  {
+    m_translation_speed = speed;
+  }
+  gpu_real simple_camera::get_translation_speed() const
+  {
+    return m_translation_speed;
+  }
+  qreal simple_camera::qml_get_translation_speed() const
+  {
+    return m_translation_speed;
+  }
 
   void simple_camera::set_go_left( bool left )
   {
@@ -54,7 +71,7 @@ namespace graphics_origin { namespace application {
     gpu_real factor = dot( m_direction, m_direction );
     if( factor > 0.01 )
       {
-        factor = gpu_real( (omp_get_wtime() - m_last_update_time) * 0.5 ) / std::sqrt( factor );
+        factor = gpu_real( (omp_get_wtime() - m_last_update_time) * m_translation_speed ) / std::sqrt( factor );
         m_direction *= factor;
 
         m_view[3][0] += m_direction.x;

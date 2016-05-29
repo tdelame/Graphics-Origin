@@ -133,7 +133,7 @@ namespace graphics_origin {
 
       output.set_radius( m_params.m_radius );
       output.set_heightmap( control_module, m_params.m_heightmap_size );//and_selector, m_params.m_heightmap_size );
-      output.set_resolution( 0.05 );
+      output.set_resolution( 0.0005 );
 
 
 //      debug_noise( control_module, params.m_radius, "land.bmp");

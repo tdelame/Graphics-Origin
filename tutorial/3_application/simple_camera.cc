@@ -12,7 +12,8 @@ namespace graphics_origin { namespace application {
   simple_camera::simple_camera( QObject* parent )
     : graphics_origin::application::camera{ parent },
       m_last_update_time{ omp_get_wtime() },
-      m_mouse_dx{0}, m_mouse_dy{0}, m_mouse_moved{ false }
+      m_mouse_dx{0}, m_mouse_dy{0},
+      m_mouse_moved{ false }
   {}
 
   void simple_camera::set_go_left( bool left )

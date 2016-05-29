@@ -162,6 +162,12 @@ namespace graphics_origin
       m_number_of_patches = std::ceil( 2.0 * m_map_radius / patch_size );
       patch_size = gpu_real(2.0) * m_map_radius / gpu_real( m_number_of_patches );
 
+      LOG( info, "island has a radius of: " << m_map_radius );
+      LOG( info, "requested resolution:   " << m_resolution );
+      LOG( info, "max tessellation level: " << max_tess_levels );
+      LOG( info, "patch per dimension:    " << m_number_of_patches );
+      LOG( info, "size of one patch:      " << patch_size );
+
       glcheck(glBindVertexArray( m_vao ));
         try
           {
