@@ -74,7 +74,7 @@ namespace graphics_origin
 
       enum
       {
-        positions_vbo_id, indices_vbo_id, number_of_vbos
+        positions_texcoords_vbo_id, indices_vbo_id, number_of_vbos
       };
       unsigned int m_vao;
       unsigned int m_vbos[number_of_vbos];

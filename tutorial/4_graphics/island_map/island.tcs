@@ -1,5 +1,8 @@
 # version 440
+in vec2 tc_texcoord[];
+
 layout(vertices = 4) out;
+out vec2 tes_texcoord[];
 
 uniform vec2 window_dimensions;
 uniform mat4 mvp;
@@ -30,6 +33,7 @@ float level(vec2 v0, vec2 v1){
 }
 
 void main(){
+  tes_texcoord[gl_InvocationID] = tc_texcoord[gl_InvocationID];
     if(gl_InvocationID == 0){
         vec4 v0 = project(gl_in[0].gl_Position);
         vec4 v1 = project(gl_in[1].gl_Position);

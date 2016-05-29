@@ -37,28 +37,35 @@ function(add_graphics_tutorial)
   set( tutorial_name ${AGT_NAME})
   set( TUTORIAL_MESHES "${AGT_MESHES}" )
   
-  add_executable( ${tutorial_name} ${TUTORIAL_SOURCES} )
-  target_link_libraries( ${tutorial_name} ${AGT_LIBRARIES} )
+  add_executable( ${tutorial_name} ${TUTORIAL_SOURCES})
+  target_link_libraries( ${tutorial_name} ${AGT_LIBRARIES})
   set_go_tutorial_properties( ${tutorial_name} )
   
   if( NOT "${TUTORIAL_QML}" STREQUAL "" )
     set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/qml )
     add_custom_command( TARGET ${tutorial_name}
-        DEPENDS ${TUTORIAL_QML}
-        COMMENT "Copying QML files for tutorial ${tutorial_name}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_QML} ${_destination}
-      )
+      DEPENDS ${TUTORIAL_QML}
+      COMMENT "Copying QML files for tutorial ${tutorial_name}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_QML} ${_destination}
+    )
+    #add_custom_target( ${tutorial_name}.qml DEPENDS ${_output} )
+    #add_dependencies( ${tutorial_name} ${tutorial_name}.qml )
   endif()
   
   if( NOT "${TUTORIAL_SHADERS}" STREQUAL "" )
     set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/shaders )
+    #foreach( _file ${TUTORIAL_SHADERS} )
+      #list( APPEND _output ${_destination}/${_file} )
+    #endforeach()
     add_custom_command( TARGET ${tutorial_name}
-        DEPENDS ${TUTORIAL_SHADERS}
-        COMMENT "Copying shader files for tutorial ${tutorial_name}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_SHADERS} ${_file} ${_destination}
+      DEPENDS ${TUTORIAL_SHADERS}
+      COMMENT "Copying shader files for tutorial ${tutorial_name}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_SHADERS} ${_file} ${_destination}
     )
+    #add_custom_target( ${tutorial_name}.shaders DEPENDS ${_output} )
+    #add_dependencies( ${tutorial_name} ${tutorial_name}.shaders ) 
   endif()
   
   if( NOT "${TUTORIAL_MESHES}" STREQUAL "" ) 

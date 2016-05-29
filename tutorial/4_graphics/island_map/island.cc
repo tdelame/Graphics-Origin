@@ -2,13 +2,11 @@
  *      Author: T. Delame (tdelame@gmail.com) */
 # include "island.h"
 # include "../../../graphics-origin/application/gl_helper.h"
+# include "../../../graphics-origin/application/camera.h"
 # include "../../../graphics-origin/application/gl_window_renderer.h"
 # include "../../../graphics-origin/tools/log.h"
 # include <GL/glew.h>
 
-
-//temp
-# include <noise/noiseutils.h>
 namespace graphics_origin
 {
   namespace application
@@ -88,67 +86,38 @@ namespace graphics_origin
         {
           m_texture_size = texture_size;
           m_normal_height_texture.resize( m_texture_size * m_texture_size, gpu_vec4{} );
+          const float extent = m_map_radius * 2.0f ;
+          const float step = extent / float( m_texture_size );
 
-          {
-            noise::utils::NoiseMap noise_map;
-            noise::utils::NoiseMapBuilderPlane noise_map_builder;
-            noise_map_builder.SetSourceModule( land_generator );
-            noise_map_builder.SetDestNoiseMap( noise_map );
-            noise_map_builder.SetDestSize( m_texture_size, m_texture_size );
-            noise_map_builder.SetBounds( -m_map_radius, m_map_radius, -m_map_radius, m_map_radius );
-            noise_map_builder.Build();
+          # pragma omp parallel for
+          for( unsigned int j = 0; j < m_texture_size; ++ j )
+            {
+              float y = -m_map_radius + j * step;
+              float x = -m_map_radius           ;
+              gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
+              for( unsigned int i = 0; i < m_texture_size; ++ i, x += step, ++ dest )
+                {
+                  dest->a = land_generator.GetValue( x, 0, y );
+                }
+            }
+          const gpu_real scale = gpu_real(2.0) * m_map_radius / gpu_real( m_texture_size );
+          # pragma omp parallel for
+          for( unsigned int j = 0; j < m_texture_size; ++ j )
+            {
+              gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
+              for( unsigned int i = 0; i < m_texture_size; ++ i, ++ dest )
+                {
+                  float z = dest->a;
+                  float nx = scale * (( i == 0 ? z : (dest - 1)->a ) - ( i + 1 == m_texture_size) ? z : dest[1].a);
+                  float ny = scale * (( j == 0 ? z : (dest-m_texture_size)->a ) - ( j + 1 == m_texture_size ) ? z : dest[m_texture_size].a);
+                  float inv_norm = float(1.0) / std::sqrt( nx * nx + ny * ny + 4.0f );
+                  dest->x = nx * inv_norm;
+                  dest->y = ny * inv_norm;
+                  dest->z = float(2.0) * inv_norm;
 
-            noise::utils::Image noise_image;
-            noise::utils::RendererImage renderer;
-            renderer.SetSourceNoiseMap( noise_map );
-            renderer.SetDestImage( noise_image );
-            renderer.ClearGradient();
-            renderer.AddGradientPoint(-1.0000, noise::utils::Color(  0,   0, 128, 255)); // deeps
-            renderer.AddGradientPoint(-0.2500, noise::utils::Color(  0,   0, 255, 255)); // shallow
-            renderer.AddGradientPoint( 0.0000, noise::utils::Color(  0, 128, 255, 255)); // shore
-            renderer.AddGradientPoint( 0.0625, noise::utils::Color(240, 240,  64, 255)); // sand
-            renderer.AddGradientPoint( 0.1250, noise::utils::Color( 32, 160,   0, 255)); // grass
-            renderer.AddGradientPoint( 0.3750, noise::utils::Color(224, 224,   0, 255)); // dirt
-            renderer.AddGradientPoint( 0.7500, noise::utils::Color(128, 128, 128, 255)); // rock
-            renderer.AddGradientPoint( 1.0000, noise::utils::Color(255, 255, 255, 255)); // snow
-            renderer.EnableLight();
-            renderer.SetLightContrast(3.0);
-            renderer.SetLightBrightness(2.0);
-            renderer.Render();
-
-            noise::utils::WriterBMP writer;
-            writer.SetSourceImage( noise_image );
-            writer.SetDestFilename( "land.bmp" );
-            writer.WriteDestFile();
-
-            for( unsigned int j = 0; j < m_texture_size; ++ j )
-              {
-                for( unsigned int i = 0; i < m_texture_size; ++ i )
-                  {
-                    m_normal_height_texture[ i + j * m_texture_size ].a = noise_map.GetValue( i, j );
-                  }
-              }
-
-          }
-
-
-
-//          const float step = m_map_radius * 2.0f / float( m_texture_size );
-//
-//          # pragma omp parallel for
-//          for( unsigned int j = 0; j < m_texture_size; ++ j )
-//            {
-//              float y = -m_map_radius + j * step;
-//              float x = -m_map_radius           ;
-//              gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
-//              for( unsigned int i = 0; i < m_texture_size; ++ i, x += step, ++ dest )
-//                {
-//                  dest->a = land_generator.GetValue( x, y, 0 );
-//                }
-//            }
+                }
+            }
           set_dirty();
-
-          //todo: compute normals
         }
       catch( std::bad_alloc& e )
         {
@@ -167,7 +136,8 @@ namespace graphics_origin
         }
 
       int position_location = m_program->get_attribute_location( "position" );
-      int texture_location = m_program->get_attribute_location( "terrain" );
+      int texcoord_location = m_program->get_attribute_location( "texcoord" );
+      int texture_location = m_program->get_uniform_location( "terrain" );
       int max_tess_levels    = 64; //minimum in the specification
       glcheck(glGetIntegerv( GL_MAX_TESS_GEN_LEVEL, &max_tess_levels));
 
@@ -197,26 +167,33 @@ namespace graphics_origin
           {
             std::vector< gpu_vec4 > positions(
                 (m_number_of_patches + 1) * (m_number_of_patches + 1),
-                gpu_vec4( 0, 0, 0, 1 ) );
+                gpu_vec4( 0, 0, 0, 0 ) );
+
+            const gpu_real inv_double_radius = gpu_real(1.0) / (gpu_real(2.0) * m_map_radius );
             # pragma omp parallel for
             for( unsigned int j = 0; j <= m_number_of_patches; ++j )
               {
                 gpu_vec4* row = positions.data( ) + j * (m_number_of_patches + 1);
                 gpu_real y = -m_map_radius + j * patch_size;
                 gpu_real x = -m_map_radius;
-                for( unsigned int i = 0; i <= m_number_of_patches; ++i, ++row, x +=
-                    patch_size )
+                gpu_real ty = y * inv_double_radius + gpu_real(0.5);
+                for( unsigned int i = 0; i <= m_number_of_patches; ++i, ++row, x += patch_size )
                   {
                     row->x = x;
                     row->y = y;
+                    row->z = x * inv_double_radius + gpu_real(0.5);
+                    row->w = ty;
                   }
               }
 
-            glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ positions_vbo_id ] ));
+            glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ positions_texcoords_vbo_id ] ));
             glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec4) * positions.size(), positions.data(), GL_STATIC_DRAW ));
             glcheck(glEnableVertexAttribArray( position_location ));
             glcheck(glVertexAttribPointer( position_location,
-              4, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), 0 ));
+              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), 0 ));
+            glcheck(glEnableVertexAttribArray( texcoord_location ));
+            glcheck(glVertexAttribPointer( texcoord_location,
+              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), reinterpret_cast<void*>( 2 * sizeof(gpu_real))));
           }
         catch( std::bad_alloc& e )
           {
@@ -286,12 +263,11 @@ namespace graphics_origin
     void
     island::do_render()
     {
-//      glcheck(glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ));
+      glcheck(glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ));
       glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
       glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix())));
-      glcheck(glUniformMatrix3fv( m_program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( m_model ) ) ) ) ));
       glcheck(glUniform1f( m_program->get_uniform_location( "lod_factor"), 4.0f ));
-      glcheck(glUniform1f( m_program->get_uniform_location( "inv_radius"), gpu_real(1.0/m_map_radius) ));
+      glcheck(glUniform3fv( m_program->get_uniform_location( "camera_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position())));
       glcheck(glPatchParameteri( GL_PATCH_VERTICES, 4 ));
 
       glcheck(glBindTexture(GL_TEXTURE_2D, m_texture_id ));

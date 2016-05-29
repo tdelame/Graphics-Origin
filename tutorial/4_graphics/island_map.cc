@@ -5,8 +5,6 @@
 # include "../../graphics-origin/application/gl_window.h"
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
-# include "../../graphics-origin/application/points_renderable.h"
-# include "../../graphics-origin/application/lines_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/random.h"
 # include "../../graphics-origin/tools/log.h"
@@ -209,24 +207,10 @@ namespace graphics_origin {
               shader_directory + "island.tes",
               shader_directory + "island.frag"});
 
-        shader_program_ptr flat_program =
-            std::make_shared<shader_program>( std::list<std::string>{
-              shader_directory + "flat.vert",
-              shader_directory + "flat.frag"});
-
         island* map = new island{};
         island_map_builder( island_map_builder::parameters{}, *map );
         map->set_shader_program( island_program );
         add_renderable( map );
-
-
-        points_renderable* points = new points_renderable( flat_program, 4 );
-        points->add( gpu_vec3{-5,-5,0}, gpu_vec3{1,0,0});
-        points->add( gpu_vec3{ 5,-5,0}, gpu_vec3{1,0,0});
-        points->add( gpu_vec3{-5, 5,0}, gpu_vec3{1,0,0});
-        points->add( gpu_vec3{ 5, 5,0}, gpu_vec3{1,0,0});
-        points->add( gpu_vec3{ 6, 0,0}, gpu_vec3{0,0,1});
-        add_renderable( points );
 
 //        island_map map( island_map::generation_parameters{} );
 //        points_renderable* points = new points_renderable( samples_program, island_map::generation_parameters{}.m_number_of_input_samples );

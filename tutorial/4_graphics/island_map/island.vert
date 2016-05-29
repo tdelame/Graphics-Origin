@@ -1,11 +1,13 @@
 #version 440
-in vec4 position;
+in vec2 position;
+in vec2 texcoord;
+
+out vec2 tc_texcoord;
+
 uniform sampler2D terrain;
-uniform float inv_radius;
     
 void main( )
 {
-  vec2 tex_coordinates = position.xy * inv_radius * 0.5f + 0.5f;
-  float height = texture( terrain, tex_coordinates ).a;
-  gl_Position = vec4( position.xy, height, 1.0 );
+  tc_texcoord = texcoord;
+  gl_Position = vec4( position, texture( terrain, texcoord ).a, 1.0 );
 }

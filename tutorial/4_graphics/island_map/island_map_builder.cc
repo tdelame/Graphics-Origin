@@ -83,7 +83,7 @@ namespace graphics_origin {
         m_land_frequency{ 1.0 }, m_land_lacunarity{ 2.0 }, m_land_persistance{ 0.5 },
         m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() ),
 
-        m_heightmap_size{ 4096 }
+        m_heightmap_size{ 8192 }
     {}
 
     island_map_builder::island_map_builder( const parameters& params, island& output )
@@ -116,6 +116,10 @@ namespace graphics_origin {
       noise::module::Add control_module;
       control_module.SetSourceModule( 0, land );
       control_module.SetSourceModule( 1, s2 );
+
+
+
+
 
       // land_selector: when the control module is in the range [0,+inf], we
       // have land and output the constant module. Otherwise, this is water
