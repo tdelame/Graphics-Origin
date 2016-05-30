@@ -69,6 +69,7 @@ namespace graphics_origin
       std::vector< gpu_vec4 > m_normal_height_texture;
       gpu_real m_map_radius;
       gpu_real m_resolution;
+      gpu_real m_vertical_scale; // what an elevation of 1.0 represents in world space
       unsigned int m_texture_size;
       unsigned int m_number_of_patches;
 

@@ -107,14 +107,16 @@ namespace graphics_origin
               gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
               for( unsigned int i = 0; i < m_texture_size; ++ i, ++ dest )
                 {
-                  float z = dest->a;
-                  float nx = scale * (( i == 0 ? z : (dest - 1)->a ) - ( i + 1 == m_texture_size) ? z : dest[1].a);
-                  float ny = scale * (( j == 0 ? z : (dest-m_texture_size)->a ) - ( j + 1 == m_texture_size ) ? z : dest[m_texture_size].a);
-                  float inv_norm = float(1.0) / std::sqrt( nx * nx + ny * ny + 4.0f );
-                  dest->x = nx * inv_norm;
-                  dest->y = ny * inv_norm;
-                  dest->z = float(2.0) * inv_norm;
+                  float nc = dest->a;
+                  float nu = dest[ (((j + 1) == m_texture_size) ? 0 : 1) * m_texture_size ].a;
+                  float nr = dest[ (((i + 1) == m_texture_size) ? 0 : 1) ].a;
 
+                  dest->x = nc - nr;
+                  dest->y = nc - nu;
+                  float inv_norm = float(1.0) / std::sqrt( dest->x * dest->x + dest->y * dest->y + 1.0f );
+                  dest->x *= inv_norm;
+                  dest->y *= inv_norm;
+                  dest->z = inv_norm;
                 }
             }
           set_dirty();
@@ -244,6 +246,7 @@ namespace graphics_origin
         glcheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
         glcheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
+        //todo: GL_RGBA16F ?
         // load the texture
         glcheck(glTexImage2D(GL_TEXTURE_2D,
            0,

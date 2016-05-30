@@ -87,6 +87,11 @@ option(
   GO_BUILD_GEOMETRY_TUTORIAL
   "Set to ON to build the tutorial for the geometry library."
   ON)
+  
+option(
+  GO_BUILD_TEST
+  "Set to ON to build some tests."
+  ON)  
 
 #*********************
 # external libraries *

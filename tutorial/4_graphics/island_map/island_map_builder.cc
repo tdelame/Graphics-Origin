@@ -78,10 +78,11 @@ namespace graphics_origin {
     }
 
     island_map_builder::parameters::parameters()
-      : m_radius{ 5 },
-
-        m_land_frequency{ 1.0 }, m_land_lacunarity{ 2.0 }, m_land_persistance{ 0.5 },
+      : m_land_frequency{ 1.0 }, m_land_lacunarity{ 2.0 }, m_land_persistance{ 0.5 },
         m_land_threshold{ 0.3 }, m_land_octaves{ 4 }, m_land_seed( std::chrono::system_clock::now().time_since_epoch().count() ),
+
+        m_radius{ 5000 },
+        m_min_elevation{ -150 }, m_max_elevation{ 1500 },
 
         m_heightmap_size{ 8192 }
     {}
@@ -90,12 +91,12 @@ namespace graphics_origin {
       : m_params{ params }, m_output{ output }
     {
       // land: a perlin noise
-      noise::module::Perlin land;
-      land.SetFrequency( m_params.m_land_frequency );
-      land.SetLacunarity( m_params.m_land_lacunarity );
-      land.SetPersistence( m_params.m_land_persistance );
-      land.SetOctaveCount( m_params.m_land_octaves );
-      land.SetSeed( m_params.m_land_seed );
+      noise::module::Perlin base_land_definition;
+      base_land_definition.SetFrequency( m_params.m_land_frequency );
+      base_land_definition.SetLacunarity( m_params.m_land_lacunarity );
+      base_land_definition.SetPersistence( m_params.m_land_persistance );
+      base_land_definition.SetOctaveCount( m_params.m_land_octaves );
+      base_land_definition.SetSeed( m_params.m_land_seed );
 
       // this module can be seen as the probability to have land depending on
       // the distance to the center: the closer to the center we are, the more
@@ -114,7 +115,7 @@ namespace graphics_origin {
       // opposite of the s2 module (the parameters of this module are such that
       // we already have the opposite). This gives us the control module.
       noise::module::Add control_module;
-      control_module.SetSourceModule( 0, land );
+      control_module.SetSourceModule( 0, base_land_definition );
       control_module.SetSourceModule( 1, s2 );
 
 

@@ -50,9 +50,18 @@ namespace graphics_origin {
         int m_land_seed;
 
         /**
-         * Radius of the map, in kilometer. The default value is 5.
+         * Radius of the map in meters. The default value is 5000.
          */
         float m_radius;
+
+        /**
+         * Approximate minimum elevation of the island map.
+         */
+        float m_min_elevation;
+        /**
+         * Approximate maximum elevation of the island map.
+         */
+        float m_max_elevation;
 
         unsigned int m_heightmap_size;
       };
