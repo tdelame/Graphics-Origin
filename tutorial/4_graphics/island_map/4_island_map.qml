@@ -10,11 +10,11 @@ Rectangle {
   height: 1000
   color: Style.main_window.background
   visible: true
-    
+  
   GLCamera {
     id: cam1
     ratio: main.height > 0 ? main.width / main.height : 1
-    translation_speed : 0.0015
+    translation_speed : 1.5
   }
     
   GLWindow {
@@ -26,6 +26,7 @@ Rectangle {
     
     property bool move_fast : false
     property bool move_human : true
+    
     
     focus: true
     Keys.onPressed: {
@@ -44,11 +45,11 @@ Rectangle {
   	  } else if( event.key == Qt.Key_Space ) {
   	    move_fast = true
   	    event.accepted = true
-  	    cam1.translation_speed = move_human ? 0.01 : 4.0
+  	    cam1.translation_speed = move_human ? 10 : 4000
   	  } else if( event.key == Qt.Key_Shift ) {
   	    move_human = false
   	    event.accepted = true
-  	    cam1.translation_speed = move_fast ? 4.0 : 2.0
+  	    cam1.translation_speed = move_fast ? 4000 : 2000
   	  }
     }
        
@@ -68,11 +69,11 @@ Rectangle {
   	  } else if( event.key == Qt.Key_Space ) {
   	    move_fast = false
   	    event.accepted = true
-  	    cam1.translation_speed = move_human ? 0.0015 : 2.0
+  	    cam1.translation_speed = move_human ? 1.5 : 2000
   	  } else if( event.key == Qt.Key_Shift ) {
   	    move_human = true
   	    event.accepted = true
-  	    cam1.translation_speed = move_fast ? 0.01 : 0.0015
+  	    cam1.translation_speed = move_fast ? 10 : 1.5
   	  }
     }
     
@@ -106,13 +107,13 @@ Rectangle {
   
   // Executed when everything is loaded
   Component.onCompleted: {
-    cam1.znear = 0.0001
-    cam1.zfar  = 15.0
-    cam1.position = Qt.vector3d( 0, 0, 10 )
+    cam1.znear = 1
+    cam1.zfar  = 15000
+    cam1.position = Qt.vector3d( 0, 0, 10000 )
     cam1.forward  = Qt.vector3d( 0, 0, -1 )
     cam1.up       = Qt.vector3d( 0, 1,  0 )
     cam1.right    = Qt.vector3d( 1, 0,  0 )
-    cam1.translation_speed = 0.0015
+    cam1.translation_speed = 1.5
   }
   
   Text {

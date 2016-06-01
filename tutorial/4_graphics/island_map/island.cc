@@ -46,34 +46,18 @@ namespace graphics_origin
     };
 
     island::island()
-      : m_map_radius{ 5 },
-        m_resolution{ 0.001 },
+      : m_map_radius{ 5000 },
+        m_resolution{ 1 }, m_maximum_elevation{300},
         m_texture_size{ 2048 }, m_number_of_patches{0},
         m_vao{0}, m_vbos{ 0, 0 }, m_texture_id{0}
     {
       m_model = gpu_mat4(1.0);
     }
 
-    island::island(
-      noise::module::Module& land_generator,
-      shader_program_ptr program,
-      gpu_real resolution_in_km,
-      gpu_real map_radius,
-      unsigned int texture_size) :
-        m_number_of_patches{0}, m_vao{0}, m_vbos{ 0, 0 }
-    {
-      m_model = gpu_mat4(1.0);
-      m_program = program;
-
-      set_radius( map_radius );
-      set_resolution( resolution_in_km );
-      set_heightmap( land_generator, texture_size );
-    }
-
     void
-    island::set_resolution( gpu_real resolution_in_km )
+    island::set_resolution( gpu_real resolution_in_m )
     {
-      m_resolution = resolution_in_km;
+      m_resolution = resolution_in_m;
       set_dirty();
     }
 
@@ -89,6 +73,7 @@ namespace graphics_origin
           const float extent = m_map_radius * 2.0f ;
           const float step = extent / float( m_texture_size );
 
+          // compute the height for every texel of the texture
           # pragma omp parallel for
           for( unsigned int j = 0; j < m_texture_size; ++ j )
             {
@@ -97,9 +82,11 @@ namespace graphics_origin
               gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
               for( unsigned int i = 0; i < m_texture_size; ++ i, x += step, ++ dest )
                 {
-                  dest->a = land_generator.GetValue( x, 0, y );
+                  dest->a = land_generator.GetValue( x, y, 0 );
                 }
             }
+
+          // compute the normal for every texel of the texture
           const gpu_real scale = gpu_real(2.0) * m_map_radius / gpu_real( m_texture_size );
           # pragma omp parallel for
           for( unsigned int j = 0; j < m_texture_size; ++ j )
@@ -119,6 +106,8 @@ namespace graphics_origin
                   dest->z = inv_norm;
                 }
             }
+
+          // when the texture has changed, all data need to be resent to the GPU
           set_dirty();
         }
       catch( std::bad_alloc& e )
@@ -163,12 +152,6 @@ namespace graphics_origin
        */
       m_number_of_patches = std::ceil( 2.0 * m_map_radius / patch_size );
       patch_size = gpu_real(2.0) * m_map_radius / gpu_real( m_number_of_patches );
-
-      LOG( info, "island has a radius of: " << m_map_radius );
-      LOG( info, "requested resolution:   " << m_resolution );
-      LOG( info, "max tessellation level: " << max_tess_levels );
-      LOG( info, "patch per dimension:    " << m_number_of_patches );
-      LOG( info, "size of one patch:      " << patch_size );
 
       glcheck(glBindVertexArray( m_vao ));
         try
@@ -246,7 +229,6 @@ namespace graphics_origin
         glcheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
         glcheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
-        //todo: GL_RGBA16F ?
         // load the texture
         glcheck(glTexImage2D(GL_TEXTURE_2D,
            0,
@@ -272,10 +254,10 @@ namespace graphics_origin
     void
     island::do_render()
     {
-      glcheck(glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ));
       glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
       glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix())));
       glcheck(glUniform1f( m_program->get_uniform_location( "lod_factor"), 4.0f ));
+      glcheck(glUniform1f( m_program->get_uniform_location( "maximum_elevation"), m_maximum_elevation ));
       glcheck(glUniform3fv( m_program->get_uniform_location( "camera_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position())));
       glcheck(glPatchParameteri( GL_PATCH_VERTICES, 4 ));
 
@@ -289,36 +271,19 @@ namespace graphics_origin
 
     void
     island::set_radius(
-      gpu_real map_radius_in_km )
+      gpu_real map_radius_in_m )
     {
-      if( map_radius_in_km > 0 )
-        m_map_radius = map_radius_in_km;
+      if( map_radius_in_m > 0 )
+        m_map_radius = map_radius_in_m;
     }
 
-    gpu_real
-    island::get_radius( ) const noexcept
+    void
+    island::set_maximum_elevation(
+      gpu_real maximum_elevation_in_m )
     {
-      return m_map_radius;
+      if( maximum_elevation_in_m > 0 )
+        m_maximum_elevation = maximum_elevation_in_m;
     }
-
-    unsigned int
-    island::get_texture_size( ) const noexcept
-    {
-      return m_texture_size;
-    }
-
-    float*
-    island::get_raw_texture_pointer( )
-    {
-      return &m_normal_height_texture[0].x;
-    }
-
-    gpu_vec4*
-    island::get_texture_pointer( )
-    {
-      return m_normal_height_texture.data( );
-    }
-
   }
 }
 

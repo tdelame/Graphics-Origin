@@ -15,182 +15,194 @@
 # include "common/simple_qml_application.h"
 # include "common/simple_gl_renderer.h"
 
-# include "island_map/island_map_builder.h"
 # include "island_map/island.h"
+
+# include <chrono>
 
 # include <QGuiApplication>
 
-//# define CGAL_LINKED_WITH_TBB
-//# include <tbb/task_scheduler_init.h>
-//# include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-//# include <CGAL/Triangulation_vertex_base_with_info_2.h>
-//# include <CGAL/Triangulation_face_base_with_info_2.h>
-//# include <CGAL/Delaunay_triangulation_2.h>
+# include <noise/noiseutils.h>
+# include <noise/noise.h>
 
+/**
+ * This tutorial is about the generation of an island map. I took a great
+ * pleasure while building this tutorial, playing with parameters, building
+ * more and more complex noises to obtain what I had in mind. I played so
+ * much that the result was a little too obscure for a tutorial. So this
+ * version is really simple and I let you read those two references to have
+ * more ideas to obtain the terrain YOU want:
+ * - [1] http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/
+ * - [2] http://libnoise.sourceforge.net/index.html (in particular the complex_planet.cc example)
+ */
 
 namespace graphics_origin {
   namespace application {
 
-//    class island_map {
-//      struct vertex_info {
-//        vertex_info()
-//          : elevation{ 0 }, index{ 0 }, land{ false }
-//        {}
-//        vertex_info( size_t i )
-//          : elevation{ 0 }, index{ i }, land{ false }
-//        {}
-//        gpu_real elevation;
-//        size_t index;
-//        bool land;
-//      };
-//
-//      struct face_info {
-//
-//      };
-//
-//      typedef CGAL::Epick kernel;
-//      typedef CGAL::Triangulation_vertex_base_with_info_2< vertex_info, kernel > dt_vertex_base;
-//      typedef CGAL::Triangulation_face_base_with_info_2< face_info, kernel > dt_face_base;
-//      typedef CGAL::Triangulation_data_structure_2< dt_vertex_base, dt_face_base > dt_datastructure;
-//      typedef CGAL::Delaunay_triangulation_2< kernel, dt_datastructure > dt;
-//
-//
-//    public:
-//      struct generation_parameters {
-//        generation_parameters()
-//          : m_map_radius{ 6 },m_land_density{ 0.1 },
-//            m_number_of_input_samples{100000},
-//            m_lloyds_relaxations{ 2 }
-//        {}
-//        gpu_real m_map_radius;
-//        gpu_real m_land_density; // should be positive, and less than 1.0
-//        size_t m_number_of_input_samples;
-//        uint8_t m_lloyds_relaxations;
-//      };
-//
-//      island_map( const generation_parameters& params )
-//      {
-//        std::vector< dt::Point > input_points( params.m_number_of_input_samples, dt::Point{} );
-//        std::vector< vertex_info > vertex_infos( params.m_number_of_input_samples, vertex_info{} );
-//        # pragma omp parallel for
-//        for( size_t i = 0; i < params.m_number_of_input_samples; ++ i )
-//          {
-//            input_points[ i ] = dt::Point{
-//                (tools::unit_random() * 2 - 1) * params.m_map_radius,
-//                (tools::unit_random() * 2 - 1) * params.m_map_radius };
-//            vertex_infos[ i ] = vertex_info{ i };
-//          }
-//        m_delaunay.insert(
-//            boost::make_zip_iterator(boost::make_tuple( input_points.begin(), vertex_infos.begin())),
-//            boost::make_zip_iterator(boost::make_tuple( input_points.end(), vertex_infos.end())));
-//
-//        for( uint8_t k = 0; k < params.m_lloyds_relaxations; ++ k )
-//          {
-//            # pragma omp parallel
-//            # pragma omp single
-//            {
-//              for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
-//                  it != end; ++ it )
-//                {
-//                  # pragma omp task firstprivate(it)
-//                  {
-//                    size_t i = it->info().index;
-//                    dt::Point& new_point = input_points[ i ];
-//                    vec2 temp_point;
-//                    size_t count = 0;
-//
-//                    auto circulator = m_delaunay.incident_faces( it ), start = circulator;
-//                    do
-//                      {
-//                        if( !m_delaunay.is_infinite( circulator ) )
-//                          {
-//                            dt::Point dual = m_delaunay.dual( circulator );
-//                            temp_point.x += CGAL::to_double(dual.x());
-//                            temp_point.y += CGAL::to_double(dual.y());
-//                             ++count;
-//                          }
-//                      }
-//                    while( ++circulator != start );
-//
-//                    temp_point *= real(1.0) / real(count);
-//                    new_point = dt::Point( temp_point.x, temp_point.y );
-//                  }
-//                }
-//              # pragma omp taskwait
-//            }
-//            for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
-//                it != end; ++ it )
-//              {
-//                m_delaunay.move_if_no_collision( it, input_points[ it->info().index ] );
-//              }
-//          }
-//
-//        noise::module::Perlin land_generator;
-//        land_generator.SetFrequency( 1.0 );
-//        land_generator.SetOctaveCount( 4 );
-//        land_generator.SetSeed( std::chrono::system_clock::now().time_since_epoch().count() );
-//        land_generator.SetNoiseQuality( noise::NoiseQuality::QUALITY_STD );
-//
-//        const float invr2 = float(1.0) / (params.m_map_radius * params.m_map_radius);
-//        # pragma omp parallel
-//        # pragma omp single
-//        {
-//          for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
-//             it != end; ++ it )
-//           {
-//             # pragma omp task firstprivate(it)
-//             {
-//               dt::Point p = it->point();
-//               float x = p.x();
-//               float y = p.y();
-//               float threshold = params.m_land_density + (x*x + y*y) * invr2;
-//               it->info().land = land_generator.GetValue( x, y, 0 ) * 0.5f + 0.5f > threshold;
-//             }
-//           }
-//        }
-//      }
-//
-//      void load( points_renderable& points, lines_renderable& lines )
-//      {
-//        dt::Segment s;
-//        for( auto eit = m_delaunay.finite_edges_begin(), end = m_delaunay.finite_edges_end();
-//            eit != end; ++ eit )
-//          {
-//            bool take = false;
-//            for( int i = 0; i < 3; ++ i )
-//              {
-//                if( i != eit->second && eit->first->vertex( i )->info().land )
-//                  {
-//                    take = true;
-//                    break;
-//                  }
-//              }
-//            if( take )
-//              {
-//                CGAL::Object o = m_delaunay.dual( eit );
-//                if( CGAL::assign( s, o ) )
-//                  {
-//                    auto source = s.source(), target = s.target();
-//                    lines.add( gpu_vec3{ source.x(), source.y(), 0 }, gpu_vec3{0,1,0},
-//                               gpu_vec3{ target.x(), target.y(), 0 }, gpu_vec3{0,1,0} );
-//                  }
-//              }
-//          }
-//        for( auto it = m_delaunay.finite_vertices_begin(), end = m_delaunay.finite_vertices_end();
-//            it != end; ++ it )
-//          {
-//            if( it->info().land )
-//              {
-//                auto point = it->point();
-//                points.add( gpu_vec3{ point.x(), point.y(), 0 }, gpu_vec3{1,0,0});
-//              }
-//          }
-//
-//      }
-//
-//    private:
-//      dt m_delaunay;
-//    };
+    /**@brief Define the place where the island(s) will be.
+     *
+     * We wand to have an island to render. Thus we need to have some land to
+     * appear in our square map, centered at the origin,  with a side equals to
+     * two time the radius R.
+     * In particular, the probability to have land at a position p should increase
+     * with ||p||, such that having land at the boundaries of the map is unlikely.
+     * One method method to do so [1] is to compare the value of a coherent noise
+     * b(p) with s2[c,K](p) = c.||p||^2 + K, with c > 0:
+     * if b(p) > s2[c,K](p) we have land.
+     *
+     * b(p) is (mostly) in [-1,1], and c.||p||^2 + K >= K.
+     * - K should then be < 1 to have some land in the map.
+     * - we take c = 1 / R^1 such that s2[c,0](p) < 1 when ||p|| < R. Thus,
+     * for any p s.t. ||p|| < R, we have s2[c,K](p) in [K,K+1].
+     * - finally, s2[c,K](p) should be >= 1 to constrain the existence of lands in
+     * the map. This means K >= -1.
+     *
+     * In conclusion, if c = 1 / R^1 and K in [-1,1]:
+     * - s2[c,K](p) in [K,K+1] included in [-1,2] for p such that ||p|| <= R
+     * - land can exist for || p || <= R
+     * - land is unlikely to exist for || p || > R
+     *
+     * Given the constant c,K and R, as well as the parameters for the coherent
+     * noise b, this class implements the test to determine if a point is a land.
+     */
+    class land_definition {
+    public:
+      struct parameters {
+        double m_base_frequency;
+        double m_base_lacunarity;
+        double m_base_persistance;
+        uint m_base_octaves;
+        int m_base_seed;
+
+        double m_constant_threshold;
+        double m_quadratic_threshold;
+
+        parameters( double radius )
+          : m_base_frequency{ double(1.0/radius) }, m_base_lacunarity{ 2.0 },
+            m_base_persistance{ 0.5 }, m_base_octaves{ 6 }, m_base_seed{ 0 },
+
+            m_constant_threshold{ 0 }, m_quadratic_threshold{ double(1.0/(radius*radius))}
+        {}
+      };
+
+      land_definition( const parameters& params ) :
+        m_constant_threshold{ params.m_constant_threshold },
+        m_quadratic_threshold{ params.m_quadratic_threshold }
+      {
+        m_base.SetFrequency( params.m_base_frequency );
+        m_base.SetLacunarity( params.m_base_lacunarity );
+        m_base.SetPersistence( params.m_base_persistance );
+        m_base.SetOctaveCount( params.m_base_octaves );
+        m_base.SetSeed( params.m_base_seed );
+      }
+
+      /**@brief Get the value of the test.
+       *
+       * Get the value of the land test for a point p(x,y,z). If this value
+       * is negative, then p is in water. If this value is positive, then
+       * p is in a land. For a value around 0, then p is likely to be on a shore.
+       * @param x The x component of point p
+       * @param y The y component of point p
+       * @param z The z component of point p
+       * @return The test value b(p) - s2[c,K](p)
+       */
+      double land_value( double x, double y, double z ) const
+      {
+        return m_base.GetValue( x, y, z )
+          - m_constant_threshold
+          - m_quadratic_threshold * ( x * x + y * y + z * z );
+      }
+    private:
+      noise::module::Perlin m_base;
+      double m_constant_threshold;
+      double m_quadratic_threshold;
+    };
+
+    struct island_map_metrics {
+      double m_radius;
+      double m_maximum_elevation;
+      double m_horizontal_resolution;
+
+      island_map_metrics( double radius )
+        : m_radius{ radius },
+          m_maximum_elevation{ 1000 },
+          m_horizontal_resolution{ 1.0 }
+      {}
+    };
+
+    struct island_map_parameters {
+      island_map_metrics m_metrics;
+      land_definition::parameters m_land_definition;
+      double m_shore_threshold;
+
+      island_map_parameters( double radius )
+        : m_metrics{ radius },
+          m_land_definition{ radius },
+          m_shore_threshold{ 0.05 }
+      {}
+    };
+
+    /**@brief Noise module to generate the height map.
+     *
+     * This class defines the height of any position in the map. It can then
+     * be used to generate an height map sent to the GPU for rendering.
+     *
+     * The class is quite simple: it uses two modules, one for the land, when
+     * the land test is positive, and one for the water. If the land test value
+     * is inside a range [-shore_threshold,shore_threshold], it returns a linear
+     * interpolation of the value of the water module and of the land module.
+     * I recommend you to improve this class as well as the definition of the
+     * modules to have better results, according to what you have in mind. You
+     * can also add a shore module to better control the junction between land
+     * and water.
+     */
+    class island_map_module
+      : public noise::module::Module {
+    public:
+      island_map_module(
+        const island_map_parameters& parameters,
+        noise::module::Module& water,
+        noise::module::Module& land )
+        : noise::module::Module(0),
+          m_params{ parameters },
+          m_water{ water }, m_land{ land },
+          m_land_definition{ parameters.m_land_definition }
+      {}
+
+      // To implement the noise::module::Module interface.
+      int GetSourceModuleCount() const override
+      {
+        return 0;
+      }
+
+      /**@brief Get the height at a particular point.
+       *
+       * Get the height a point p(x,y,0).
+       * @param x The x component of point p
+       * @param y The y component of point p
+       * @param z This value is not used and kept to be conform with the
+       * noise::module::Module interface that defines "solid" noises.
+       * @return The height at point p.
+       */
+      double GetValue( double x, double y, double z ) const
+      {
+        double land_factor = m_land_definition.land_value( x, y, 0 );
+        if( land_factor > m_params.m_shore_threshold )
+          return m_params.m_metrics.m_maximum_elevation * m_land.GetValue( x, y, 0 );
+        else if( land_factor < -m_params.m_shore_threshold )
+          return m_params.m_metrics.m_maximum_elevation* m_water.GetValue( x, y, 0 );
+
+        double a = m_params.m_metrics.m_maximum_elevation * m_water.GetValue( x, y, 0 );
+        double b = m_params.m_metrics.m_maximum_elevation * m_land.GetValue( x, y, 0 );
+        double t = land_factor / (2.0 * m_params.m_shore_threshold ) + 0.5;
+        return a * ( 1.0 - t ) + b * t;
+      }
+
+    private:
+      island_map_parameters m_params;
+      noise::module::Module& m_water;
+      noise::module::Module& m_land;
+      land_definition m_land_definition;
+    };
 
     class simple_gl_window
       : public gl_window {
@@ -207,20 +219,54 @@ namespace graphics_origin {
               shader_directory + "island.tes",
               shader_directory + "island.frag"});
 
+        // we create a new set of parameters, for a map of 5km, with a resolution of 50 cm
+        // the mountains should be lower than 500 m
+        // for any point with a land test value in [-0.05, 0.05], we consider this is a shore
+        island_map_parameters params(5000);
+        params.m_metrics.m_horizontal_resolution = 0.5;
+        params.m_metrics.m_maximum_elevation = 500;
+        params.m_land_definition.m_base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+        params.m_shore_threshold = 0.05;
+
+        //
+        // definition of the land module: keep in mind that you SHOULD improve it yourself :-}
+        ////
+        // a base perlin noise for the land
+        noise::module::Perlin base_land_definition;
+        base_land_definition.SetSeed( std::chrono::system_clock::now().time_since_epoch().count() );
+        base_land_definition.SetFrequency( 2.0 / params.m_metrics.m_radius );
+        base_land_definition.SetPersistence( 0.5 );
+        base_land_definition.SetLacunarity( 2.0 );
+        base_land_definition.SetOctaveCount( 10 );
+        base_land_definition.SetNoiseQuality( noise::QUALITY_STD );
+
+        // this module change the values of the base module such that the height is always >0
+        noise::module::Curve land;
+        land.SetSourceModule( 0, base_land_definition );
+        land.AddControlPoint(-2.0000, 0.01 );
+        land.AddControlPoint(-1.0000, 0.10 );
+        land.AddControlPoint( 0.0000, 0.20 );
+        land.AddControlPoint( 0.2500, 0.25 );
+        land.AddControlPoint( 1.0000, 1.00 );
+        land.AddControlPoint( 2.0000, 2.00 );
+
+        // definition of the water module. Have a look at the possibilities of the libnoise
+        // library, with its generators, modifiers, combiners and so on...
+        ////
+        noise::module::Const water;
+        water.SetConstValue( 0.0 );
+
+        island_map_module module ( params, water, land );
+
         island* map = new island{};
-        island_map_builder( island_map_builder::parameters{}, *map );
+        map->set_radius( params.m_metrics.m_radius );
+        map->set_heightmap( module, 4096 );
+        map->set_resolution( params.m_metrics.m_horizontal_resolution );
+        map->set_maximum_elevation( params.m_metrics.m_maximum_elevation );
         map->set_shader_program( island_program );
         add_renderable( map );
-
-//        island_map map( island_map::generation_parameters{} );
-//        points_renderable* points = new points_renderable( samples_program, island_map::generation_parameters{}.m_number_of_input_samples );
-//        lines_renderable* lines = new lines_renderable( samples_program );
-//        map.load( *points, *lines );
-//        add_renderable( points );
-//        add_renderable( lines );
       }
     };
-
 }}
 
 int main( int argc, char* argv[] )
