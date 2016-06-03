@@ -1,6 +1,6 @@
-#****
-#
-#*
+#*******************************************************************************
+# GRAPHICS ORIGIN BUILDING SYSTEM                                              *
+#*******************************************************************************
 # Options
 # -------
 #   GO_USE_OPENCL                 Set to ON to enable parallelization with OpenCL
@@ -10,6 +10,12 @@
 #   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the tutorial for the geometry library
 #   GO_BUILD_GRAPHICS_TUTORIAL    Set to ON to build tutorials on Computer Graphics with GO libraries
 #   GO_BUILD_TEST                 Set to ON to build tests
+# Variables
+# ---------
+# LIBNOISE_DIR
+# OPENMESH_DIR
+#
+
 
 #**********************
 # cmake configuration *
@@ -23,10 +29,12 @@ project( Graphics-Origin )
 set( Graphics-Origin_VERSION_MAJOR 1 )
 set( Graphics-Origin_VERSION_MINOR 0 )
 
-if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE "Release" 
-    CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+  if( NOT CMAKE_BUILD_TYPE )
+    set( CMAKE_BUILD_TYPE "Release" 
+      CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
+  endif(NOT CMAKE_BUILD_TYPE)
+endif()
 
 #****************************
 # directories configuration *
@@ -105,7 +113,7 @@ include_directories( "${CMAKE_SOURCE_DIR}/graphics-origin/extlibs" )
 # OpenMP
 #   OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
 #   OPENMP_FOUND - true if openmp is detected
-find_package( OpenMP )
+find_package( OpenMP QUIET )
 if( OPENMP_FOUND )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
 else()
@@ -126,7 +134,7 @@ if( GO_USE_OPENCL )
 endif()
 
 # openmesh
-find_package( OpenMesh REQUIRED )
+find_package( OpenMesh REQUIRED QUIET )
 include_directories( ${OPENMESH_INCLUDE_DIR} )
 link_directories( ${OPENMESH_LIBRARY_DIR} )
 
@@ -135,7 +143,7 @@ set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_LIBS OFF )
 set( Boost_USE_STATIC_RUNTIME OFF )
 find_package( Boost
-  REQUIRED
+  REQUIRED QUIET
   COMPONENTS serialization filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
@@ -147,11 +155,11 @@ if( GO_BUILD_APPLICATION )
   # qt
   set( CMAKE_INCLUDE_CURRENT_DIR ON )
   set( CMAKE_AUTOMOC ON )
-  find_package( Qt5Core REQUIRED )
-  find_package( Qt5Quick REQUIRED )
-  find_package( Qt5Gui REQUIRED )
-  find_package( Qt5Qml REQUIRED )
-  find_package( Qt5Network REQUIRED )
+  find_package( Qt5Core REQUIRED QUIET )
+  find_package( Qt5Quick REQUIRED QUIET )
+  find_package( Qt5Gui REQUIRED QUIET )
+  find_package( Qt5Qml REQUIRED QUIET )
+  find_package( Qt5Network REQUIRED QUIET )
   include_directories( ${Qt5Core_INCLUDE_DIRS} )
   include_directories( ${Qt5Quick_INCLUDE_DIRS} )
   include_directories( ${Qt5Gui_INCLUDE_DIRS} )
@@ -164,15 +172,15 @@ if( GO_BUILD_APPLICATION )
   link_directories( ${Qt5Network_LIBRARY_DIRS} )
   
   # glew
-  find_package( GLEW REQUIRED )
+  find_package( GLEW REQUIRED QUIET )
   include_directories( ${GLEW_INCLUDE_DIRS} )
   
   # gl
-  find_package( OpenGL REQUIRED )
+  find_package( OpenGL REQUIRED QUIET )
   include_directories( ${OPENGL_INCLUDE_DIR} )
 endif()
 
-#***************
+#*************** 
 # global flags *
 #*******************************************************************************
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
@@ -185,7 +193,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
- 	set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+ 	set( CMAKE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
@@ -291,6 +299,8 @@ configure_file( "${GO_SOURCES_IN_DIR}/graphics_origin.h.in" "${GO_HEADERS_IN_DIR
 
 install( DIRECTORY graphics-origin DESTINATION include )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindLibNoise.cmake DESTINATION share/cmake/modules )
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindOpenMesh.cmake DESTINATION share/cmake/modules )
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )

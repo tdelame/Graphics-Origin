@@ -1,25 +1,29 @@
-# - Try to find OPENMESH
-# Once done this will define
-#  
-# OPENMESH_FOUND			- system has OPENMESH
-# OPENMESH_INCLUDE_DIR		- the OPENMESH include directory
-# OPENMESH_LIBRARIES		- the OPENMESH libraries
-# OPENMESH_LIBRARY_DIR		- the OPENMESH libraries directory
-#   
+# FindOpenMesh.cmake
+# ==================
+# Find the OpenMesh library.
+#
+# Filepath
+# --------
+# OPENMESH_DIR hint to find the OpenMesh installation path, i.e. where to find
+#   either OpenMesh/Core/Mesh/PolyMeshT.hh
+# Variables defined
+# -----------------
+# OPENMESH_FOUND        true if OpenMesh was found
+# OPENMESH_INCLUDE_DIR  OpenMesh include directory (to add to include_directories())
+# OPENMESH_LIBRARIES    OpenMesh libraries (to add to target_link_libraries())
 
-IF (OPENMESH_INCLUDE_DIR)
-  # Already in cache, be silent
-  SET(OPENMESH_FIND_QUIETLY TRUE)
-ENDIF (OPENMESH_INCLUDE_DIR)
-
-FIND_PATH(OPENMESH_INCLUDE_DIR OpenMesh/Core/Mesh/PolyMeshT.hh
-	  PATHS /usr/local/include 
-                /usr/include 
-                /opt/local/include
-				/opt/include
-				$ENV{OPENMESH_DIR}/src
-                $ENV{OPENMESH_DIR}/include
-                )
+find_path( OPENMESH_INCLUDE_DIR OpenMesh/Core/Mesh/PolyMeshT.hh
+  PATHS
+    /usr/local/include
+    /usr/include
+    /opt/local/include
+    /opt/include
+    $ENV{OPENMESH_DIR}/src
+    $ENV{OPENMESH_DIR}/include
+    ${OPENMESH_DIR}
+    ${OPENMESH_DIR}/include
+    ${OPENMESH_DIR}/src
+)
 
 IF (OPENMESH_INCLUDE_DIR)
 	IF (WIN32)
@@ -53,5 +57,11 @@ endif()
 
 IF(OPENMESH_INCLUDE_DIR AND OPENMESH_LIBRARIES)
 	SET(OPENMESH_FOUND TRUE)
-	MESSAGE(STATUS "Found OpenMesh: ${OPENMESH_LIBRARIES}")
+	if( NOT OpenMesh_FIND_QUIETLY )
+	  MESSAGE(STATUS "Found OpenMesh: ${OPENMESH_LIBRARIES}")
+	endif()
+else()
+  if( OpenMesh_FIND_REQUIRED )
+    message( SEND_ERROR "Cannot find OpenMesh. Make sure it is installed and set OPENMESH_DIR variable to give a hint about its location")
+  endif()
 ENDIF(OPENMESH_INCLUDE_DIR AND OPENMESH_LIBRARIES)

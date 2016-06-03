@@ -11,8 +11,8 @@ uniform vec3 camera_position;
 
 struct gradient 
 {
-  vec3 color;
-  float height;
+  vec3 color;  
+  float height;   
 };
 
 // this code is adapted from libnoise
@@ -49,10 +49,11 @@ vec3 color_gradient( float height )
   float coeff  = (height - input0) / (input1 - input0);
   return mix( gradients[index0].color, gradients[index1].color, coeff );
 }
-///////
+/////
 
 
 void main(){
+  // simple phong shading
   vec3 surfel_to_light = normalize(camera_position - world_coordinates);
   float diffuse_factor = max( 0.0, dot( texture(terrain, tex_coordinates).xyz, surfel_to_light ));
   vec3 ground_color = color_gradient( world_coordinates.z );

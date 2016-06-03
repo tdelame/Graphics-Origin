@@ -54,15 +54,23 @@ function(add_graphics_tutorial)
   endif()
   
   if( NOT "${TUTORIAL_SHADERS}" STREQUAL "" )
+    
+    #get_target_property( tutorial_location $<TARGET_FILE:${tutorial_name}> LOCATION )
+    #get_filename_component( tutorial_destination $<TARGET_FILE_DIR:${tutorial_name}> PATH )
     set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/shaders )
+    #message( STATUS "destination = ${_destination}" )
+    
     #foreach( _file ${TUTORIAL_SHADERS} )
-      #list( APPEND _output ${_destination}/${_file} )
+    #      list( APPEND _output ${_destination}/${_file} )
     #endforeach()
-    add_custom_command( TARGET ${tutorial_name}
+    set( _output ${CMAKE_BINARY_DIR}/tutorial/4_graphics/${CMAKE_BUILD_TYPE}/${tutorial_name}_shaders.stamp)
+    add_custom_command( TARGET ${tutorial_name} #OUTPUT ${_output}
       DEPENDS ${TUTORIAL_SHADERS}
       COMMENT "Copying shader files for tutorial ${tutorial_name}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/tutorial/4_graphics/${CMAKE_BUILD_TYPE}
+      COMMAND ${CMAKE_COMMAND} -E touch ${_output}
       COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_SHADERS} ${_file} ${_destination}
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TUTORIAL_SHADERS} ${_destination}
     )
     #add_custom_target( ${tutorial_name}.shaders DEPENDS ${_output} )
     #add_dependencies( ${tutorial_name} ${tutorial_name}.shaders ) 
@@ -90,25 +98,8 @@ add_graphics_tutorial(
     ${GO_APPLICATION_LIBRARIES}
 )
 
-set( CGAL_CORE_PACKAGE_DIR "/usr"
-	CACHE FILEPATH "Variable to try to find CGAL_CORE package i.e. the directory where include/CGAL/CORE can be found" )
-
-find_package( GMP REQUIRED )
-find_package( MPFR REQUIRED )
-find_package( TBB REQUIRED COMPONENTS tbbmalloc )
-if( NOT GMP_FOUND )
-  message( fatal "GMP not found")
-endif()
-if( NOT MPFR_FOUND )
-  message( fatal "MPFR not found")
-endif()
-
-include_directories( ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS})
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCGAL_DISABLE_ROUNDING_MATH_CHECK ${TBB_DEFINITIONS}")
-set( GO_CGAL_LIBRARIES ${GMP_LIBRARIES} ${MPFR_LIBRARIES} -lCGAL -lCGAL_Core ${TBB_LIBRARIES} ${CGAL_CORE_LIBRARY})
-
 # get it here: https://github.com/qknight/libnoise
-find_package( LibNoise REQUIRED )
+find_package( LibNoise REQUIRED QUIET )
 include_directories( ${LIBNOISE_INCLUDE_DIR} )
 
 add_graphics_tutorial(
