@@ -31,11 +31,6 @@ BEGIN_GO_NAMESPACE namespace tools {
     parallelization_setup_mutex.unlock();
   }
 
-
-# ifdef __linux__
-  static void initialize_parallel_setup() __attribute__((constructor));
-# endif
-
 # ifdef GO_USE_OPENCL
   void check_cl_error( const char* call, const char* file, const int line, cl_int error )
   {
@@ -124,11 +119,12 @@ BEGIN_GO_NAMESPACE namespace tools {
 
     if( type & CL_DEVICE_TYPE_DEFAULT )
       result += " [default]";
+    return result;
   }
 
 # endif
 
-  void initialize_parallel_setup()
+  void startup_init_parallel_setup()
   {
     LOG( info, "[OpenMP] number of devices: " << omp_get_num_devices() );
     LOG( info, "[OpenMP] default device: " << omp_get_default_device() );
@@ -215,23 +211,4 @@ BEGIN_GO_NAMESPACE namespace tools {
     }
 # endif
   }
-
-# ifdef _WIN32
-  BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-    {
-      if (fdwReason == DLL_PROCESS_ATTACH)
-      {
-        // equivalent of __attribute__((constructor))...
-        initialize_parallel_setup();
-        // return TRUE if succeeded, FALSE if you failed to initialize properly
-        return TRUE;
-      }
-      else if (fdwReason == DLL_PROCESS_DETACH)
-        {
-        // equivalent of __attribute__((destructor))...
-        }
-      return TRUE;
-    }
-# endif
-
 } END_GO_NAMESPACE

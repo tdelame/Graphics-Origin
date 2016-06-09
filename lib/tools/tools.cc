@@ -14,6 +14,9 @@
 
 BEGIN_GO_NAMESPACE namespace tools {
 
+  void startup_init_log();
+  void startup_init_parallel_setup();
+
   std::unordered_map < std::type_index, std::string >& get_type_to_name()
   {
     static std::unordered_map < std::type_index, std::string > type_to_name;
@@ -29,6 +32,7 @@ BEGIN_GO_NAMESPACE namespace tools {
 # ifdef __linux__ 
   static void initialize_library() __attribute__((constructor));
   static void finalize_library() __attribute__((destructor));
+# endif
 
   void initialize_library()
   {
@@ -48,6 +52,10 @@ BEGIN_GO_NAMESPACE namespace tools {
 	  std::wcout.imbue(loc);
 	  std::ios_base::sync_with_stdio(false);
 
+	  startup_init_log();
+	  startup_init_parallel_setup();
+
+
 	  initialized = true;
   }
 
@@ -60,43 +68,22 @@ BEGIN_GO_NAMESPACE namespace tools {
 		  delete pair.second;
 	  }
   }
-# elif _WIN32
+
+
+# ifdef _WIN32
   BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   {
-	  if (fdwReason == DLL_PROCESS_ATTACH)
-	  {
-		  // equivalent of __attribute__((constructor))...
-		  REGISTER_ANY_SERIALIZATION_TYPE(int, "int");
-		  REGISTER_ANY_SERIALIZATION_TYPE(bool, "bool");
-		  REGISTER_ANY_SERIALIZATION_TYPE(std::string, "string");
-		  REGISTER_ANY_SERIALIZATION_TYPE(float, "float");
-		  REGISTER_ANY_SERIALIZATION_TYPE(double, "double");
-		  REGISTER_ANY_SERIALIZATION_TYPE(real, "real");
-
-		  boost::locale::generator gen;
-		  std::locale loc = gen("");
-		  std::locale::global(loc);
-		  std::wcout.imbue(loc);
-		  std::ios_base::sync_with_stdio(false);
-		  // return TRUE if succeeded, FALSE if you failed to initialize properly
-		  return TRUE; 
-	  }
+    if (fdwReason == DLL_PROCESS_ATTACH)
+	    {
+	     initialize_library();
+	     return TRUE;
+	    }
 	  else if (fdwReason == DLL_PROCESS_DETACH)
 	    {
-		  // equivalent of __attribute__((destructor))...
-		  for (auto pair : get_name_to_serializer())
-		    {
-			  delete pair.second;
-   		    }
-		  
+	      finalize_library();
 	    }
-
-	  // Return value is ignored when fdwReason isn't DLL_PROCESS_ATTACH, so we'll
-	  // just return TRUE.
 	  return TRUE;
   }
-# else
-#  error Unkown C++ Compiler
 # endif
 
 
