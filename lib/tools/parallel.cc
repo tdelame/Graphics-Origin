@@ -133,6 +133,8 @@ BEGIN_GO_NAMESPACE namespace tools {
     LOG( info, "[OpenMP] number of devices: " << omp_get_num_devices() );
     LOG( info, "[OpenMP] default device: " << omp_get_default_device() );
     LOG( info, "[OpenMP] maximum threads to use on default device: " << omp_get_num_procs() )
+    LOG( info, "[OpenMP] use OpenMP as the default parallelization setup");
+    set_parallelization_setup( parallelization_setup::openmp );
 # ifdef GO_USE_OPENCL
     //fixme: why in debug mode, this code crashes?
     {
