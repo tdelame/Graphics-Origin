@@ -19,7 +19,7 @@
 # include "../../graphics-origin/application/gl_window.h"
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
-# include "../../graphics-origin/application/mesh_renderable.h"
+# include "../../graphics-origin/application/textured_mesh_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/log.h"
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
@@ -338,13 +338,14 @@ namespace application {
       : gl_window( parent )
     {
       initialize_renderer( new transparency_gl_renderer );
+      std::string texture_directory = tools::get_path_manager().get_resource_directory( "textures" );
       std::string shader_directory = tools::get_path_manager().get_resource_directory( "shaders" );
       std::string mesh_directory = tools::get_path_manager().get_resource_directory( "meshes" );
 
       shader_program_ptr mesh_program =
           std::make_shared<shader_program>( std::list<std::string>{
-            shader_directory + "mesh.vert",
-            shader_directory + "mesh.frag"});
+            shader_directory + "textured_mesh.vert",
+            shader_directory + "textured_mesh.frag"});
 
       shader_program_ptr transparent_program =
           std::make_shared<shader_program>( std::list<std::string>{
@@ -353,8 +354,9 @@ namespace application {
             shader_directory + "transparent_window.frag"
       });
 
-      auto mesh = new mesh_renderable( mesh_program );
-      mesh->load( mesh_directory + "armadillo.off" );
+      auto mesh = new textured_mesh_renderable( mesh_program );
+      mesh->load_mesh( mesh_directory + "spot_triangulated.obj" );
+      mesh->load_texture( texture_directory + "spot_texture.png" );
       mesh->set_model_matrix( glm::rotate( -gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
       add_renderable( mesh );
 

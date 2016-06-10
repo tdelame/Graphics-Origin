@@ -578,11 +578,18 @@ BEGIN_GO_NAMESPACE namespace geometry {
   {
     clear();
     ImporterT importer(*this);
-    auto option = OpenMesh::IO::Options(); //todo: set correctly the options!
+    auto option = OpenMesh::IO::Options(
+      OpenMesh::IO::Options::VertexNormal  |
+      OpenMesh::IO::Options::VertexColor   |
+      OpenMesh::IO::Options::VertexTexCoord  );
     if( OpenMesh::IO::IOManager().read( filename, importer,  option) )
       {
-        update_normals();
-
+        if( n_vertices() && normal( VertexHandle{0} ).l8_norm() < 0.5 )
+          {
+            LOG( info, "input mesh file [" << filename << "] does not have vertex normal. Computing them...");
+            update_face_normals();
+            update_vertex_normals();
+          }
         return true;
       }
     else

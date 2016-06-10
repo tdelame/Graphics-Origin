@@ -10,7 +10,8 @@ file(
   
 add_go_lib( application ${SOURCE_FILES} ${HEADER_FILES} )
 set_go_lib_properties( application ${GO_GEOMETRY_LIBRARIES} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
-  ${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES} )  
+  ${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES} 
+  ${FreeImage_LIBRARIES})  
     
 install( TARGETS graphics_origin_application
   CONFIGURATIONS Debug

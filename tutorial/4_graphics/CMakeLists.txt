@@ -7,11 +7,13 @@
 #
 # MESHES list of mesh files required for this tutorial
 #
+# TEXTURES list of texture files required for this tutorial
+#
 # LIBRARIES list of libraries to link the tutorial with
 function(add_graphics_tutorial)
   set(options "")
   set(oneValueArgs NAME)
-  set(multiValueArgs SHADERS MESHES LIBRARIES)
+  set(multiValueArgs SHADERS MESHES TEXTURES LIBRARIES)
   cmake_parse_arguments( AGT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   file(GLOB_RECURSE TUTORIAL_SOURCES
@@ -36,10 +38,13 @@ function(add_graphics_tutorial)
   )
   set( tutorial_name ${AGT_NAME})
   set( TUTORIAL_MESHES "${AGT_MESHES}" )
+  set( TUTORIAL_TEXTURES "${AGT_TEXTURES}" )
   
   add_executable( ${tutorial_name} ${TUTORIAL_SOURCES})
   target_link_libraries( ${tutorial_name} ${AGT_LIBRARIES})
-  set_go_tutorial_properties( ${tutorial_name} )
+  set_go_tutorial_properties(
+    NAME ${tutorial_name} 
+    MODULE 4_graphics )
   
   if( NOT "${TUTORIAL_QML}" STREQUAL "" )
     set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/qml )
@@ -85,28 +90,46 @@ function(add_graphics_tutorial)
         COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_MESHES} ${_destination}
       )
   endif()
+  
+  if( NOT "${TUTORIAL_TEXTURES}" STREQUAL "" ) 
+    set( _destination $<TARGET_FILE_DIR:${tutorial_name}>/textures )
+    add_custom_command( TARGET ${tutorial_name}
+        DEPENDS ${TUTORIAL_TEXTURES}
+        COMMENT "Copying texture files for tutorial ${tutorial_name}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${_destination}
+        COMMAND ${CMAKE_COMMAND} -E copy ${TUTORIAL_TEXTURES} ${_destination}
+      )
+  endif()  
 endfunction()
 
-add_graphics_tutorial(
-  NAME transparency
-  SHADERS 
-    ${GO_SHADERS_DIR}/mesh.vert ${GO_SHADERS_DIR}/mesh.frag
-    ${GO_SHADERS_DIR}/transparent_window.vert ${GO_SHADERS_DIR}/transparent_window.geom ${GO_SHADERS_DIR}/transparent_window.frag
-  MESHES
-    ${GO_MESHES_DIR}/armadillo.off
-  LIBRARIES
-    ${GO_APPLICATION_LIBRARIES}
-)
+  add_graphics_tutorial(
+    NAME transparency
+    SHADERS 
+      ${GO_SHADERS_DIR}/textured_mesh.vert ${GO_SHADERS_DIR}/textured_mesh.frag
+      ${GO_SHADERS_DIR}/transparent_window.vert ${GO_SHADERS_DIR}/transparent_window.geom ${GO_SHADERS_DIR}/transparent_window.frag
+    MESHES
+      ${GO_MESHES_DIR}/spot_triangulated.obj
+    TEXTURES
+      ${CMAKE_CURRENT_SOURCE_DIR}/transparency/spot_texture.png
+    LIBRARIES
+      ${GO_APPLICATION_LIBRARIES} 
+  )
 
 # get it here: https://github.com/qknight/libnoise
-find_package( LibNoise REQUIRED QUIET )
-include_directories( ${LIBNOISE_INCLUDE_DIR} )
+find_package( LibNoise  QUIET )
 
-add_graphics_tutorial(
-  NAME island_map
-  SHADERS
-    ${GO_SHADERS_DIR}/flat.vert ${GO_SHADERS_DIR}/flat.frag
-  LIBRARIES
-    ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES}
-)
+if( LIBNOISE_FOUND )
+  include_directories( ${LIBNOISE_INCLUDE_DIR} )
+
+  add_graphics_tutorial(
+    NAME island_map
+    SHADERS
+      ${GO_SHADERS_DIR}/flat.vert ${GO_SHADERS_DIR}/flat.frag
+    LIBRARIES
+      ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES}
+  )
+else()
+  message( STATUS "4_graphics/island_map not built because LibNoise was not found")
+endif()
+  
   

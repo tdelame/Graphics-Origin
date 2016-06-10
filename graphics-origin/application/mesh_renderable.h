@@ -8,9 +8,6 @@
 # include "renderable.h"
 # include "../../graphics-origin/geometry/mesh.h"
 namespace graphics_origin {
-  namespace geometry {
-    class mesh;
-  }
   namespace application {
     class GO_API mesh_renderable
       : public renderable {
