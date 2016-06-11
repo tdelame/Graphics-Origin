@@ -245,6 +245,7 @@ namespace application {
 
     void do_render() override
     {
+      sort();
       gpu_mat4 vp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix();
       glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
       glcheck(glBindVertexArray( m_vao ));
@@ -306,7 +307,6 @@ namespace application {
         {
           glcheck(glEnable(GL_BLEND));
           glcheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-            m_windows->sort();
             m_windows->get_shader_program()->bind();
             m_windows->render();
           glcheck(glDisable(GL_BLEND));
