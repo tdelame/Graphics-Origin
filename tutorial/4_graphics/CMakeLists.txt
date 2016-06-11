@@ -106,11 +106,12 @@ endfunction()
     NAME transparency
     SHADERS 
       ${GO_SHADERS_DIR}/textured_mesh.vert ${GO_SHADERS_DIR}/textured_mesh.frag
+      ${GO_SHADERS_DIR}/texture_debug.vert ${GO_SHADERS_DIR}/texture_debug.geom ${GO_SHADERS_DIR}/texture_debug.frag  
       ${GO_SHADERS_DIR}/transparent_window.vert ${GO_SHADERS_DIR}/transparent_window.geom ${GO_SHADERS_DIR}/transparent_window.frag
     MESHES
-      ${GO_MESHES_DIR}/spot_triangulated.obj
+      ${GO_MESHES_DIR}/Bunny.obj
     TEXTURES
-      ${CMAKE_CURRENT_SOURCE_DIR}/transparency/spot_texture.png
+      ${GO_TEXTURES_DIR}/TexturedBunny.png
     LIBRARIES
       ${GO_APPLICATION_LIBRARIES} 
   )

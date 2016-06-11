@@ -33,6 +33,7 @@ namespace graphics_origin {
         {
           std::swap( buffer_ids[ i ], other.buffer_ids[ i ] );
         }
+      return *this;
     }
 
     meshes_renderable::storage::~storage()

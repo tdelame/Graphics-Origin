@@ -16,7 +16,7 @@
 # OPENMESH_DIR
 #
 
-
+ 
 #**********************
 # cmake configuration *
 #*******************************************************************************
@@ -44,6 +44,7 @@ set( GO_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
 set( GO_TUTORIAL_IN_DIR "${CMAKE_SOURCE_DIR}/tutorial" )
 set( GO_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
 set( GO_SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders" )
+set( GO_TEXTURES_DIR "${CMAKE_SOURCE_DIR}/textures" )
 set( GO_MESHES_DIR "${CMAKE_SOURCE_DIR}/meshes" )
 set( GO_QML_DIR "${CMAKE_SOURCE_DIR}/qml" )
 set( GO_OUT_DIR "${CMAKE_BINARY_DIR}")

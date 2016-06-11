@@ -115,8 +115,7 @@ namespace graphics_origin { namespace application {
       LOG( debug, FreeImage_GetWidth( m_fib ) << " x " << FreeImage_GetHeight( m_fib ) );
       glcheck(glTexImage2D( GL_TEXTURE_2D,
         0, GL_RGBA32F, FreeImage_GetWidth(m_fib), FreeImage_GetHeight(m_fib), 0,
-        GL_BGRA,
-        GL_UNSIGNED_BYTE, FreeImage_GetBits(m_fib)));
+        GL_BGRA, GL_UNSIGNED_BYTE, FreeImage_GetBits(m_fib)));
 
     glcheck(glBindVertexArray( 0 ));
     glcheck(glBindBuffer( GL_ARRAY_BUFFER, 0));

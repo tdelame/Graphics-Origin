@@ -20,6 +20,7 @@
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/textured_mesh_renderable.h"
+# include "../../graphics-origin/application/texture_debug_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/log.h"
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
@@ -354,17 +355,27 @@ namespace application {
             shader_directory + "transparent_window.frag"
       });
 
-      auto mesh = new textured_mesh_renderable( mesh_program );
-      mesh->load_mesh( mesh_directory + "spot_triangulated.obj" );
-      mesh->load_texture( texture_directory + "spot_texture.png" );
-      mesh->set_model_matrix( glm::rotate( -gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
-      add_renderable( mesh );
+      shader_program_ptr texture_debug_program =
+          std::make_shared<shader_program>( std::list<std::string>{
+            shader_directory + "texture_debug.vert",
+            shader_directory + "texture_debug.geom",
+            shader_directory + "texture_debug.frag"
+      });
 
-      auto windows = new transparent_windows_renderable( transparent_program );
-      windows->add( gpu_vec3{2,0,0}, gpu_vec3{0,0.3,-0.3}, gpu_vec3{0,-0.3,-0.3}, gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
+      auto texture_debug = new texture_debug_renderable( texture_debug_program );
+      texture_debug->set_texture( texture_directory + "TexturedBunny.png" );
+      add_renderable( texture_debug );
 
-      windows->add( gpu_vec3{1.9,1,0}, gpu_vec3{0,1,-1}, gpu_vec3{0,-1,-1}, gpu_vec4( 0.2, 0.4, 0.8, 0.68 ) );
-      add_renderable( windows );
+//      auto mesh = new textured_mesh_renderable( mesh_program );
+//      mesh->load_mesh( mesh_directory + "Bunny.obj" );
+//      mesh->load_texture( texture_directory + "TexturedBunny.png" );
+//      mesh->set_model_matrix( glm::rotate( -gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
+//      add_renderable( mesh );
+//
+//      auto windows = new transparent_windows_renderable( transparent_program );
+//      windows->add( gpu_vec3{2,0,0}, gpu_vec3{0,0.3,-0.3}, gpu_vec3{0,-0.3,-0.3}, gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
+//      windows->add( gpu_vec3{1.9,1,0}, gpu_vec3{0,1,-1}, gpu_vec3{0,-1,-1}, gpu_vec4( 0.2, 0.4, 0.8, 0.68 ) );
+//      add_renderable( windows );
     }
   };
 
