@@ -5,24 +5,52 @@ import GraphicsOrigin 1.0 // This "library" is defined from the C++ side and con
 import "." //QTBUG-34418, singletons require explicit import to load qmldir file
 
 Rectangle {
-    id: main
-    width: Style.main_window.initial_width
-    height: Style.main_window.initial_height
-    color: Style.main_window.background
-    visible: true
+  id: main
+  width: 1000
+  height: 1000
+  color: Style.main_window.background
+  visible: true
+  
+  GLCamera {
+    id: cam1
+    ratio: main.height > 0 ? main.width / main.height : 1
+  }
     
-    // Executed when the component is loaded.
-    Component.onCompleted: {
-      // Test if we can build a SceneWindow, that is the component described in SceneWindow.qml
-      var component = Qt.createComponent("SceneWindow.qml");
-      if( component.status != Component.Ready ) {
-  			if( component.status == Component.Error )
-          console.debug("Error:"+ component.errorString() );
-        return; // or maybe throw
-      }
-
-	  // Apparently, we can create a SceneWindow, so we create one:
-	  // it will be a child of "main" and we define its position to (50,10)      
-      var w = component.createObject(main,{"x":50,"y":10});
+  GLWindow {
+    id: glwindow
+    width: main.width
+    height: main.height
+    anchors.centerIn: main
+    camera: cam1
+  }
+    
+  // Executed when everything is loaded
+  Component.onCompleted: {
+    cam1.znear = 0.01
+    cam1.zfar  = 7
+    cam1.position = Qt.vector3d( 4, 0, 0 )
+    cam1.forward  = Qt.vector3d( -1, 0, 0 )
+    cam1.up       = Qt.vector3d( 0, 0, 1 )
+    cam1.right    = Qt.vector3d( 0, 1, 0 )
+  }
+  
+  Text {
+    id: fps
+    anchors.top: parent.top
+    anchors.right: parent.right
+  }  
+  
+  Timer {
+    interval: 2000; running: true; repeat: true
+    onTriggered: {
+      fps.text = "FPS: " + glwindow.get_fps().toFixed(2)
     }
+  }
+  
+  Timer {
+    interval: 15; running: true; repeat: true
+    onTriggered: {
+      cam1.arcball_rotate( 0.01, 0 );
+    }
+  }
 }

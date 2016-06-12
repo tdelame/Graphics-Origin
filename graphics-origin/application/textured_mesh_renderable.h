@@ -38,7 +38,7 @@ namespace graphics_origin {
 
       geometry::mesh mesh;
       FIBITMAP* m_fib;
-      enum { position_normal_texture_vbo, indices_vbo, number_of_buffers };
+      enum { position_normal_texture_vbo, number_of_buffers };
       unsigned int m_vbo[ number_of_buffers ];
       unsigned int m_vao;
       unsigned int m_texture_id;

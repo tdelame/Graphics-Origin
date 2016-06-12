@@ -581,7 +581,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     auto option = OpenMesh::IO::Options(
       OpenMesh::IO::Options::VertexNormal  |
       OpenMesh::IO::Options::VertexColor   |
-      OpenMesh::IO::Options::VertexTexCoord  );
+      OpenMesh::IO::Options::FaceTexCoord  );
     if( OpenMesh::IO::IOManager().read( filename, importer,  option) )
       {
         if( n_vertices() && normal( VertexHandle{0} ).l8_norm() < 0.5 )

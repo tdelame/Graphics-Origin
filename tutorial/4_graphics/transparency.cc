@@ -20,11 +20,12 @@
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/application/textured_mesh_renderable.h"
-# include "../../graphics-origin/application/texture_debug_renderable.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/log.h"
 # include "../../graphics-origin/tools/tight_buffer_manager.h"
+# include "transparency/window_frames_renderable.h"
 # include <GL/glew.h>
+
 
 # include "common/simple_camera.h"
 # include "common/simple_qml_application.h"
@@ -53,13 +54,13 @@ namespace application {
    * A window has no thickness, but you can either add another parallel
    * window or modify the code to render a box instead of a quad.
    *
-   * This code has a limitation related to the difficulty of performing transparency:
-   * put the camera between the mesh and the windows, and look at the windows.
-   * You will see that depending on the viewing angle, the transparency is not
-   * ok. This is due to the simple depth sorting made here: we assume that all
-   * quad fragments have the same depth as the center. There exist more evolved
-   * methods to address this issue.
-   * TODO: make a simple implementation of a complex method.
+   * This code has a limitation related to the difficulty of performing
+   * transparency with OpenGL: quads are not always in front of other
+   * quads, thus, only parts of a quad need to be rendered before another
+   * one. Partial primitive rendering is not possible with the rasterization
+   * pipeline. There are more evolved rendering methods to address this issue,
+   * like ray-tracing.
+   * TODO: make a simple implementation of a ray-tracing (on the cpu).
    */
   class transparent_windows_renderable
     : public graphics_origin::application::renderable {
@@ -355,27 +356,44 @@ namespace application {
             shader_directory + "transparent_window.frag"
       });
 
-      shader_program_ptr texture_debug_program =
+      shader_program_ptr frame_program =
           std::make_shared<shader_program>( std::list<std::string>{
-            shader_directory + "texture_debug.vert",
-            shader_directory + "texture_debug.geom",
-            shader_directory + "texture_debug.frag"
+            shader_directory + "window_frame.vert",
+            shader_directory + "window_frame.geom",
+            shader_directory + "window_frame.frag"
       });
 
-      auto texture_debug = new texture_debug_renderable( texture_debug_program );
-      texture_debug->set_texture( texture_directory + "TexturedBunny.png" );
-      add_renderable( texture_debug );
 
-//      auto mesh = new textured_mesh_renderable( mesh_program );
-//      mesh->load_mesh( mesh_directory + "Bunny.obj" );
-//      mesh->load_texture( texture_directory + "TexturedBunny.png" );
-//      mesh->set_model_matrix( glm::rotate( -gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
-//      add_renderable( mesh );
-//
-//      auto windows = new transparent_windows_renderable( transparent_program );
-//      windows->add( gpu_vec3{2,0,0}, gpu_vec3{0,0.3,-0.3}, gpu_vec3{0,-0.3,-0.3}, gpu_vec4( 0.2, 0.8, 0.4, 0.9 ) );
-//      windows->add( gpu_vec3{1.9,1,0}, gpu_vec3{0,1,-1}, gpu_vec3{0,-1,-1}, gpu_vec4( 0.2, 0.4, 0.8, 0.68 ) );
-//      add_renderable( windows );
+      auto mesh = new textured_mesh_renderable( mesh_program );
+      mesh->load_mesh( mesh_directory + "Bunny.obj" );
+      mesh->load_texture( texture_directory + "TexturedBunny.png" );
+      mesh->set_model_matrix( glm::rotate( gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
+      add_renderable( mesh );
+
+
+      const unsigned int angle_divisions = 16;
+      const gpu_real angle_step = 2.0 * M_PI / gpu_real{16};
+      gpu_real angle = 0;
+
+      auto windows = new transparent_windows_renderable( transparent_program, angle_divisions );
+      auto frames = new window_frames_renderable( frame_program, angle_divisions );
+
+      for( unsigned int i = 0; i < angle_divisions; ++ i, angle += angle_step )
+        {
+          auto rotation = glm::rotate( angle, gpu_vec3{0,0,1} );
+          auto position = gpu_vec3{rotation * gpu_vec4{2,0,0,1.0}};
+          auto v1 = gpu_vec3{rotation * gpu_vec4{0,0.4,-0.3,0}};
+          auto v2 = gpu_vec3{rotation * gpu_vec4{0,-0.4,-0.3,0}};
+          windows->add(
+            position, v1, v2,
+            gpu_vec4{0.5 + position.x / 4.0, 0.5 + position.y / 4.0, 0.5 + position.z / 4.0, 0.2 + gpu_real(i) / gpu_real(angle_divisions)*0.4} );
+
+          frames->add(
+            position, v1, v2, 0.01 + 0.02 * gpu_real(i)/gpu_real(angle_divisions), 0.02 );
+        }
+
+      add_renderable( windows );
+      add_renderable( frames );
     }
   };
 

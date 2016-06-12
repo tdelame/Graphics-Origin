@@ -1,0 +1,85 @@
+/**
+\mainpage Introduction
+
+Graphics Origin is a set of three libraries to develop Computer Graphics applications:
+- tools, for utilities commonly used in an application, such as log, simple file
+system functions or tight buffer with handles
+- geometry, to represent geometric objects such as triangles, points, rotations as
+well as operations on those objects like intersection tests
+- application, to easily setup 3D application with classes for windows, renderer, renderable
+and camera. Currently, Qt 5 libraries are used for the interface, and the 3D scene is rendered
+in another thread using an OpenGL 4.0 context.
+
+This project is meant to be used by students, researches and practitioners in Computer Graphics,
+with a beginner to intermediate level in graphical application development. Be aware that this is
+an ongoing project; I will  add more features, documentation and tutorial in the future, as well
+as removing more and more bugs :-}. If you want to participate in this project, feel fre to contact me.
+
+List of available tutorials:
+1. for the tools library (soon)
+2. for the geometry library (soon)
+3. for the application library (soon)
+4. \subpage graphics_tutorial "3D Computer Graphics tutorials"
+*/
+
+/**
+\page graphics_tutorial 3D Computer Graphics tutorials
+
+This page is currently just a draft.
+
+\subpage transparency Rendering transparent objects
+
+TODO:
+- adapt tutorials we made for ENSIMAG
+
+*/
+
+/**
+\page transparency Rendering transparent objects
+
+\section Introduction
+Rendering a transparent object with OpenGL is a question that students often ask me.
+Indeed, it is not a trivial thing to do due to the way objects are rendered (TODO:
+make a page that introduce the graphics pipeline). There are two main points to
+understand: opaque objects need to be rendered first and transparent objects need
+to be sorted.
+
+To illustrate this technique, we have a scene with a textured mesh in the center and
+a set of transparent windows all around this central mesh. The windows are composed
+of a transparent quad (stored in transparent_windows_renderable) and an opaque frame
+(stored in window_frames_renderable).
+
+\section sec1 Rendering opaque objects first
+
+\subsection sec1.1 Blending
+When fragments of transparent objects are processed, we can blend their color with
+fragments already present in the frame buffer. This is done by activating blending
+and selecting a nice blending function (see https://www.opengl.org/sdk/docs/man/html/glBlendFunc.xhtml):
+\code{.cpp}
+glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+\endcode
+
+When all transparent objects are processing, it is a good practice to desactivate blending,
+to not produce unintuitive results:
+\code{.cpp}
+glDisable(GL_BLEND);
+\endcode
+
+\subsection Processing order
+Let us suppose that two objects, one opaque A and one transparent B, have fragments at the
+same position (i.e. for the same pixel). If fragments of objects B are processed first, the 
+blending function will not do anything, so color of those fragments remain unchanged. Then,
+when fragments of object A are processed, the blending is disactivated, and the fragments
+of object B will be the final pixels.
+
+Now, if we start by processing fragments of object A, they will be already in the frame buffer
+when fragments of object B are processed. The blending function will use the alpha value of
+B's fragments to make a linear interpolation with A's fragments. Thus, we will have the impression
+to see through B.
+
+<b>Opaque objects must be rendered first.</b>
+
+
+
+*/

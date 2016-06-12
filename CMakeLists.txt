@@ -102,6 +102,11 @@ option(
   "Set to ON to build some tests."
   ON)  
 
+option(
+  GO_BUILD_DOC
+  "Set to ON to build documentation."
+  ON) 
+
 #*********************
 # external libraries *
 #*******************************************************************************
@@ -344,6 +349,22 @@ if( GO_BUILD_TEST )
   add_subdirectory( "${GO_TEST_IN_DIR}" )
 endif()
 
+# build documentation
+if( ${GO_BUILD_DOC} )
+  find_package( Doxygen )
+  if( DOXYGEN_FOUND )
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        file(MAKE_DIRECTORY doc) 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+  else()
+    message( ERROR "Cannot find Doxygen to build the documentation" )
+  endif()
+endif()
+
 message(
   "Graphics-Origin Options:\n"
   "GO_USE_OPENCL                 = ${GO_USE_OPENCL}\n"
@@ -352,5 +373,6 @@ message(
   "GO_BUILD_APPLICATION_TUTORIAL = ${GO_BUILD_APPLICATION_TUTORIAL}\n"
   "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}\n"
   "GO_BUILD_GRAPHICS_TUTORIAL    = ${GO_BUILD_GRAPHICS_TUTORIAL}\n"
-  "GO_BUILD_TEST                 = ${GO_BUILD_TEST}"
+  "GO_BUILD_TEST                 = ${GO_BUILD_TEST}\n"
+  "GO_BUILD_DOC                  = ${GO_BUILD_DOC}"
 )
