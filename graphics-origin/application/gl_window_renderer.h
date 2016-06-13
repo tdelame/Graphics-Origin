@@ -74,6 +74,7 @@ namespace application {
     QOpenGLContext* m_context;
     QOpenGLFramebufferObject* m_render_fbo;
     QOpenGLFramebufferObject* m_display_fbo;
+    QOpenGLFramebufferObject* m_downsampled_fbo;
 
     /**Note: the camera is not deleted in the destructor. */
     camera* m_camera;
