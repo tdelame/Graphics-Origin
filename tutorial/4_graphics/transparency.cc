@@ -5,7 +5,9 @@
  * The main differences between the files of this application and the one of
  * the tutorial 3_simple_gl_applications are:
  * - the definition of a transparent windows renderable, that we will use to
- * have some transparency in the scene
+ * have some transparency in the scene (see transparency/transparent_windows_renderable.h)
+ * - the definition of a window frames renderable to add a frame around the
+ * transparent windows (see transparency/window_frames_renderable.h)
  * - the definition of a transparency_gl_renderer, which is basically the
  * simple_gl_renderer with another list for transparent windows renderables.
  * Those renderables are rendered last, after all opaque objects had been
@@ -13,6 +15,8 @@
  * - the definition of a transparency_gl_window, which only difference with
  * simple_gl_window is the initialization of a default scene in the
  * constructor.
+ * - the definition of a camera that cannot be controlled by the user but
+ * that will rotate around the scene (see transparency/rotating_camera.h)
  */
 // to write window/draw code
 # include "../../graphics-origin/application/camera.h"
@@ -154,10 +158,11 @@ namespace application {
           auto position = gpu_vec3{rotation * gpu_vec4{2,0,0,1.0}};
           auto v1 = gpu_vec3{rotation * gpu_vec4{0,0.4,-0.3,0}};
           auto v2 = gpu_vec3{rotation * gpu_vec4{0,-0.4,-0.3,0}};
+          // add a transparent window with a color based on its position
           windows->add(
             position, v1, v2,
             gpu_vec4{0.5 + position.x / 4.0, 0.5 + position.y / 4.0, 0.5 + position.z / 4.0, 0.2 + gpu_real(i) / gpu_real(angle_divisions)*0.4} );
-
+          // add a frame around that window with a dimension that depends on its position
           frames->add(
             position, v1, v2, 0.01 + 0.02 * gpu_real(i)/gpu_real(angle_divisions), 0.02 );
         }
@@ -169,7 +174,7 @@ namespace application {
 
 }}
 
-// launching our Qt/QtQuic + OpenGL application
+// launching our Qt/QtQuick + OpenGL application
 # include "common/simple_qml_application.h"
 # include "transparency/rotating_camera.h"
 # include <QGuiApplication>
