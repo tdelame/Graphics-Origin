@@ -10,11 +10,16 @@
 #   GO_BUILD_GEOMETRY_TUTORIAL    Set to ON to build the tutorial for the geometry library
 #   GO_BUILD_GRAPHICS_TUTORIAL    Set to ON to build tutorials on Computer Graphics with GO libraries
 #   GO_BUILD_TEST                 Set to ON to build tests
-# Variables
-# ---------
-# LIBNOISE_DIR
-# OPENMESH_DIR
 #
+# Finding libraries
+# -----------------
+# Set those variables to help cmake finding the libraries you want to use.
+#   LIBNOISE_DIR          where to find either noise/noise.h or include/noise/noise.h
+#   OPENMESH_DIR          where to find OpenMesh/Core/Mesh/PolyMeshT.hh
+#   BOOST_ROOT            where boost has been installed
+#   BOOST_INCLUDEDIR      Preferred include directory e.g. <prefix>/include
+#   BOOST_LIBRARYDIR      Preferred library directory e.g. <prefix>/lib
+#   Boost_NO_SYSTEM_PATHS Set to ON to disable searching in locations not specified by these hint variables. Default is OFF.
 
  
 #**********************
@@ -374,5 +379,20 @@ message(
   "GO_BUILD_GEOMETRY_TUTORIAL    = ${GO_BUILD_GEOMETRY_TUTORIAL}\n"
   "GO_BUILD_GRAPHICS_TUTORIAL    = ${GO_BUILD_GRAPHICS_TUTORIAL}\n"
   "GO_BUILD_TEST                 = ${GO_BUILD_TEST}\n"
-  "GO_BUILD_DOC                  = ${GO_BUILD_DOC}"
+  "GO_BUILD_DOC                  = ${GO_BUILD_DOC}\n\n"
+  
+  "External libraries:\n"
+  "* Boost\n"
+  "   - include: ${Boost_INCLUDE_DIRS}\n"
+  "   - libs:    ${Boost_LIBRARIES}\n"
+  "* OpenMesh\n"
+  "   - include: ${OPENMESH_INCLUDE_DIRS}\n"
+  "   - libs:    ${OPENMESH_LIBRARIES}\n"
+  "* GLEW\n"
+  "   - include: ${GLEW_INCLUDE_DIRS}\n"
+  "   - libs:    ${GLEW_LIBRARIES}\n"
+  "* Libnoise\n"
+  "   - include: ${LIBNOISE_INCLUDE_DIRS}\n"
+  "   - libs:    ${LIBNOISE_LIBRARIES}\n"
+  
 )

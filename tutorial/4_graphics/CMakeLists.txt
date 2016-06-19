@@ -115,7 +115,7 @@ endfunction()
   )
 
 # get it here: https://github.com/qknight/libnoise
-find_package( LibNoise  QUIET )
+find_package( LibNoise  REQUIRED QUIET )
 
 if( LIBNOISE_FOUND )
   include_directories( ${LIBNOISE_INCLUDE_DIR} )
