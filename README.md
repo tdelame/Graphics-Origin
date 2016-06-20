@@ -28,18 +28,13 @@ The code has been tested on a limited set of platforms, including:
 ## Installation
 A documentation about installation will be added soon for both GNU/Linux and 
 Windows. In the meantime, here are the set of external libraries required:
-- mandatory (only to parallelize things)
-  - OpenMP
-  - OpenCL. On GNU/Linux platforms, be sure to install OpenCL development headers.
-    Indeed, when Cuda is installed, the include directory of cuda is used instead of
-    the one of OpenCL. Thus, there will be a conflict between the Cuda/Thrust headers
-    included in the sources and those from the cuda installation.
 - required
+  - OpenMP
   - OpenMesh (for the geometry library)
   - Boost 
 - required for graphic applications
   - Qt 5
-  - GLEW & OpenGL
+  - GLEW & OpenGL 4
 
 ## Licensing
 This code is release under the MIT Licence. Please see the file called LICENCE.

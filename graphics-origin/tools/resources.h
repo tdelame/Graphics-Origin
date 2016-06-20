@@ -9,10 +9,6 @@
 
 BEGIN_GO_NAMESPACE namespace tools {
 
-  class resource {
-
-  };
-
   /**
    * Paths can be given in two different ways:
    * - relatively to a root directory
