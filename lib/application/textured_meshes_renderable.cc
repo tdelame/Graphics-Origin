@@ -138,6 +138,7 @@ namespace graphics_origin { namespace application {
     glcheck(glUniform1i( m_program->get_uniform_location( "sampler"), 0));
     glcheck(glDrawArrays( GL_TRIANGLES, 0, mesh.n_faces() * 3 ));
     glcheck(glBindVertexArray( 0 ) );
+    glcheck(glBindTexture(GL_TEXTURE_2D, 0 ));
   }
 
   void

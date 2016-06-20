@@ -16,6 +16,7 @@ namespace application {
   gl_window_renderer::gl_window_renderer()
     : m_surface{ nullptr }, m_context{ nullptr },
       m_render_fbo{ nullptr }, m_display_fbo{ nullptr },
+      m_downsampled_fbo{ nullptr },
 
       m_camera{ nullptr }, m_size_changed{ 0 },
       m_is_running{ 1 }, m_width{ 0 }, m_height{ 0 },
@@ -60,7 +61,9 @@ namespace application {
     static bool initialized = false;
     static QOpenGLFramebufferObjectFormat instance;
     if( !initialized )
-      instance.setAttachment( QOpenGLFramebufferObject::CombinedDepthStencil );
+      {
+        instance.setAttachment( QOpenGLFramebufferObject::CombinedDepthStencil );
+      }
     return instance;
   }
 
@@ -72,8 +75,11 @@ namespace application {
      // initialize the buffers and renderer
      if( !m_render_fbo)
        {
-         m_render_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), get_format() );
-         m_display_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), get_format() );
+         auto format = get_format();
+         m_downsampled_fbo = new QOpenGLFramebufferObject( QSize(m_width, m_height), format );
+         format.setSamples( 4 );
+         m_render_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), format );
+         m_display_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), format );
          glcheck(glClearColor( 1.0, 1.0, 1.0, 1.0 ));
          glcheck(glViewport( 0, 0, m_width, m_height ));
        }
@@ -82,8 +88,13 @@ namespace application {
          m_size_changed = 0;
          delete m_render_fbo;
          delete m_display_fbo;
-         m_render_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), get_format() );
-         m_display_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), get_format() );
+         delete m_downsampled_fbo;
+
+         auto format = get_format();
+         m_downsampled_fbo = new QOpenGLFramebufferObject( QSize(m_width, m_height), format );
+         format.setSamples( 4 );
+         m_render_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), format );
+         m_display_fbo = new QOpenGLFramebufferObject( QSize(m_width,m_height), format );
          glcheck(glViewport( 0, 0, m_width, m_height ));
        }
 
@@ -104,8 +115,16 @@ namespace application {
      // other thread, otherwise, we might get unexpected results.
      //glFlush();
      glFinish();
+
+
+
+     QOpenGLFramebufferObject::blitFramebuffer(
+         m_downsampled_fbo,
+         m_render_fbo,
+         GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT| GL_STENCIL_BUFFER_BIT,GL_NEAREST);
+
      std::swap( m_render_fbo, m_display_fbo );
-     emit texture_ready( m_display_fbo->texture(), QSize(m_width,m_height));
+     emit texture_ready( m_downsampled_fbo->texture(), QSize(m_width,m_height));
   }
 
   void
@@ -116,6 +135,7 @@ namespace application {
     m_context->makeCurrent( m_surface );
     delete m_render_fbo;
     delete m_display_fbo;
+    delete m_downsampled_fbo;
 
     m_context->doneCurrent();
     delete m_context;

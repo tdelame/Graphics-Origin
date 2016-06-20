@@ -5,7 +5,9 @@
  * The main differences between the files of this application and the one of
  * the tutorial 3_simple_gl_applications are:
  * - the definition of a transparent windows renderable, that we will use to
- * have some transparency in the scene
+ * have some transparency in the scene (see transparency/transparent_windows_renderable.h)
+ * - the definition of a window frames renderable to add a frame around the
+ * transparent windows (see transparency/window_frames_renderable.h)
  * - the definition of a transparency_gl_renderer, which is basically the
  * simple_gl_renderer with another list for transparent windows renderables.
  * Those renderables are rendered last, after all opaque objects had been
@@ -13,266 +15,26 @@
  * - the definition of a transparency_gl_window, which only difference with
  * simple_gl_window is the initialization of a default scene in the
  * constructor.
+ * - the definition of a camera that cannot be controlled by the user but
+ * that will rotate around the scene (see transparency/rotating_camera.h)
  */
-
+// to write window/draw code
+# include "../../graphics-origin/application/camera.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/gl_window.h"
-# include "../../graphics-origin/application/renderable.h"
+# include "../../graphics-origin/application/gl_window_renderer.h"
 # include "../../graphics-origin/application/shader_program.h"
+# include <GL/glew.h>
+// to use renderables in the scene
 # include "../../graphics-origin/application/textured_mesh_renderable.h"
+# include "transparency/window_frames_renderable.h"
+# include "transparency/transparent_windows_renderable.h"
+// utilities
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/tools/log.h"
-# include "../../graphics-origin/tools/tight_buffer_manager.h"
-# include "transparency/window_frames_renderable.h"
-# include <GL/glew.h>
-
-
-# include "common/simple_camera.h"
-# include "common/simple_qml_application.h"
-
-# include <QGuiApplication>
-
 
 namespace graphics_origin {
 namespace application {
-
-  /**@brief A collection of transparent windows to render.
-   *
-   * A transparent window is a quad that let the light go through it. As such,
-   * we can see any opaque object that lies behind a transparent window. We show
-   * in this tutorial how to do it.
-   *
-   * First, a window is defined by its center, and two vectors that goes from
-   * the center to two consecutive corners of that window. Those two vectors
-   * are named v1 and v2, and should not be colinear (otherwise, you have a
-   * zero-sized window by definition). Then, a window has a RGBA color.
-   *
-   * It should be noted that the current code can handle any orientation of the
-   * corners. But if face culling is activated, some holes can appear depending
-   * on the view point.
-   *
-   * A window has no thickness, but you can either add another parallel
-   * window or modify the code to render a box instead of a quad.
-   *
-   * This code has a limitation related to the difficulty of performing
-   * transparency with OpenGL: quads are not always in front of other
-   * quads, thus, only parts of a quad need to be rendered before another
-   * one. Partial primitive rendering is not possible with the rasterization
-   * pipeline. There are more evolved rendering methods to address this issue,
-   * like ray-tracing.
-   * TODO: make a simple implementation of a ray-tracing (on the cpu).
-   */
-  class transparent_windows_renderable
-    : public graphics_origin::application::renderable {
-
-    struct storage {
-      gpu_vec3 center;
-      gpu_vec3 v1;
-      gpu_vec3 v2;
-      gpu_vec4 color;
-      gpu_real depth;
-
-      storage( const storage& other )
-         : center{ other.center }, v1{ other.v1 }, v2{ other.v2 },
-           color{ other.color }, depth{ other.depth }
-       {}
-
-      storage& operator=( const storage& other )
-      {
-        center = other.center;
-        v1 = other.v1;
-        v2 = other.v2;
-        color = other.color;
-        depth = other.depth;
-        return *this;
-      }
-
-      storage& operator=( storage&& other )
-      {
-        center = other.center;
-        v1 = other.v1;
-        v2 = other.v2;
-        color = other.color;
-        depth = other.depth;
-        return *this;
-      }
-      storage()
-        : depth{0}
-      {}
-    };
-
-    typedef tools::tight_buffer_manager<
-        storage,
-        uint32_t,
-        22 > windows_buffer;
-
-    struct storage_depth_computation {
-      storage_depth_computation( const camera* camera )
-        : eye{ camera->get_position() }, forward{ camera->get_forward() }
-      {}
-      void operator()( storage& s ) const
-      {
-        s.depth = dot( forward, s.center - eye );
-      }
-      const gpu_vec3 eye;
-      const gpu_vec3 forward;
-    };
-
-    struct storage_depth_ordering {
-      bool operator()( const storage& a, const storage& b ) const
-      {
-        return a.depth > b.depth;
-      }
-    };
-
-  public:
-    typedef windows_buffer::handle handle;
-
-    /**@brief Create a new collection of transparent windows.
-     *
-     * Build an instance of a transparent windows renderable.
-     * @param program The shader program used to render a window. This shader
-     * should have the following attributes:
-     * - center (vec3) for the center of a window
-     * - v1 (vec3) to go from the center to a corner
-     * - v2 (vec3) to go from the center to a consecutive corner
-     * - color (vec4) for the color of the window.
-     * The shader should also have a uniform named vp (mat4) to receive the
-     * product between the projection matrix and the view matrix.
-     * @param expected_number_of_windows A guess about the final number of windows
-     * stored in the instance. A correct guess avoids resizing internal buffer.
-     */
-    transparent_windows_renderable(
-        shader_program_ptr program,
-        size_t expected_number_of_windows = 0 )
-      : m_windows{ expected_number_of_windows },
-        m_vao{0}, m_vbos{ 0 }
-    {
-      m_model = gpu_mat4(1.0);
-      m_program = program;
-    }
-    ~transparent_windows_renderable()
-    {
-      remove_gpu_data();
-    }
-
-    /**@brief Add another transparent window to render.
-     *
-     * Add one more transparent window to this instance.
-     * @param center Center of the window.
-     * @param v1 Vector that goes from the center to one corner of the window.
-     * @param v2 Vector that goes from the center to the next corner of the window.
-     * @param color Color of the window.
-     * @return Handle to the newly created window.
-     */
-    handle add(
-        const gpu_vec3& center,
-        const gpu_vec3& v1,
-        const gpu_vec3& v2,
-        const gpu_vec4& color )
-    {
-      m_dirty = true;
-      auto pair = m_windows.create();
-      pair.second.center = center;
-      pair.second.v1 = v1;
-      pair.second.v2 = v2;
-      pair.second.color = color;
-      return pair.first;
-    }
-
-    /**@brief Get an existing window.
-     *
-     * Access to a window that was previously created by add(). If you modify
-     * the data of a window, be sure to notify
-     * @param h Handle of the existing window.
-     * @return The window pointed by the handle h.
-     */
-    storage& get( handle h )
-    {
-      return m_windows.get( h );
-    }
-
-    void sort()
-    {
-      m_windows.process( storage_depth_computation{m_renderer->get_camera()} );
-      m_windows.sort( storage_depth_ordering{} );
-      glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
-      glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_DYNAMIC_DRAW));
-    }
-
-  private:
-    void update_gpu_data() override
-    {
-      if( !m_vao )
-        {
-          glcheck(glGenVertexArrays( 1, &m_vao ));
-          glcheck(glGenBuffers( number_of_vbos, m_vbos ));
-        }
-
-      int center_location = m_program->get_attribute_location( "center" );
-      int v1_location = m_program->get_attribute_location( "v1" );
-      int v2_location = m_program->get_attribute_location( "v2" );
-      int color_location = m_program->get_attribute_location( "color" );
-
-      glcheck(glBindVertexArray( m_vao ));
-        glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
-        glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(storage) * m_windows.get_size(), m_windows.data(), GL_DYNAMIC_DRAW));
-
-        glcheck(glEnableVertexAttribArray( center_location ));
-        glcheck(glVertexAttribPointer( center_location,        // format of center:
-          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
-          sizeof(storage),                                     // each attribute has the size of storage
-          reinterpret_cast<void*>(offsetof(storage,center)))); // offset of the center inside an attribute
-
-        glcheck(glEnableVertexAttribArray( v1_location ));
-        glcheck(glVertexAttribPointer( v1_location,            // format of v1:
-          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
-          sizeof(storage),                                     // each attribute has the size of storage
-          reinterpret_cast<void*>(offsetof(storage,v1))));     // offset of the v1 inside an attribute
-
-        glcheck(glEnableVertexAttribArray( v2_location ));
-        glcheck(glVertexAttribPointer( v2_location,            // format of v1:
-          3, GL_FLOAT, GL_FALSE,                               // 3 unnormalized floats
-          sizeof(storage),                                     // each attribute has the size of storage
-          reinterpret_cast<void*>(offsetof(storage,v2))));     // offset of the v1 inside an attribute
-
-        glcheck(glEnableVertexAttribArray( color_location ));
-        glcheck(glVertexAttribPointer( color_location,        // format of color:
-          4, GL_FLOAT, GL_FALSE,                              // 4 unnormalized floats
-          sizeof(storage),                                    // each attribute has the size of storage
-          reinterpret_cast<void*>(offsetof(storage,color)))); // offset of the color inside an attribute
-
-      glcheck(glBindVertexArray( 0 ));
-    }
-
-    void do_render() override
-    {
-      sort();
-      gpu_mat4 vp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix();
-      glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
-      glcheck(glBindVertexArray( m_vao ));
-      glcheck(glDrawArrays( GL_POINTS, 0, m_windows.get_size()));
-      glcheck(glBindVertexArray( 0 ) );
-    }
-
-    void remove_gpu_data() override
-    {
-      if( m_vao )
-        {
-          glcheck(glDeleteBuffers( number_of_vbos, m_vbos ));
-          glcheck(glDeleteVertexArrays( 1, &m_vao ));
-          m_vao = (unsigned int) 0;
-          for( unsigned int i = 0; i < number_of_vbos; ++ i )
-            m_vbos[ i ] = (unsigned int)0;
-        }
-    }
-
-    windows_buffer m_windows;
-    enum{ windows_vbo_id, number_of_vbos };
-    unsigned int m_vao;
-    unsigned int m_vbos[ number_of_vbos];
-  };
-
 
   class transparency_gl_renderer
     : public graphics_origin::application::gl_window_renderer {
@@ -282,6 +44,7 @@ namespace application {
   private:
     void do_add( graphics_origin::application::renderable* r ) override
     {
+      // check if the renderable is a transparent window
       transparent_windows_renderable* windows = dynamic_cast< transparent_windows_renderable* >( r );
       if( windows )
         {
@@ -293,25 +56,36 @@ namespace application {
             }
           m_windows = windows;
         }
+      // otherwise, add it to the list of opaque objects
       else m_renderables.push_back( r );
     }
 
     void do_render() override
     {
       m_camera->update();
+
+      // render opaque objects, i.e. the central mesh and the window frames.
       for( auto& r : m_renderables )
         {
           r->get_shader_program()->bind();
           r->render();
         }
 
+      // render transparent windows (if any)
       if( m_windows )
         {
+          // Activate blending with the right interpolation function. [1]
           glcheck(glEnable(GL_BLEND));
           glcheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+          // bind the program and draw our windows
             m_windows->get_shader_program()->bind();
             m_windows->render();
+          // remember to disable blending to not mess with other parts of the code [1]
           glcheck(glDisable(GL_BLEND));
+
+          //[1] Typically, those lines should be included inside the do_render()
+          // function of transparent_windows_renderable. I let them here to insist
+          // on their importance in the main source file of the demo.
         }
     }
 
@@ -384,10 +158,11 @@ namespace application {
           auto position = gpu_vec3{rotation * gpu_vec4{2,0,0,1.0}};
           auto v1 = gpu_vec3{rotation * gpu_vec4{0,0.4,-0.3,0}};
           auto v2 = gpu_vec3{rotation * gpu_vec4{0,-0.4,-0.3,0}};
+          // add a transparent window with a color based on its position
           windows->add(
             position, v1, v2,
             gpu_vec4{0.5 + position.x / 4.0, 0.5 + position.y / 4.0, 0.5 + position.z / 4.0, 0.2 + gpu_real(i) / gpu_real(angle_divisions)*0.4} );
-
+          // add a frame around that window with a dimension that depends on its position
           frames->add(
             position, v1, v2, 0.01 + 0.02 * gpu_real(i)/gpu_real(angle_divisions), 0.02 );
         }
@@ -399,6 +174,10 @@ namespace application {
 
 }}
 
+// launching our Qt/QtQuick + OpenGL application
+# include "common/simple_qml_application.h"
+# include "transparency/rotating_camera.h"
+# include <QGuiApplication>
 
 int main( int argc, char* argv[] )
 {
@@ -410,7 +189,7 @@ int main( int argc, char* argv[] )
 
   // Register C++ types to the QML engine: we would then be able to use those types in qml scripts.
   qmlRegisterType<graphics_origin::application::simple_gl_window>( "GraphicsOrigin", 1, 0, "GLWindow" );
-  qmlRegisterType<graphics_origin::application::simple_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
+  qmlRegisterType<graphics_origin::application::rotating_camera   >( "GraphicsOrigin", 1, 0, "GLCamera" );
 
   // Load the main QML describing the main window into the simple QML application.
   std::string input_qml = graphics_origin::tools::get_path_manager().get_resource_directory( "qml" ) + "4_transparency.qml";

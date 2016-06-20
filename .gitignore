@@ -4,7 +4,6 @@ build/
 *.slo
 *.lo
 *.o
-*.obj
 moc_*
 *qtmakefile.mk
 *.pri
