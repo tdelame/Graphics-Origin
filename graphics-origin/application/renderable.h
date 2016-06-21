@@ -12,6 +12,10 @@ namespace application {
 
   class gl_window_renderer;
 
+  namespace qt {
+    class renderer;
+  }
+
   /** Interface class to render an object with OpenGL.
    *
    * OpenGL related operations should be done when the right context is bound
@@ -69,6 +73,9 @@ namespace application {
 
     void set_renderer( gl_window_renderer* renderer );
 
+    ///fixme: hack, do not look here
+    void set_renderer( qt::renderer* renderer );
+
     /**@brief Notify a modification in data used for the rendering.
      *
      * Notify the renderable that the data used for its rendering has been
@@ -122,6 +129,10 @@ namespace application {
      * functionalities.
      */
     gl_window_renderer* m_renderer;
+
+
+    //fixme: hack, do not look here
+    qt::renderer* renderer;
   };
 
 }

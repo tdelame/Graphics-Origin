@@ -1,6 +1,3 @@
-/* Created on: Feb 2, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # include <graphics-origin/application/camera.h>
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_helper.h>
@@ -173,6 +170,4 @@ namespace application {
   {
     return gpu_vec2{ m_width, m_height };
   }
-
-}
-END_GO_NAMESPACE
+}}

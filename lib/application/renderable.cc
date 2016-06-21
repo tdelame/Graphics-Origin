@@ -7,7 +7,7 @@ BEGIN_GO_NAMESPACE
 namespace application {
 
   renderable::renderable()
-    : m_dirty{ true }, m_renderer{ nullptr }
+    : m_dirty{ true }, m_renderer{ nullptr }, renderer{ nullptr }
   {}
 
   renderable::~renderable()
@@ -56,6 +56,12 @@ namespace application {
   shader_program_ptr renderable::get_shader_program() const
   {
     return m_program;
+  }
+
+  void
+  renderable::set_renderer( qt::renderer* renderer )
+  {
+    this->renderer = renderer;
   }
 }
 END_GO_NAMESPACE

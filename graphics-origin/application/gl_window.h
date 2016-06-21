@@ -7,16 +7,19 @@
 
 # include <QQuickItem>
 
-namespace graphics_origin {
-namespace application {
-  class gl_window_renderer;
-  class renderable;
-  /**
+/**
    *
    *
    * The design for this class is adapted from this article:
    * http://doc.qt.io/qt-5/qtquick-scenegraph-openglunderqml-example.html
    */
+
+
+
+namespace graphics_origin {
+namespace application {
+  class gl_window_renderer;
+  class renderable;
   class GO_API gl_window :
       public QQuickItem {
     Q_OBJECT

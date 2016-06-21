@@ -1,6 +1,3 @@
-/* Created on: Jan 28, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # include <graphics-origin/application/gl_window.h>
 # include <graphics-origin/application/gl_window_renderer.h>
 # include <graphics-origin/application/gl_texture_node.h>
@@ -221,5 +218,4 @@ namespace application {
     return m_renderer->get_fps();
   }
 
-}
-END_GO_NAMESPACE
+}}

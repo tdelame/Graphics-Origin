@@ -51,25 +51,38 @@
  *
  * I have seen examples with UID, handles and pointers on the web, but I do not
  * make a clear separation between the three cases. I cannot see why we cannot use
- * the three. So, the main question here is how to store the resources, both on
- * client side and inside the manager?
+ * the three. So, the main questions are:
+ * - how to store the resources, both on client side and inside the manager?
+ * - how to handle the destruction of a resource? e.g. when client still has a copy
+ *
+ * When a resource is destroyed, it is not clear to me that this resource should
+ * continue to exist if it is still referred to by other parts of the code. For
+ * example, if I destroy a particular mesh, I do not expect to still see it on
+ * the screen: instances using that resource should now use an empty mesh. On the
+ * other hand, an instance of empty mesh will still exist after the deletion of the
+ * resource. Even if the memory consumption is expected to be lower, we still use
+ * a mesh resource. Also, a segmentation fault occurring when accessing to a
+ * destroyed resource will provide better debugging information.
+ *
+ * For now, I will simply store the resources inside the map. Clients will have
+ * access to those resources thanks to references, meaning they should not keep such
+ * references after resource deletion.
  *
  *
  * [1] http://cowboyprogramming.com/2007/01/04/practical-hash-ids/
  *
  * [2] http://www.randygaul.net/2015/12/11/preprocessed-strings-for-asset-ids/
- *
  */
 
 # include "../graphics-origin/graphics_origin.h"
 # include "../graphics-origin/tools/log.h"
-# include "../graphics-origin/tools/tight_buffer_manager.h"
 # include <unordered_map>
 namespace graphics_origin {
 
-
-
-
+  uint32_t hash_name( const std::string& lower_case_ascii_name )
+  {
+    return std::hash<std::string>()( lower_case_ascii_name );
+  }
 
   template< typename resource_type >
   class resource_manager {
@@ -95,9 +108,18 @@ namespace graphics_origin {
         return scope;
       }
 
+      resource( uint32_t id ) :
+        uid{id}, scope{0}
+      {
+        LOG(debug, "a resource [0x" << std::hex <<  uid << "] is created " << this );
+      }
+
       resource() :
         uid{0}, scope{0}
-      {}
+      {
+        LOG(debug, "default resource is created " << this );
+      }
+
       resource& operator=( resource&& other )
       {
         scope = other.scope;
@@ -113,31 +135,40 @@ namespace graphics_origin {
       uint32_t uid;
       uint32_t scope;
     };
-  private:
-    typedef tools::tight_buffer_manager< resource, uint32_t, 22 > resource_buffer;
-  public:
-    typedef typename resource_buffer::handle handle;
 
     resource_manager()
     {}
 
-    handle create( uint32_t uid, uint32_t scope )
+    void load(
+        const std::string& filename,
+        const std::string& lower_case_ascii_name )
     {
-      auto pair = resources.create();
-      pair.second.uid = uid;
-      pair.second.scope = scope;
-      return pair.first;
-    }
-
-    resource& get( handle h )
-    {
-      // once it works, do not use the tight buffer
-      return resources.get( h );
+      // what should we do if a resource with that name already exist?
+      uint32_t id = hash_name( lower_case_ascii_name );
+      auto res = resources.emplace( id, id );
+      if( !res.second )
+        {
+          try
+            {
+              res.first->second.~resource();
+              new((void*)&res.first->second) resource( id/*constructor parameters here*/);
+              LOG( debug, "resource [0x" << std::hex << id << " re")
+            }
+          catch(...)
+            {
+              LOG( warning, "something went wrong in the construction of resource " << filename << ". Using default resource." );
+              new((void*)&res.first->second) resource( id );
+            }
+        }
+      //return id?
     }
 
     resource& get( uint32_t uid )
     {
-
+      auto search = resources.find( uid );
+      if( search != resources.end() )
+        return search->second;
+      return resource::null;
     }
 
   private:
@@ -167,8 +198,9 @@ namespace graphics_origin {
     typedef test_data_manager::resource resource;
 
     test_data_manager manager;
-    test_data_manager::handle handle = manager.create( 0, 1 );
-    resource& res  = manager.get( handle );
+    manager.load( "dummy_file.thing", "dummy" );
+    uint32_t dummy_id = hash_name( "dummy" );
+    resource& res  = manager.get( dummy_id );
     resource& null = resource::null;
 
     res.dummy = 1;

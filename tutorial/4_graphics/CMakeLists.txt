@@ -113,6 +113,18 @@ endfunction()
     LIBRARIES
       ${GO_APPLICATION_LIBRARIES} 
   )
+  
+  add_graphics_tutorial(
+    NAME transparency2
+    SHADERS 
+      ${GO_SHADERS_DIR}/textured_mesh.vert ${GO_SHADERS_DIR}/textured_mesh.frag
+    MESHES
+      ${GO_MESHES_DIR}/Bunny.obj
+    TEXTURES
+      ${GO_TEXTURES_DIR}/TexturedBunny.png
+    LIBRARIES
+      ${GO_APPLICATION_LIBRARIES} 
+  )  
 
 # get it here: https://github.com/qknight/libnoise
 find_package( LibNoise  REQUIRED QUIET )
