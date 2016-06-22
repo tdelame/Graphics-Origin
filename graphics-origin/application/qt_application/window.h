@@ -13,6 +13,7 @@ namespace graphics_origin {
           public QQuickItem {
         Q_OBJECT
         Q_PROPERTY( QObject* camera READ get_camera WRITE set_camera )
+        Q_PROPERTY( int samples READ get_samples WRITE set_samples )
       public:
         window( QQuickItem* parent = nullptr );
         ~window();
@@ -27,6 +28,9 @@ namespace graphics_origin {
         void set_camera( QObject* cam );
         QObject* get_camera() const;
 
+        void set_samples( int samples );
+        int get_samples() const;
+
         static QList< window* > window_instances;
 
       public slots:
@@ -37,7 +41,7 @@ namespace graphics_origin {
         QSGNode* updatePaintNode( QSGNode*, UpdatePaintNodeData* ) override;
         renderer* threaded_renderer;
         QThread render_thread;
-      private:
+      private slots:
         void handle_size_changed();
       };
     }

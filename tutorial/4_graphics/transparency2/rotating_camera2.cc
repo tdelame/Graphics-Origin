@@ -7,7 +7,7 @@
 namespace graphics_origin { namespace application {
 
   static const gpu_vec3 initial_position = gpu_vec3{4,0,0};
-  static const gpu_real rotation_speed = 2.0 * M_PI / 8.0;
+  static const gpu_real rotation_speed = 2.0 * M_PI / 6.0;
   static const gpu_mat4 initial_view = glm::lookAt( initial_position, gpu_vec3{}, gpu_vec3{0,0,1});
 
   rotating_camera2::rotating_camera2( QObject* parent )

@@ -73,6 +73,19 @@ namespace graphics_origin {
         return nullptr;
       }
 
+      void window::set_samples( int samples )
+      {
+        if( threaded_renderer )
+          threaded_renderer->set_samples( samples );
+      }
+
+      int window::get_samples() const
+      {
+        if( threaded_renderer )
+          return threaded_renderer->get_samples();
+        return 0;
+      }
+
       void window::ready()
       {
         // we assume that when this function is called, we have a renderer

@@ -49,8 +49,9 @@ namespace application {
 
   void initialize_current_context()
   {
-    glEnable( GL_CULL_FACE );
-    glCullFace( GL_BACK );
+    glcheck(glEnable( GL_CULL_FACE ));
+    glcheck(glCullFace( GL_BACK ));
+    glcheck(glClearColor( 1.0, 1.0, 1.0, 1.0 ));
   }
 }
 END_GO_NAMESPACE

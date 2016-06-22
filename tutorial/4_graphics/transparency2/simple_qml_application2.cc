@@ -16,6 +16,7 @@ namespace graphics_origin { namespace application {
     QSurfaceFormat format;
     format.setMajorVersion( 4 );
     format.setMinorVersion( 4 );
+    format.setSwapInterval( 1 );
     setFormat( format );
     setResizeMode(QQuickView::SizeRootObjectToView );
     // Rendering in a thread introduces a slightly more complicated cleanup

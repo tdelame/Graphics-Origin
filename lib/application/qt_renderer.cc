@@ -12,24 +12,11 @@
 namespace graphics_origin {
   namespace application {
     namespace qt {
-
-      const QOpenGLFramebufferObjectFormat&
-      get_format()
-      {
-        static bool initialized = false;
-        static QOpenGLFramebufferObjectFormat instance;
-        if( !initialized )
-          {
-            instance.setAttachment( QOpenGLFramebufferObject::CombinedDepthStencil );
-          }
-        return instance;
-      }
-
       renderer::renderer() :
           surface( nullptr ), context( nullptr ),
-          render_fbo( nullptr ), display_fbo( nullptr ), downsampled_fbo( nullptr ),
+          frame_buffer_object{0}, color_textures{0,0}, depth_render_buffer{0}, current_color_texture{0},
           gl_camera( nullptr ),
-          size_changed( 0 ), is_running( 1 ), width( 0 ), height( 0 )
+          size_changed( 0 ), is_running( 1 ), width( 0 ), height( 0 ), samples(0)
       {}
 
       renderer::~renderer()
@@ -46,6 +33,21 @@ namespace graphics_origin {
         this->width = width;
         this->height = height;
         size_changed = 1;
+      }
+
+      void renderer::set_samples( int samples )
+      {
+        this->samples = samples;
+        // Ok, I should use another atomic_char for that. But I do not really
+        // want to test for size change AND samples changes, and then to have
+        // a function to update just the relevant openGL objects after a change
+        // in the number of samples.
+        size_changed = 1;
+      }
+
+      int renderer::get_samples() const
+      {
+        return samples;
       }
 
       void renderer::pause()
@@ -78,35 +80,54 @@ namespace graphics_origin {
         return gpu_vec2{ width, height };
       }
 
+
+
+
+      // when the texture node is using the texture of the display FBO,
+      // it sends a queued signal that execute the following function
       void renderer::render_next()
       {
         context->makeCurrent( surface );
 
-        // initialize the buffers and renderer
-        if( !render_fbo )
+        if( !frame_buffer_object )
           {
-            auto format = get_format ();
-            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            format.setSamples( 4 );
-            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            glcheck(glClearColor( 1.0, 1.0, 1.0, 1.0 ));
-            glcheck(glViewport( 0, 0, width, height ));
+            setup_opengl_objects();
           }
         else if( size_changed )
           {
             size_changed = 0;
-            delete render_fbo;
-            delete display_fbo;
-            delete downsampled_fbo;
+            destroy_textures();
+            destroy_render_buffers();
 
-            auto format = get_format ();
-            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            format.setSamples( 4 );
-            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-            glcheck(glViewport( 0, 0, width, height ));
+            build_textures();
+            build_render_buffers();
+            complete_frame_buffer();
           }
+
+//        // initialize the buffers and renderer
+//        if( !render_fbo )
+//          {
+//            auto format = get_format ();
+//            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+////            format.setSamples( 4 );
+//            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+//            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+//            glcheck(glViewport( 0, 0, width, height ));
+//          }
+//        else if( size_changed )
+//          {
+//            size_changed = 0;
+//            delete render_fbo;
+//            delete display_fbo;
+//            delete downsampled_fbo;
+//
+//            auto format = get_format ();
+//            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+////            format.setSamples( 4 );
+//            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+//            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
+//            glcheck(glViewport( 0, 0, width, height ));
+//          }
 
         if( !is_running )
           {
@@ -114,33 +135,26 @@ namespace graphics_origin {
             cv.wait (l, [this]{ return is_running;});
           }
 
-        render_fbo->bind ();
-        glEnable (GL_DEPTH_TEST);
-        glDepthFunc (GL_LESS);
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-          do_render();
-          render_fbo->bindDefault ();
-        // We need to flush the contents to the FBO before posting the texture to the
-        // other thread, otherwise, we might get unexpected results.
-        //glFlush();
-        glFinish ();
+        render_gl();
 
-        QOpenGLFramebufferObject::blitFramebuffer (
-            downsampled_fbo, render_fbo,
-            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
-            GL_NEAREST);
+        GLuint display_texture = current_color_texture;
+//        current_color_texture = current_color_texture ? 0 : 1 ;
+        emit texture_ready( color_textures[display_texture], QSize( width, height ) );
 
-        std::swap (render_fbo, display_fbo);
-        emit texture_ready (downsampled_fbo->texture (),  QSize( width, height ));
+
+//        QOpenGLFramebufferObject::blitFramebuffer (
+//            downsampled_fbo, render_fbo,
+//            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
+//            GL_NEAREST);
+
       }
 
       void renderer::shut_down()
       {
         do_shut_down();
         context->makeCurrent( surface );
-        delete render_fbo;
-        delete display_fbo;
-        delete downsampled_fbo;
+
+        destroy_opengl_objects();
 
         context->doneCurrent();
         delete context;

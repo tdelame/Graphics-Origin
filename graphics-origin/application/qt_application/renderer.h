@@ -19,6 +19,23 @@ namespace graphics_origin {
     class renderable;
     namespace qt {
       class window;
+
+      /**
+       *
+       *
+       *
+       *
+       * @note The renderer is not vsync'ed. I do not understand why.
+       * The texture used by the geometry node is not filled by the renderer
+       * and vsync is *normally* activated for the scene graph.
+       *
+       * Also, I am wondering why the original articles used FBO while a
+       * simple render to texture could have worked. Finally, if we cannot
+       * have a vsync'ed render to two textures, there is no use of a threaded
+       * renderer.
+       *
+       *
+       */
       class renderer :
           public QObject {
         Q_OBJECT
@@ -38,6 +55,9 @@ namespace graphics_origin {
 
         gpu_vec2 get_window_dimensions() const;
 
+        void set_samples( int samples );
+        int get_samples() const;
+
       public slots:
         void render_next();
       signals:
@@ -52,11 +72,26 @@ namespace graphics_origin {
         virtual void do_render() = 0;
         virtual void do_shut_down() = 0;
 
+        void render_gl();
+
+        void build_textures();
+        void build_render_buffers();
+        void build_frame_buffer();
+        void complete_frame_buffer();
+        void setup_opengl_objects();
+
+        void destroy_textures();
+        void destroy_render_buffers();
+        void destroy_frame_buffer();
+        void destroy_opengl_objects();
+
         QOffscreenSurface* surface;
         QOpenGLContext* context;
-        QOpenGLFramebufferObject* render_fbo;
-        QOpenGLFramebufferObject* display_fbo;
-        QOpenGLFramebufferObject* downsampled_fbo;
+
+        uint frame_buffer_object;
+        uint color_textures[2];
+        uint depth_render_buffer;
+        uint current_color_texture;
 
         /**Note: the camera is not deleted in the destructor. */
         camera* gl_camera;
@@ -66,6 +101,7 @@ namespace graphics_origin {
         unsigned char is_running;
         unsigned int width;
         unsigned int height;
+        int samples;
       };
     }
   }

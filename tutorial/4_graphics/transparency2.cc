@@ -39,6 +39,10 @@ namespace application {
   class transparency_gl_renderer2
     : public qt::renderer {
   public:
+	  transparency_gl_renderer2() :
+		  m_windows{nullptr}
+	  {}
+
     ~transparency_gl_renderer2(){}
 
   private:
@@ -50,7 +54,7 @@ namespace application {
         {
           if( m_windows )
             {
-              LOG( info, "cannot have more than one set of windows. Deleting previous one.");
+              LOG( info, "cannot have more than one set of windows2. Deleting previous one " << m_windows );
               delete m_windows;
               m_windows = nullptr;
             }
@@ -138,11 +142,11 @@ namespace application {
       });
 
 
-      auto mesh = new textured_mesh_renderable( mesh_program );
-      mesh->load_mesh( mesh_directory + "Bunny.obj" );
-      mesh->load_texture( texture_directory + "TexturedBunny.png" );
-      mesh->set_model_matrix( glm::rotate( gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
-      add_renderable( mesh );
+//      auto mesh = new textured_mesh_renderable( mesh_program );
+//      mesh->load_mesh( mesh_directory + "Bunny.obj" );
+//      mesh->load_texture( texture_directory + "TexturedBunny.png" );
+//      mesh->set_model_matrix( glm::rotate( gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
+//      add_renderable( mesh );
 
 
       const unsigned int angle_divisions = 16;
