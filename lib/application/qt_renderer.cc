@@ -14,9 +14,9 @@ namespace graphics_origin {
     namespace qt {
       renderer::renderer() :
           surface( nullptr ), context( nullptr ),
-          frame_buffer_object{0}, color_textures{0,0}, depth_render_buffer{0}, current_color_texture{0},
+          frame_buffer_objects{ 0, 0 }, color_textures{ 0, 0 }, depth_render_buffer{ 0 },
           gl_camera( nullptr ),
-          size_changed( 0 ), is_running( 1 ), width( 0 ), height( 0 ), samples(0)
+          size_changed( 0 ), is_running( 1 ), width( 0 ), height( 0 ), samples(4)
       {}
 
       renderer::~renderer()
@@ -89,7 +89,7 @@ namespace graphics_origin {
       {
         context->makeCurrent( surface );
 
-        if( !frame_buffer_object )
+        if( !frame_buffer_objects[0] )
           {
             setup_opengl_objects();
           }
@@ -104,31 +104,6 @@ namespace graphics_origin {
             complete_frame_buffer();
           }
 
-//        // initialize the buffers and renderer
-//        if( !render_fbo )
-//          {
-//            auto format = get_format ();
-//            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-////            format.setSamples( 4 );
-//            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-//            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-//            glcheck(glViewport( 0, 0, width, height ));
-//          }
-//        else if( size_changed )
-//          {
-//            size_changed = 0;
-//            delete render_fbo;
-//            delete display_fbo;
-//            delete downsampled_fbo;
-//
-//            auto format = get_format ();
-//            downsampled_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-////            format.setSamples( 4 );
-//            render_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-//            display_fbo = new QOpenGLFramebufferObject( QSize( width, height ), format );
-//            glcheck(glViewport( 0, 0, width, height ));
-//          }
-
         if( !is_running )
           {
             std::unique_lock<std::mutex> l( lock );
@@ -136,17 +111,9 @@ namespace graphics_origin {
           }
 
         render_gl();
+        transfer_to_normal_fbo();
 
-        GLuint display_texture = current_color_texture;
-//        current_color_texture = current_color_texture ? 0 : 1 ;
-        emit texture_ready( color_textures[display_texture], QSize( width, height ) );
-
-
-//        QOpenGLFramebufferObject::blitFramebuffer (
-//            downsampled_fbo, render_fbo,
-//            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
-//            GL_NEAREST);
-
+        emit texture_ready( color_textures[normal], QSize( width, height ) );
       }
 
       void renderer::shut_down()
@@ -163,5 +130,4 @@ namespace graphics_origin {
         surface->deleteLater();
         is_running = 0;
       }
-
 }}}

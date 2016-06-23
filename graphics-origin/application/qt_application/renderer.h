@@ -29,10 +29,8 @@ namespace graphics_origin {
        * The texture used by the geometry node is not filled by the renderer
        * and vsync is *normally* activated for the scene graph.
        *
-       * Also, I am wondering why the original articles used FBO while a
-       * simple render to texture could have worked. Finally, if we cannot
-       * have a vsync'ed render to two textures, there is no use of a threaded
-       * renderer.
+       * If we cannot have a vsync'ed render to two textures, there is no
+       * use of a threaded renderer.
        *
        *
        */
@@ -73,6 +71,7 @@ namespace graphics_origin {
         virtual void do_shut_down() = 0;
 
         void render_gl();
+        void transfer_to_normal_fbo();
 
         void build_textures();
         void build_render_buffers();
@@ -88,10 +87,10 @@ namespace graphics_origin {
         QOffscreenSurface* surface;
         QOpenGLContext* context;
 
-        uint frame_buffer_object;
-        uint color_textures[2];
+        enum { multisampled, normal, number_of_fbos };
+        uint frame_buffer_objects[number_of_fbos];
+        uint color_textures[number_of_fbos];
         uint depth_render_buffer;
-        uint current_color_texture;
 
         /**Note: the camera is not deleted in the destructor. */
         camera* gl_camera;
