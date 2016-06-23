@@ -18,6 +18,12 @@ namespace graphics_origin {
          glcheck(glBindTexture(GL_TEXTURE_2D, color_textures[normal] ));
          glcheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, 0));
          glcheck(glBindTexture(GL_TEXTURE_2D, 0));
+
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+         glcheck(glBindTexture(GL_TEXTURE_2D, color_textures[normalbis] ));
+         glcheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, 0));
+         glcheck(glBindTexture(GL_TEXTURE_2D, 0));
+# endif
       }
 
       void renderer::build_render_buffers()
@@ -36,18 +42,20 @@ namespace graphics_origin {
       void renderer::complete_frame_buffer()
       {
         glcheck(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_objects[multisampled] ));
-
         glcheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, color_textures[multisampled], 0 ));
         glcheck(glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_render_buffer ));
-
         glcheck(glViewport( 0, 0, width, height ));
         glcheckfbo(frame_buffer_objects[multisampled]);
-        glcheck(glBindFramebuffer(GL_FRAMEBUFFER, 0 ));
 
         glcheck(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_objects[normal] ));
-
         glcheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_textures[normal], 0 ));
         glcheckfbo(frame_buffer_objects[normal]);
+
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+        glcheck(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_objects[normal] ));
+        glcheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_textures[normal], 0 ));
+        glcheckfbo(frame_buffer_objects[normal]);
+# endif
         glcheck(glBindFramebuffer(GL_FRAMEBUFFER, 0 ));
       }
 
@@ -90,17 +98,23 @@ namespace graphics_origin {
         glDepthFunc(GL_LESS);
         glcheck(glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
           do_render();
-          // with glFlush or glFinish, nothing change: we still have tearing and thus no vsync.
-//          glcheck(glFlush());
-//          glFinish();
       }
 
       void renderer::transfer_to_normal_fbo()
       {
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+        glcheck(glBlitNamedFramebuffer(
+           frame_buffer_objects[multisampled], frame_buffer_objects[current_render_texture],
+           0,0,width,height,0,0,width,height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+# else
         glcheck(glBlitNamedFramebuffer(
             frame_buffer_objects[multisampled], frame_buffer_objects[normal],
             0,0,width,height,0,0,width,height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+# endif
         glcheck(glBindFramebuffer( GL_FRAMEBUFFER, 0 ));
+        // with glFlush or glFinish, nothing change: we still have tearing and thus no vsync.
+//          glcheck(glFlush());
+//          glFinish();
       }
     }
   }

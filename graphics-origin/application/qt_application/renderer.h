@@ -20,19 +20,26 @@ namespace graphics_origin {
     namespace qt {
       class window;
 
-      /**
+      /**@brief Render a 3D scene in its own thread.
        *
+       * The design of this renderer kept me busy many days. I really wanted
+       * to have multisampling and vsync, as well as the total control over
+       * my OpenGL 4 context. However, I was never able to achieve vsync.
+       * Also, vsync may not be something we really want to, or can, achieve.
+       * So, instead of continuing to fight with the design of this class,
+       * Qt, the driver and the OS, I let the code like it is now. If you find
+       * an explanation, at the code level, for the vertical tearing that can
+       * happen, please let me know.
        *
-       *
-       *
-       * @note The renderer is not vsync'ed. I do not understand why.
-       * The texture used by the geometry node is not filled by the renderer
-       * and vsync is *normally* activated for the scene graph.
-       *
-       * If we cannot have a vsync'ed render to two textures, there is no
-       * use of a threaded renderer.
-       *
-       *
+       * This renderer will render a surface to a multisampled FBO in its own
+       * thread. Then, this FBO is blitted to a normal FBO and the resulting
+       * texture is sent to a texture node to be rendered by the Qt Quick
+       * Scene Graph. In case you worry that the normal texture can be read
+       * by the scene graph and written to by the renderer at the same time
+       * (meaning that the renderer takes less time to render a 3D scene than
+       * the scene graph to render the interface), you can compile with the
+       * flag GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES. In that case, the
+       * renderer will blit alternatively to one of the two normal FBOS.
        */
       class renderer :
           public QObject {
@@ -41,20 +48,15 @@ namespace graphics_origin {
         renderer();
         virtual ~renderer();
 
-        void add( renderable* r );
-        void set_size( const real& width, const real& height );
-        void pause();
-        void resume();
-
-        const gpu_mat4& get_view_matrix() const;
-        void set_view_matrix( const gpu_mat4& new_view_matrix );
-
-        const gpu_mat4& get_projection_matrix() const;
-
+        /**@name Useful values for shader program uniforms.
+         * Those methods can be used to fill the values of shader program uniforms.
+         * They are accessible thanks to the field \c renderer inside the renderable
+         * class.
+         * @{*/
         gpu_vec2 get_window_dimensions() const;
-
-        void set_samples( int samples );
-        int get_samples() const;
+        const gpu_mat4& get_view_matrix() const;
+        const gpu_mat4& get_projection_matrix() const;
+        ///@}
 
       public slots:
         void render_next();
@@ -66,28 +68,64 @@ namespace graphics_origin {
       protected:
         friend window;
 
+        /**@name Interface for the window class
+         * Only the window lass will call those methods. You do not have
+         * (should) call them yourself.
+         * @{*/
+        void add( renderable* r );
+        void set_surface_dimensions( const real& width, const real& height );
+        void pause();
+        void resume();
+        void set_samples( int samples );
+        int get_samples() const;
+        ///@}
+
+        /**@name Renderer's interface
+         * You have to implement those virtual functions to do the actual
+         * work of a renderer.
+         * @{*/
         virtual void do_add( renderable* r ) = 0;
         virtual void do_render() = 0;
         virtual void do_shut_down() = 0;
+        ///@}
 
         void render_gl();
         void transfer_to_normal_fbo();
 
+        /**@name OpenGL setup/build
+         * Create and setup OpenGL objects. This is done by different methods
+         * because it is impossible to have Qt and OpenGL raw calls in the same
+         * source code (due to the includes).
+         * @{
+         */
         void build_textures();
         void build_render_buffers();
         void build_frame_buffer();
         void complete_frame_buffer();
         void setup_opengl_objects();
+        ///@}
 
+        /**@name OpenGL destruction
+         * Destroy OpenGL objects. This is done by different methods
+         * because it is impossible to have Qt and OpenGL raw calls in the same
+         * source code (due to the includes).
+         * @{
+         */
         void destroy_textures();
         void destroy_render_buffers();
         void destroy_frame_buffer();
         void destroy_opengl_objects();
+        ///@}
 
         QOffscreenSurface* surface;
         QOpenGLContext* context;
 
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+        enum { multisampled, normal, normalbis, number_of_fbos };
+        uint current_render_texture;
+# else
         enum { multisampled, normal, number_of_fbos };
+# endif
         uint frame_buffer_objects[number_of_fbos];
         uint color_textures[number_of_fbos];
         uint depth_render_buffer;
@@ -98,8 +136,8 @@ namespace graphics_origin {
         std::condition_variable cv;
         std::atomic_char size_changed;
         unsigned char is_running;
-        unsigned int width;
-        unsigned int height;
+        uint width;
+        uint height;
         int samples;
       };
     }

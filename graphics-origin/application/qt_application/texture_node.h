@@ -11,6 +11,11 @@ class QSGTexture;
 namespace graphics_origin {
   namespace application {
     namespace qt {
+      /**@brief Display our 3D scene thanks to a texture.
+       *
+       * This class is used to display a texture, produced by an offscreen
+       * rendering, for a window into the Qt application. It is very unlikely
+       * you will have to touch this class. */
       class texture_node
         : public QObject,
           public QSGSimpleTextureNode {

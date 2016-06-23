@@ -14,7 +14,13 @@ namespace graphics_origin {
     namespace qt {
       renderer::renderer() :
           surface( nullptr ), context( nullptr ),
-          frame_buffer_objects{ 0, 0 }, color_textures{ 0, 0 }, depth_render_buffer{ 0 },
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+          current_render_texture{ normal },
+          frame_buffer_objects{ 0, 0, 0 }, color_textures{ 0, 0, 0 },
+# else
+          frame_buffer_objects{ 0, 0 }, color_textures{ 0, 0 },
+# endif
+          depth_render_buffer{ 0 },
           gl_camera( nullptr ),
           size_changed( 0 ), is_running( 1 ), width( 0 ), height( 0 ), samples(4)
       {}
@@ -65,10 +71,6 @@ namespace graphics_origin {
       {
         return gl_camera->get_view_matrix();
       }
-      void renderer::set_view_matrix( const gpu_mat4& new_view_matrix )
-      {
-        gl_camera->set_view_matrix( new_view_matrix );
-      }
 
       const gpu_mat4& renderer::get_projection_matrix() const
       {
@@ -79,9 +81,6 @@ namespace graphics_origin {
       {
         return gpu_vec2{ width, height };
       }
-
-
-
 
       // when the texture node is using the texture of the display FBO,
       // it sends a queued signal that execute the following function
@@ -112,8 +111,12 @@ namespace graphics_origin {
 
         render_gl();
         transfer_to_normal_fbo();
-
+# ifdef GO_QT_RENDERER_USE_DOUBLE_NORMAL_TEXTURES
+        emit texture_ready( color_textures[current_render_texture], QSize( width, height ) );
+        current_render_texture = ( current_render_texture == normal ? normalbis : normal );
+# else
         emit texture_ready( color_textures[normal], QSize( width, height ) );
+# endif
       }
 
       void renderer::shut_down()
