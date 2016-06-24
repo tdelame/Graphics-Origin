@@ -1,6 +1,4 @@
-/*  Created on: May 26, 2016
- *      Author: T. Delame (tdelame@gmail.com) */
-# include "island.h"
+# include "map.h"
 # include "../../../graphics-origin/application/gl_helper.h"
 # include "../../../graphics-origin/application/camera.h"
 # include "../../../graphics-origin/application/renderer.h"
@@ -11,9 +9,9 @@ namespace graphics_origin
 {
   namespace application
   {
-    struct island_map_texture_overflow : public std::runtime_error
+    struct map_texture_overflow : public std::runtime_error
     {
-      island_map_texture_overflow(
+      map_texture_overflow(
         const std::string& file,
         size_t line ) :
           std::runtime_error(
@@ -22,9 +20,9 @@ namespace graphics_origin
       {
       }
     };
-    struct island_map_positions_overflow : public std::runtime_error
+    struct map_positions_overflow : public std::runtime_error
     {
-      island_map_positions_overflow(
+      map_positions_overflow(
         const std::string& file,
         size_t line ) :
           std::runtime_error(
@@ -33,9 +31,9 @@ namespace graphics_origin
       {
       }
     };
-    struct island_map_indices_overflow : public std::runtime_error
+    struct map_indices_overflow : public std::runtime_error
     {
-      island_map_indices_overflow(
+      map_indices_overflow(
         const std::string& file,
         size_t line ) :
           std::runtime_error(
@@ -45,7 +43,7 @@ namespace graphics_origin
       }
     };
 
-    island::island()
+    simple_terrain_map::simple_terrain_map()
       : m_map_radius{ 5000 },
         m_resolution{ 1 }, m_maximum_elevation{300},
         m_texture_size{ 2048 }, m_number_of_patches{0},
@@ -55,14 +53,14 @@ namespace graphics_origin
     }
 
     void
-    island::set_resolution( gpu_real resolution_in_m )
+    simple_terrain_map::set_resolution( gpu_real resolution_in_m )
     {
       m_resolution = resolution_in_m;
       set_dirty();
     }
 
     void
-    island::set_heightmap(
+    simple_terrain_map::set_heightmap(
       noise::module::Module& land_generator,
       unsigned int texture_size )
     {
@@ -112,12 +110,12 @@ namespace graphics_origin
         }
       catch( std::bad_alloc& e )
         {
-          throw island_map_texture_overflow( __FILE__, __LINE__ );
+          throw map_texture_overflow( __FILE__, __LINE__ );
         }
     }
 
     void
-    island::update_gpu_data()
+    simple_terrain_map::update_gpu_data()
     {
       if( !m_vao )
         {
@@ -190,7 +188,7 @@ namespace graphics_origin
           {
             glcheck(glBindVertexArray( 0 ));
             remove_gpu_data();
-            throw island_map_positions_overflow( __FILE__, __LINE__ );
+            throw map_positions_overflow( __FILE__, __LINE__ );
           }
 
         try
@@ -217,7 +215,7 @@ namespace graphics_origin
           {
             glcheck(glBindVertexArray( 0 ));
             remove_gpu_data();
-            throw island_map_indices_overflow( __FILE__, __LINE__ );
+            throw map_indices_overflow( __FILE__, __LINE__ );
           }
 
 
@@ -244,7 +242,7 @@ namespace graphics_origin
     }
 
     void
-    island::remove_gpu_data()
+    simple_terrain_map::remove_gpu_data()
     {
       glcheck(glDeleteVertexArrays( 1, &m_vao ));
       glcheck(glDeleteBuffers( number_of_vbos, m_vbos ));
@@ -252,7 +250,7 @@ namespace graphics_origin
     }
 
     void
-    island::do_render()
+    simple_terrain_map::do_render()
     {
       glcheck(glUniform2fv( program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( renderer_ptr->get_window_dimensions())));
       glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix())));
@@ -270,7 +268,7 @@ namespace graphics_origin
     }
 
     void
-    island::set_radius(
+    simple_terrain_map::set_radius(
       gpu_real map_radius_in_m )
     {
       if( map_radius_in_m > 0 )
@@ -278,7 +276,7 @@ namespace graphics_origin
     }
 
     void
-    island::set_maximum_elevation(
+    simple_terrain_map::set_maximum_elevation(
       gpu_real maximum_elevation_in_m )
     {
       if( maximum_elevation_in_m > 0 )

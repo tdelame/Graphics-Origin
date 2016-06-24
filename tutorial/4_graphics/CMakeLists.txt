@@ -121,14 +121,14 @@ if( LIBNOISE_FOUND )
   include_directories( ${LIBNOISE_INCLUDE_DIR} )
 
   add_graphics_tutorial(
-    NAME island_map
+    NAME simple_terrain_generation
     SHADERS
       ${GO_SHADERS_DIR}/flat.vert ${GO_SHADERS_DIR}/flat.frag
     LIBRARIES
       ${GO_APPLICATION_LIBRARIES} ${GO_CGAL_LIBRARIES} ${LIBNOISE_LIBRARIES}
   )
 else()
-  message( STATUS "4_graphics/island_map not built because LibNoise was not found")
+  message( STATUS "4_graphics/simple_terrain_generation not built because LibNoise was not found")
 endif()
   
   

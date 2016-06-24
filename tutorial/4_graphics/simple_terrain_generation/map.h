@@ -1,7 +1,5 @@
-/*  Created on: May 25, 2016
- *      Author: T. Delame (tdelame@gmail.com) */
-# ifndef ISLAND_H_
-# define ISLAND_H_
+# ifndef GRAPHICS_ORIGIN_SIMPLE_TERRAIN_MAP_H_
+# define GRAPHICS_ORIGIN_SIMPLE_TERRAIN_MAP_H_
 # include "../../../graphics-origin/geometry/vec.h"
 # include "../../../graphics-origin/application/renderable.h"
 # include "../../../graphics-origin/application/shader_program.h"
@@ -12,18 +10,18 @@ namespace graphics_origin
 {
   namespace application
   {
-    /**@brief A class to render in 3D an island map
+    /**@brief A class to render in 3D a simple terrain map
      *
      * This class uses a noise module to generate an height map
-     * for an island and render it in 3D. The map is a square, centered
+     * for a simple terrain and render it in 3D. The map is a square, centered
      * at the origin, with a size equals to two time a radius R.
      */
-    class island : public renderable
+    class simple_terrain_map : public renderable
     {
     public:
-      island();
+      simple_terrain_map();
 
-      ~island()
+      ~simple_terrain_map()
       {
         remove_gpu_data();
       }
