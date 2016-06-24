@@ -1,18 +1,13 @@
-/* Created on: Apr 21, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
-# ifndef PROJECT_MESHES_RENDERABLE_H_
-# define PROJECT_MESHES_RENDERABLE_H_
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../tools/tight_buffer_manager.h"
+# ifndef GRAPHICS_ORIGIN_MESHES_RENDERABLE_H_
+# define GRAPHICS_ORIGIN_MESHES_RENDERABLE_H_
+# include "../renderable.h"
+# include "../../tools/tight_buffer_manager.h"
 
 namespace graphics_origin {
   namespace geometry {
     class mesh;
   }
   namespace application {
-
     class GO_API meshes_renderable:
         public renderable {
       enum { position_normal_vbo, indices_vbo, number_of_buffers };
@@ -60,6 +55,5 @@ namespace graphics_origin {
 
       mesh_buffer m_meshes;
     };
-
 }}
 # endif 

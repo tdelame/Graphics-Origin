@@ -3,7 +3,7 @@
  */
 # include "transparent_windows_renderable.h"
 # include "../../../graphics-origin/application/camera.h"
-# include "../../../graphics-origin/application/gl_window_renderer.h"
+# include "../../../graphics-origin/application/renderer.h"
 # include "../../../graphics-origin/application/gl_helper.h"
 # include <GL/glew.h>
 
@@ -40,8 +40,8 @@ namespace graphics_origin {
     : depth{0}
   {}
 
-  transparent_windows_renderable::storage_depth_computation::storage_depth_computation( const camera* camera )
-    : eye{ camera->get_position() }, forward{ camera->get_forward() }
+  transparent_windows_renderable::storage_depth_computation::storage_depth_computation( const gpu_mat4& view )
+    : eye{ -gpu_vec3( view[3] ) * gpu_mat3( view ) }, forward{ -view[0][2], -view[1][2], -view[2][2] }
   {}
 
   void transparent_windows_renderable::storage_depth_computation::operator()( storage& s ) const
@@ -60,8 +60,8 @@ namespace graphics_origin {
     : m_windows{ expected_number_of_windows },
       m_vao{0}, m_vbos{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
   transparent_windows_renderable::~transparent_windows_renderable()
   {
@@ -93,7 +93,7 @@ namespace graphics_origin {
   void transparent_windows_renderable::sort()
   {
     // first compute the depth for all windows (done in parallel by the tight buffer manager)
-    m_windows.process( storage_depth_computation{m_renderer->get_camera()} );
+    m_windows.process( storage_depth_computation{renderer_ptr->get_view_matrix()} );
     // then sort windows according to this depth (done in parallel by the tight buffer manager)
     m_windows.sort( storage_depth_ordering{} );
     // now update the data on the GPU.
@@ -109,10 +109,10 @@ namespace graphics_origin {
           glcheck(glGenBuffers( number_of_vbos, m_vbos ));
         }
 
-      int center_location = m_program->get_attribute_location( "center" );
-      int v1_location = m_program->get_attribute_location( "v1" );
-      int v2_location = m_program->get_attribute_location( "v2" );
-      int color_location = m_program->get_attribute_location( "color" );
+      int center_location = program->get_attribute_location( "center" );
+      int v1_location = program->get_attribute_location( "v1" );
+      int v2_location = program->get_attribute_location( "v2" );
+      int color_location = program->get_attribute_location( "color" );
 
       glcheck(glBindVertexArray( m_vao ));
         glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ windows_vbo_id] ));
@@ -152,8 +152,8 @@ namespace graphics_origin {
       // their color with opaque objects as well as with already drawn windows. Note that
       // this function update the data on the gpu so we do not have to care about it here.
       sort();
-      gpu_mat4 vp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix();
-      glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
+      gpu_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
+      glcheck(glUniformMatrix4fv( program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
       glcheck(glBindVertexArray( m_vao ));
       glcheck(glDrawArrays( GL_POINTS, 0, m_windows.get_size()));
       glcheck(glBindVertexArray( 0 ) );

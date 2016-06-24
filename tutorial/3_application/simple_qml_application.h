@@ -4,7 +4,7 @@
 
 # ifndef TUTORIAL_SIMPLE_QML_APPLICATION_H_
 # define TUTORIAL_SIMPLE_QML_APPLICATION_H_
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderer.h"
 # include <QtQuick/QQuickView>
 
 namespace graphics_origin { namespace application {

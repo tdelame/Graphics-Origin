@@ -1,12 +1,7 @@
-/*  Created on: Mar 16, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-
 # ifndef GRAPHICS_ORIGIN_MESH_RENDERABLE_H_
 # define GRAPHICS_ORIGIN_MESH_RENDERABLE_H_
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../../graphics-origin/geometry/mesh.h"
+# include "../renderable.h"
+# include "../../geometry/mesh.h"
 namespace graphics_origin {
   namespace application {
     class GO_API mesh_renderable

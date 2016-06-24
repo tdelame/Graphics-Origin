@@ -2,7 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com) */
 # include "window_frames_renderable.h"
 # include "../../graphics-origin/application/gl_helper.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/tools/log.h"
 
 # include <GL/glew.h>
@@ -46,8 +46,8 @@ namespace graphics_origin {
       size_t expected_number_of_frames ) :
           m_frames( expected_number_of_frames ), m_vao{ 0 }, m_vbos{ 0 }
     {
-      m_model = gpu_mat4(1.0);
-      m_program = program;
+      model = gpu_mat4(1.0);
+      this->program = program;
     }
 
     window_frames_renderable::~window_frames_renderable()
@@ -80,11 +80,11 @@ namespace graphics_origin {
           glcheck(glGenVertexArrays( 1, &m_vao ));
           glcheck(glGenBuffers( number_of_vbos, m_vbos ));
         }
-      int center_location = m_program->get_attribute_location( "center" );
-      int v1_location = m_program->get_attribute_location( "v1" );
-      int v2_location = m_program->get_attribute_location( "v2" );
-      int size_location = m_program->get_attribute_location( "size" );
-      int depth_location = m_program->get_attribute_location( "depth" );
+      int center_location = program->get_attribute_location( "center" );
+      int v1_location = program->get_attribute_location( "v1" );
+      int v2_location = program->get_attribute_location( "v2" );
+      int size_location = program->get_attribute_location( "size" );
+      int depth_location = program->get_attribute_location( "depth" );
 
       glcheck(glBindVertexArray( m_vao ));
         glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ attributes_vbo_id ] ));
@@ -125,8 +125,8 @@ namespace graphics_origin {
 
     void window_frames_renderable::do_render()
     {
-      gpu_mat4 vp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix();
-      glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
+      gpu_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
+      glcheck(glUniformMatrix4fv( program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
       glcheck(glBindVertexArray( m_vao ));
       glcheck(glDrawArrays( GL_POINTS, 0, m_frames.get_size()));
       glcheck(glBindVertexArray( 0 ) );

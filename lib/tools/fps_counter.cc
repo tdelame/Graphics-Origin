@@ -1,7 +1,4 @@
-/* Created on: Feb 25, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
-# include <graphics-origin/tools/fps_counter.h>
+# include "../../graphics-origin/tools/fps_counter.h"
 # include <omp.h>
 
 BEGIN_GO_NAMESPACE namespace tools {

@@ -1,21 +1,13 @@
-/* Created on: Mar 17, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef GRAPHICS_ORIGIN_POINTS_RENDERABLE_H_
 # define GRAPHICS_ORIGIN_POINTS_RENDERABLE_H_
-
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../tools/tight_buffer_manager.h"
+# include "../renderable.h"
+# include "../../tools/tight_buffer_manager.h"
 
 namespace graphics_origin {
-
   namespace application {
-
     class GO_API points_renderable
       : public renderable {
     public:
-
       struct storage {
         gpu_vec3 center;
         gpu_vec3 color;
@@ -31,7 +23,6 @@ namespace graphics_origin {
           uint32_t,
           22 > points_buffer;
     public:
-
       points_renderable(
           shader_program_ptr program,
           size_t expected_number_of_points = 0);

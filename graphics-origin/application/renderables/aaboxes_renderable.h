@@ -1,13 +1,8 @@
-/*  Created on: Feb 20, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-
 # ifndef GRAPHICS_ORIGIN_AABOX_RENDERABLES_H_
 # define GRAPHICS_ORIGIN_AABOX_RENDERABLES_H_
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../tools/tight_buffer_manager.h"
-# include "../geometry/box.h"
+# include "../renderable.h"
+# include "../../tools/tight_buffer_manager.h"
+# include "../../geometry/box.h"
 
 namespace graphics_origin {
   namespace geometry {
@@ -51,7 +46,6 @@ namespace graphics_origin {
 
     aaboxes_renderable*
     aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::bvh<geometry::aabox>& bvh );
-
   }
 }
 # endif

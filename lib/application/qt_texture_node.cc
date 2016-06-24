@@ -1,11 +1,8 @@
-# include "../../graphics-origin/application/qt_application/texture_node.h"
+# include "../../graphics-origin/application/texture_node.h"
 # include "../../graphics-origin/tools/log.h"
-
 # include <QtQuick/QQuickWindow>
 namespace graphics_origin {
   namespace application {
-    namespace qt {
-
   texture_node::texture_node(
       QQuickWindow *window) :
     m_identifier{ 0 }, m_size{ 0, 0 }, m_texture{ nullptr }, m_window{ window }
@@ -59,5 +56,4 @@ namespace graphics_origin {
         emit texture_in_use();
       }
   }
-
-}}}
+}}

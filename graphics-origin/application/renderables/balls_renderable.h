@@ -1,12 +1,8 @@
-/* Created on: Feb 24, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef GRAPHICS_ORIGIN_BALLS_RENDERABLE_H_
 # define GRAPHICS_ORIGIN_BALLS_RENDERABLE_H_
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../tools/tight_buffer_manager.h"
-# include "../geometry/ball.h"
+# include "../renderable.h"
+# include "../../tools/tight_buffer_manager.h"
+# include "../../geometry/ball.h"
 
 namespace graphics_origin {
   namespace application {

@@ -1,21 +1,13 @@
-/* Created on: Mar 17, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef GRAPHICS_ORIGIN_LINES_RENDERABLE_H_
 # define GRAPHICS_ORIGIN_LINES_RENDERABLE_H_
-
-# include "../graphics_origin.h"
-# include "renderable.h"
-# include "../tools/tight_buffer_manager.h"
+# include "../renderable.h"
+# include "../../tools/tight_buffer_manager.h"
 
 namespace graphics_origin {
-
   namespace application {
-
     class GO_API lines_renderable
       : public renderable {
     public:
-
       struct storage {
         gpu_vec3 p1;
         gpu_vec3 color1;

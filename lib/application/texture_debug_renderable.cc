@@ -1,6 +1,6 @@
 /*  Created on: Jun 11, 2016
  *      Author: T. Delame (tdelame@gmail.com) */
-# include "../../graphics-origin/application/texture_debug_renderable.h"
+# include "../../graphics-origin/application/renderables/texture_debug_renderable.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/tools/filesystem.h"
 # include "../../graphics-origin/tools/log.h"
@@ -17,7 +17,7 @@ namespace graphics_origin {
       : m_fib{ nullptr }, m_texture_id{ 0 }, m_next_texture_id{ 0 },
         m_visible{ true }, m_owner{ false }
     {
-      m_program = program;
+      this->program = program;
     }
 
     texture_debug_renderable::~texture_debug_renderable()
@@ -140,7 +140,7 @@ namespace graphics_origin {
     void texture_debug_renderable::do_render()
     {
       glcheck(glBindTexture( GL_TEXTURE_2D, m_texture_id ));
-      glcheck(glUniform1i( m_program->get_uniform_location( "sampler" ), 0 ));
+      glcheck(glUniform1i( program->get_uniform_location( "sampler" ), 0 ));
       glcheck(glDrawArrays( GL_POINTS, 0, 1 ));
     }
   }

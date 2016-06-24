@@ -57,7 +57,7 @@ namespace graphics_origin {
           22 > windows_buffer;
 
       struct storage_depth_computation {
-        storage_depth_computation( const camera* camera );
+        storage_depth_computation( const gpu_mat4& view );
         void operator()( storage& s ) const;
         const gpu_vec3 eye;
         const gpu_vec3 forward;

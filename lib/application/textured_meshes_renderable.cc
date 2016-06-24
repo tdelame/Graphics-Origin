@@ -1,10 +1,7 @@
-/*  Created on: Mar 16, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-# include "../../graphics-origin/application/textured_mesh_renderable.h"
+# include "../../graphics-origin/application/renderables/textured_mesh_renderable.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/camera.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/geometry/mesh.h"
 # include "../../graphics-origin/tools/log.h"
 
@@ -18,8 +15,8 @@ namespace graphics_origin { namespace application {
       shader_program_ptr program )
     : m_fib{ nullptr }, m_vbo{ 0 }, m_vao{ 0 }, m_texture_id{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
 
   void
@@ -80,9 +77,9 @@ namespace graphics_origin { namespace application {
           }
       }
 
-    int position_location = m_program->get_attribute_location( "position" );
-    int  texture_location = m_program->get_attribute_location( "texture"  );
-    int   normal_location = m_program->get_attribute_location( "normal"   );
+    int position_location = program->get_attribute_location( "position" );
+    int  texture_location = program->get_attribute_location( "texture"  );
+    int   normal_location = program->get_attribute_location( "normal"   );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbo[ position_normal_texture_vbo ] ));
@@ -124,18 +121,18 @@ namespace graphics_origin { namespace application {
   void
   textured_mesh_renderable::do_render()
   {
-    shader_program::identifier location = m_program->get_uniform_location( "window_dimensions");
+    shader_program::identifier location = program->get_uniform_location( "window_dimensions");
     if( location != shader_program::null_identifier )
-      glcheck(glUniform2fv( location, 1, glm::value_ptr( m_renderer->get_window_dimensions())));
-    glcheck(glUniform3fv( m_program->get_uniform_location( "light_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position() )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
-    glcheck(glUniformMatrix3fv( m_program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( m_model ) ) ) ) ));
+      glcheck(glUniform2fv( location, 1, glm::value_ptr( renderer_ptr->get_window_dimensions())));
+    glcheck(glUniform3fv( program->get_uniform_location( "light_position"), 1, glm::value_ptr( renderer_ptr->get_camera_position() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( model )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_view_matrix() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix())));
+    glcheck(glUniformMatrix3fv( program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( model ) ) ) ) ));
     glcheck(glBindVertexArray( m_vao ));
 
     glcheck(glBindTexture(GL_TEXTURE_2D, m_texture_id ));
-    glcheck(glUniform1i( m_program->get_uniform_location( "sampler"), 0));
+    glcheck(glUniform1i( program->get_uniform_location( "sampler"), 0));
     glcheck(glDrawArrays( GL_TRIANGLES, 0, mesh.n_faces() * 3 ));
     glcheck(glBindVertexArray( 0 ) );
     glcheck(glBindTexture(GL_TEXTURE_2D, 0 ));

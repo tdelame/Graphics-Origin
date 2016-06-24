@@ -15,14 +15,13 @@ BEGIN_GO_NAMESPACE
 namespace application {
 
   /**
-   * The application will have more than one OpenGL context. There will be at
-   * least one context used and managed by Qt, and one context by GL Window. All
-   * openGL command must be issued when the correct context is bound. We know
-   * for sure the context of a GL Window is bound when the draw function is
-   * called. If we want to change the current context at any time, we could
-   * change it when it is needed by other part of the code and thus create a big
-   * mess. Thus, we should take care than any openGL command is issued only *in*
-   * the draw function of the GL window.
+   * An application can have more than one OpenGL context. Any openGL command
+   * must be issued when the correct context is bound. We know for sure the
+   * right context is bound when the draw function is called. If we want to
+   * change the current context at any time, we could change it when it is
+   * needed by other part of the code and thus create a big mess. Thus, we
+   * should take care than any openGL command is issued only *in* the draw
+   * function of the GL window.
    *
    * This is not particularly constraining, as GL commands are meant to occur
    * during rendering, except for the shader program construction, source
@@ -35,9 +34,12 @@ namespace application {
    * load dynamically sources into a shader program, the filenames has to be
    * stored somewhere and then passed to the constructor of a shader program at
    * rendering. Thus, I chose the first solution: a little sub-optimal but less
-   * constraints.
+   * constraints. Also, you should be aware that binding a shader program is
+   * not free. This is why this operation should be done only a few time by
+   * frame: you are advised to store geometry that will use the same shader
+   * program into the same renderable. This why, you only bind a shader program
+   * once per geometry type.
    */
-
   class GO_API shader_program {
   public:
     typedef int identifier;
@@ -83,7 +85,7 @@ namespace application {
      *
      * \note The shader sources compilation and linking are actually done in
      * this function. Indeed, this function is typically called during the
-     * GL Window rendering (and should be called only during this operation),
+     * GL window rendering (and should be called only during this operation),
      * thus when the correct GL context is bound. This is then a good time
      * to issue all GL commands that we couldn't do during the constructor,
      * the load() and reload() functions.

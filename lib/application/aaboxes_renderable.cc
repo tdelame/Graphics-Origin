@@ -1,8 +1,8 @@
 /*  Created on: Feb 20, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include "../../graphics-origin/application/aaboxes_renderable.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderables/aaboxes_renderable.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/geometry/bvh.h"
 # include "../../graphics-origin/tools/log.h"
@@ -34,8 +34,8 @@ namespace graphics_origin { namespace application {
     : m_boxes{ expected_number_of_boxes },
       m_vao{ 0 }, m_boxes_vbo{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
 
   aaboxes_renderable::boxes_buffer::handle
@@ -65,9 +65,9 @@ namespace graphics_origin { namespace application {
         glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
       }
 
-    int center_location = m_program->get_attribute_location( "center" );
-    int hsides_location = m_program->get_attribute_location( "hsides" );
-    int  color_location = m_program->get_attribute_location( "color"  );
+    int center_location = program->get_attribute_location( "center" );
+    int hsides_location = program->get_attribute_location( "hsides" );
+    int  color_location = program->get_attribute_location( "color"  );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_boxes_vbo ));
@@ -95,8 +95,8 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::do_render()
   {
-    gpu_mat4 mvp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
+    gpu_mat4 mvp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
 
     glcheck(glLineWidth( 2.0 ));
     glcheck(glBindVertexArray( m_vao ));

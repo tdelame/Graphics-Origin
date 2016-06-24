@@ -4,14 +4,14 @@
 # ifndef TUTORIAL_SIMPLE_GL_RENDERER_H_
 # define TURORIAL_SIMPLE_GL_RENDERER_H_
 # include "../../../graphics-origin/application/camera.h"
-# include "../../../graphics-origin/application/gl_window_renderer.h"
+# include "../../../graphics-origin/application/renderer.h"
 # include "../../../graphics-origin/application/renderable.h"
 # include <list>
 
 namespace graphics_origin { namespace application {
 
   class simple_gl_renderer
-    : public graphics_origin::application::gl_window_renderer {
+    : public graphics_origin::application::renderer {
   public:
     ~simple_gl_renderer(){}
 
@@ -23,7 +23,7 @@ namespace graphics_origin { namespace application {
 
     void do_render() override
     {
-      m_camera->update();
+      gl_camera->update();
       for( auto& r : m_renderables )
         {
           r->get_shader_program()->bind();

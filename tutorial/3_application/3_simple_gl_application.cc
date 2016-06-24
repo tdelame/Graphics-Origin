@@ -2,11 +2,11 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "../../graphics-origin/application/gl_helper.h"
-# include "../../graphics-origin/application/gl_window.h"
+# include "../../graphics-origin/application/window.h"
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
-# include "../../graphics-origin/application/aaboxes_renderable.h"
-# include "../../graphics-origin/application/mesh_renderable.h"
+# include "../../graphics-origin/application/renderables/aaboxes_renderable.h"
+# include "../../graphics-origin/application/renderables/mesh_renderable.h"
 # include "../../graphics-origin/tools/random.h"
 # include "../../graphics-origin/tools/resources.h"
 # include "../../graphics-origin/geometry/bvh.h"
@@ -36,10 +36,10 @@ namespace application {
    * window.
    */
   class simple_gl_window
-    : public gl_window {
+    : public window {
   public:
     simple_gl_window( QQuickItem* parent = nullptr )
-      : gl_window( parent )
+      : window( parent )
     {
       /**
        * Bind an implementation of a gl_window_renderer to the window. This

@@ -1,10 +1,7 @@
-/*  Created on: Jun 10, 2016
- *      Author: T. Delame (tdelame@gmail.com) */
 # ifndef TEXTURED_MESH_RENDERABLE_H_
 # define TEXTURED_MESH_RENDERABLE_H_
-# include "../graphics_origin.h"
-# include "../geometry/mesh.h"
-# include "renderable.h"
+# include "../../geometry/mesh.h"
+# include "../renderable.h"
 
 class FIBITMAP;
 

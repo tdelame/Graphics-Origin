@@ -2,7 +2,7 @@
  *     Author: T.Delame (tdelame@gmail.com)
  */
 # include "../../graphics-origin/application/gl_helper.h"
-# include "../../graphics-origin/application/gl_window.h"
+# include "../../graphics-origin/application/window.h"
 # include "../../graphics-origin/application/renderable.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include "../../graphics-origin/tools/resources.h"
@@ -205,10 +205,10 @@ namespace graphics_origin {
     };
 
     class simple_gl_window
-      : public gl_window {
+      : public window {
     public:
       simple_gl_window( QQuickItem* parent = nullptr )
-        : gl_window{ parent }
+        : window{ parent }
       {
         initialize_renderer( new simple_gl_renderer );
         std::string shader_directory = tools::get_path_manager().get_resource_directory( "shaders" );

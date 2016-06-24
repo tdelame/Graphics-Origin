@@ -33,7 +33,7 @@ Rectangle {
   Timer {
     interval: 2000; running: true; repeat: true
     onTriggered: {
-      fps.text = "FPS: " + glwindow.get_fps().toFixed(2)
+      fps.text = "ms per frame: " + glwindow.get_ms_per_frame().toFixed(3)
     }
   }
 }

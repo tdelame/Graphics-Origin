@@ -1,11 +1,7 @@
-/*  Created on: Jun 11, 2016
- *      Author: T. Delame (tdelame@gmail.com) */
 
-#ifndef TEXTURE_DEBUG_RENDERABLE_H_
-#define TEXTURE_DEBUG_RENDERABLE_H_
-
-# include "../graphics_origin.h"
-# include "renderable.h"
+# ifndef TEXTURE_DEBUG_RENDERABLE_H_
+# define TEXTURE_DEBUG_RENDERABLE_H_
+# include "../renderable.h"
 # include <mutex>
 
 class FIBITMAP;

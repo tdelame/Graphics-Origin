@@ -3,7 +3,7 @@
 # include "island.h"
 # include "../../../graphics-origin/application/gl_helper.h"
 # include "../../../graphics-origin/application/camera.h"
-# include "../../../graphics-origin/application/gl_window_renderer.h"
+# include "../../../graphics-origin/application/renderer.h"
 # include "../../../graphics-origin/tools/log.h"
 # include <GL/glew.h>
 
@@ -51,7 +51,7 @@ namespace graphics_origin
         m_texture_size{ 2048 }, m_number_of_patches{0},
         m_vao{0}, m_vbos{ 0, 0 }, m_texture_id{0}
     {
-      m_model = gpu_mat4(1.0);
+      model = gpu_mat4(1.0);
     }
 
     void
@@ -126,9 +126,9 @@ namespace graphics_origin
           glcheck(glGenBuffers( 1, &m_texture_id ));
         }
 
-      int position_location = m_program->get_attribute_location( "position" );
-      int texcoord_location = m_program->get_attribute_location( "texcoord" );
-      int texture_location = m_program->get_uniform_location( "terrain" );
+      int position_location = program->get_attribute_location( "position" );
+      int texcoord_location = program->get_attribute_location( "texcoord" );
+      int texture_location = program->get_uniform_location( "terrain" );
       int max_tess_levels    = 64; //minimum in the specification
       glcheck(glGetIntegerv( GL_MAX_TESS_GEN_LEVEL, &max_tess_levels));
 
@@ -254,15 +254,15 @@ namespace graphics_origin
     void
     island::do_render()
     {
-      glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
-      glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix())));
-      glcheck(glUniform1f( m_program->get_uniform_location( "lod_factor"), 4.0f ));
-      glcheck(glUniform1f( m_program->get_uniform_location( "maximum_elevation"), m_maximum_elevation ));
-      glcheck(glUniform3fv( m_program->get_uniform_location( "camera_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position())));
+      glcheck(glUniform2fv( program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( renderer_ptr->get_window_dimensions())));
+      glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix())));
+      glcheck(glUniform1f( program->get_uniform_location( "lod_factor"), 4.0f ));
+      glcheck(glUniform1f( program->get_uniform_location( "maximum_elevation"), m_maximum_elevation ));
+      glcheck(glUniform3fv( program->get_uniform_location( "camera_position"), 1, glm::value_ptr( renderer_ptr->get_camera_position())));
       glcheck(glPatchParameteri( GL_PATCH_VERTICES, 4 ));
 
       glcheck(glBindTexture(GL_TEXTURE_2D, m_texture_id ));
-      glcheck(glUniform1i( m_program->get_uniform_location( "terrain"), 0));
+      glcheck(glUniform1i( program->get_uniform_location( "terrain"), 0));
 
       glcheck(glBindVertexArray( m_vao ));
       glcheck(glDrawElements( GL_PATCHES, m_number_of_patches * m_number_of_patches * 4, GL_UNSIGNED_INT, 0 ));

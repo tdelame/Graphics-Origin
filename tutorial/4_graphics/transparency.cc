@@ -21,12 +21,12 @@
 // to write window/draw code
 # include "../../graphics-origin/application/camera.h"
 # include "../../graphics-origin/application/gl_helper.h"
-# include "../../graphics-origin/application/gl_window.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/window.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/application/shader_program.h"
 # include <GL/glew.h>
 // to use renderables in the scene
-# include "../../graphics-origin/application/textured_mesh_renderable.h"
+# include "../../graphics-origin/application/renderables/textured_mesh_renderable.h"
 # include "transparency/window_frames_renderable.h"
 # include "transparency/transparent_windows_renderable.h"
 // utilities
@@ -37,7 +37,7 @@ namespace graphics_origin {
 namespace application {
 
   class transparency_gl_renderer
-    : public graphics_origin::application::gl_window_renderer {
+    : public graphics_origin::application::renderer {
   public:
     ~transparency_gl_renderer(){}
 
@@ -62,7 +62,7 @@ namespace application {
 
     void do_render() override
     {
-      m_camera->update();
+      gl_camera->update();
 
       // render opaque objects, i.e. the central mesh and the window frames.
       for( auto& r : m_renderables )
@@ -108,10 +108,10 @@ namespace application {
   };
 
   class simple_gl_window
-    : public gl_window {
+    : public window {
   public:
     simple_gl_window( QQuickItem* parent = nullptr )
-      : gl_window( parent )
+      : window( parent )
     {
       initialize_renderer( new transparency_gl_renderer );
       std::string texture_directory = tools::get_path_manager().get_resource_directory( "textures" );
