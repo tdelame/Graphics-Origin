@@ -17,4 +17,4 @@ install( TARGETS graphics_origin_tools
   
 install( TARGETS graphics_origin_tools
   CONFIGURATIONS Release
-  DESTINATION lib/release )  
+  DESTINATION lib/release )   
