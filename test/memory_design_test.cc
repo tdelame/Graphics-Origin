@@ -156,9 +156,10 @@ namespace graphics_origin {
       go_delete_array( pint, test_allocator );
 
 
+
       int a = 2;
       int b = 4;
-      tools::assert( __FILE__, __LINE__, " a > b failed").add_variable( "a", a ).add_variable( "b", b );
+//      go_assert( a > b, "a was not less than b ") GO_ASSERT_IMPL_VARS(a,b));
       return 0;
     }
   }
