@@ -1,6 +1,7 @@
 # ifndef GRAPHICS_ORIGIN_MEMORY_H_
 # define GRAPHICS_ORIGIN_MEMORY_H_
 
+# include "./assert.h"
 # include "./log.h"
 /**
  * The design comes from the Molecule Engine, explained by Stefan Reinalter
@@ -99,10 +100,17 @@ namespace graphics_origin {
       }
       inline void check_front( void* ptr ) const
       {
-        if( *(static_cast<uint32_t*>(ptr)) != front_word )
-          {
-            LOG( error, "[MEMORY] front guard");
-          }
+        GO_ASSERT(
+          *(static_cast<uint32_t*>(ptr) == front_word ),
+          "front guard had been overwritten")
+          (ptr);
+      }
+      inline void check_back( void* ptr ) const
+      {
+        GO_ASSERT(
+          *(static_cast<uint32_t*>(ptr) == back_word ),
+          "back guard had been overwritten")
+          (ptr);
       }
     };
 
@@ -113,8 +121,9 @@ namespace graphics_origin {
 
     struct no_memory_tagging_policy {
       inline void tag_allocation( void*, size_t ) const {}
-      inline void tag_deallocation( void* size_t ) const {} //DEADBEEF
+      inline void tag_deallocation( void*, size_t ) const {} //DEADBEEF
     };
+
   }
 }
 

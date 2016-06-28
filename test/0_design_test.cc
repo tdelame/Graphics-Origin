@@ -78,7 +78,7 @@
  */
 
 # include "../graphics-origin/graphics_origin.h"
-# include "../graphics-origin/tools/log.h"
+# include <iostream>
 # include <unordered_map>
 namespace graphics_origin {
 
@@ -114,13 +114,11 @@ namespace graphics_origin {
       resource( uint32_t id ) :
         uid{id}, scope{0}
       {
-        LOG(debug, "a resource [0x" << std::hex <<  uid << "] is created " << this );
       }
 
       resource() :
         uid{0}, scope{0}
       {
-        LOG(debug, "default resource is created " << this );
       }
 
       resource& operator=( resource&& other )
@@ -155,11 +153,10 @@ namespace graphics_origin {
             {
               res.first->second.~resource();
               new((void*)&res.first->second) resource( id/*constructor parameters here*/);
-              LOG( debug, "resource [0x" << std::hex << id << " re")
             }
           catch(...)
             {
-              LOG( warning, "something went wrong in the construction of resource " << filename << ". Using default resource." );
+//              LOG( warning, "something went wrong in the construction of resource " << filename << ". Using default resource." );
               new((void*)&res.first->second) resource( id );
             }
         }
@@ -226,51 +223,41 @@ namespace graphics_origin {
 0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d };
 
-    constexpr uint32_t crc32_recursive( const char* in, const uint32_t crc )
+    constexpr uint32_t crc32_recursive( uint32_t crc, const char* in)
     {
-      return *in ?  crc32_recursive( ++in, crc32_table[ ((*in)^crc) & 0xFF ] ^ (crc >> 8)) : crc;
+      return *in ?  crc32_recursive( crc32_table[ ((*in)^crc) & 0xFF ] ^ (crc >> 8), ++ in) : crc;
     }
   }
 
   constexpr uint32_t crc32( const char* in )
   {
-    return ~detail::crc32_recursive( in, 0xFFFFFFFFu );
+    return ~detail::crc32_recursive( 0xFFFFFFFFu, in );
   }
 
-  void dummy( uint32_t i )
+  uint32_t runtime_crc32( const char* in )
   {
-    uint32_t b = i;
-    LOG( debug, b );
+    uint32_t res = 0xFFFFFFFFu;
+    for( ; *in; ++ in )
+      {
+        res = detail::crc32_table[ ( *in ^ res ) & 0xFF ] ^ (res >> 8 );
+      }
+    return ~res;
   }
-
-
 
   static int execute( int argc, char* argv[] )
   {
     (void)argc;
     (void)argv;
 
-    typedef resource_manager< test_data > test_data_manager;
-    typedef test_data_manager::resource resource;
+    // compile time
+    std::cout << "compile time of string literal = " << std::hex << crc32( "hello" ) << std::endl;
 
-    test_data_manager manager;
-    manager.load( "dummy_file.thing", "dummy" );
-    uint32_t dummy_id = hash_name( "dummy" );
-    resource& res  = manager.get( dummy_id );
-    resource& null = resource::null;
 
-    res.dummy = 1;
-
-    LOG( debug, "res  is null: " << res.is_null() );
-    LOG( debug, "null is null: " << null.is_null() );
-    LOG( debug, "")
-    LOG( debug, "res  dummy: " << res.dummy );
-    LOG( debug, "null dummy: " << null.dummy );
-
-    LOG( debug, "some-id = " << crc32("some-id"));
-
-    dummy( crc32("test_me/man.conf") );
-
+    // runtime
+    std::cout << "runtime of string literal      = " << std::hex << runtime_crc32( "hello" ) << std::endl;
+    std::cout << "runtime of string.c_str()      = " << std::hex << runtime_crc32( std::string("hello").c_str() ) << std::endl;
+    // fixme: why this is different?
+    std::cout << "compile time function on string= " << std::hex << crc32( std::string("hello").c_str() ) << std::endl;
     return 0;
   }
 }
