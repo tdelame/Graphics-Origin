@@ -7,20 +7,27 @@
 namespace graphics_origin {
   namespace tools {
 
-    /**
-     * A very nice idea from Stefan Reinalter
-     * https://blog.molecular-matters.com/2011/07/22/an-improved-assert/
+    /**@brief Custom assertions.
+     *
+     * This comes from a very nice idea of Stefan Reinalter (
+     * https://blog.molecular-matters.com/2011/07/22/an-improved-assert/). Let us
+     * suppose you want to assert that a is smaller than b, where a and b are types
+     * for which the operator<<(std::ostream) is defined. You can then use the
+     * following macro:
+     * \code{.cpp}
+     * GO_ASSERT( a < b, "a is not smaller than b")(a,b)
+     * \endcode
+     *
+     * When the assertion fails, you will see a message with the code location of
+     * the assertion, the message "a is not smaller than b", and two lines with
+     * the values of variables a and b. If the program is attached to a debugger,
+     * you will be able to continue the execution. Otherwise, the program will
+     * stop immediately.
      */
     struct Assert{
-      // maybe I should use std::ostream here
-      Assert( const char* filename, int line_number, const char* format, ... )
+      Assert( const char* filename, int line_number, const char* message )
       {
-        printf( "%s (%i): [ASSERT] ", filename, line_number );
-        va_list args;
-        va_start( args, format );
-        vprintf( format, args );
-        printf("\n");
-        va_end(args);
+        std::cerr << filename << " (" << line_number << ") [ASSERT] " << message << std::endl;
       }
 
       template< typename T >
@@ -31,22 +38,12 @@ namespace graphics_origin {
       }
     };
 
-
-//
-//# define GO_ASSERT_IMPL_VAR(variable) .add_variable(GO_STRINGIZE(variable), variable)
-//# define GO_PP_EXPAND_ARGS_1(op, a1)                 op(a1)
-//# define GO_PP_EXPAND_ARGS_2(op, a1, a2)             op(a1) op(a2)
-//# define GO_PP_EXPAND_ARGS_3(op, a1, a2, a3)         op(a1) op(a2) op(a3)
-//# define GO_PP_EXPAND_ARGS_4(op, a1, a2, a3, a4)     op(a1) op(a2) op(a3) op(a4)
-//# define GO_PP_EXPAND_ARGS_5(op, a1, a2, a3, a4, a5) op(a1) op(a2) op(a3) op(a4) op(a5)
-//# define GO_PP_EXPAND_ARGS(op, ...)  GO_PP_JOIN( GO_PP_EXPAND_ARGS_, GO_PP_NUM_ARGS(__VA_ARGS__)) GO_PP_PASS_ARGS(op, __VA_ARGS__)
-//# define GO_ASSERT_IMPL_VARS(...) GO_PP_EXPAND_ARGS GO_PP_PASS_ARGS(GO_ASSERT_IMPL_VAR, __VA_ARGS__), GO_BREAK)
-//
-//# define go_assert( condition, format ) \
-//  (condition) ? \
-//      (int)1 \
-//    : (graphics_origin::tools::Assert(__FILE__,__LINE__, "Assertion \"" #condition "\" failed: " format) GO_ASSERT_IMPL_VARS
-//
+# define GO_ASSERT_IMPL_VAR(variable) .add_variable(GO_STRINGIZE(variable), variable)
+# define GO_ASSERT_EXPAND_ASSERTION( condition, format ) graphics_origin::tools::Assert(__FILE__,__LINE__,"Assertion \"" #condition "\" failed: " format )
+# define GO_ASSERT_EXPAND_VARIABLES(...) \
+  GO_PP_JOIN(GO_PP_EXPAND_ARGS_,GO_PP_VA_NUM_ARGS(__VA_ARGS__))(GO_ASSERT_IMPL_VAR,__VA_ARGS__), GO_BREAK )
+# define GO_ASSERT( condition, format ) \
+  (condition) ? (void)true : ((void)GO_ASSERT_EXPAND_ASSERTION(condition,format) GO_ASSERT_EXPAND_VARIABLES
   }
 }
 

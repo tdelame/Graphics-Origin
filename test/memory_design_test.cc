@@ -155,11 +155,10 @@ namespace graphics_origin {
 
       go_delete_array( pint, test_allocator );
 
-
-
       int a = 2;
       int b = 4;
-//      go_assert( a > b, "a was not less than b ") GO_ASSERT_IMPL_VARS(a,b));
+      GO_ASSERT( a > b, "a was not greater than b ")(a,b);
+      GO_ASSERT( b < a, "b was not less than a")(a,b);
       return 0;
     }
   }
