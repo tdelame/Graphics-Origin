@@ -17,7 +17,7 @@ namespace graphics_origin {
     alignement_,                                                              \
     __FILE__,                                                                 \
     GO_STRINGIZE(__LINE__),                                                   \
-    __FUNCTION__)) type_
+    __PRETTY_FUNCTION__)) type_
 
 # define go_new(type_,allocator_) go_new_align(type_,alignof(type_),allocator_)
 
@@ -30,7 +30,7 @@ namespace graphics_origin {
       alignment_,                                                             \
       __FILE__,                                                               \
       GO_STRINGIZE(__LINE__),                                                 \
-      __FUNCTION__,                                                           \
+      __PRETTY_FUNCTION__,                                                    \
       std::integral_constant<bool,std::is_pod<type_>::value>() )
 
 # define go_new_array(type_,allocator_) go_new_array_align(type_,alignof(type_),allocator_)
@@ -297,17 +297,19 @@ namespace graphics_origin {
         }
         inline void check_front( void* ptr ) const
         {
+          uint32_t word = *reinterpret_cast<uint32_t*>( ptr );
           GO_ASSERT(
-            *(static_cast<uint32_t*>(ptr)) == front_word,
+            word == front_word,
             "front guard had been overwritten")
-            (ptr);
+            (word,front_word);
         }
         inline void check_back( void* ptr ) const
         {
+          uint32_t word = *reinterpret_cast<uint32_t*>( ptr );
           GO_ASSERT(
-            *(static_cast<uint32_t*>(ptr)) == back_word,
+            word == back_word,
             "back guard had been overwritten")
-            (ptr);
+            (word,back_word);
         }
       };
     }

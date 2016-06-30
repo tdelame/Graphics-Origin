@@ -38,6 +38,12 @@ namespace graphics_origin {
 
       go_delete_array( pfloat, memory_arena );
 
+
+      // write outside of the allocated memory
+      pint = go_new( int, memory_arena );
+      pint[1] = 4;
+      go_delete( pint, memory_arena );
+
       return 0;
     }
   }
