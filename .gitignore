@@ -1,5 +1,6 @@
 graphics-origin/graphics_origin.h
 build/
+doc/html
 # Compiled Object files
 *.slo
 *.lo
