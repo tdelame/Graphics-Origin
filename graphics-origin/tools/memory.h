@@ -20,7 +20,8 @@ namespace graphics_origin {
  *
  * Make an allocation thanks to a memory arena with a specific alignment.
  * \code{.cpp}
- * vec4* ptr = go_new_align( vec4, 4, arena);
+ * vec4* ptr1 = go_new_align( vec4, 4, arena);
+ * vec2* ptr2 = go_new_align( vec2, 4, arena){ 1, 2 }; // with constructor
  * \endcode
  */
 # define go_new_align(type_,alignement_,arena_) new (arena_.allocate(         \
@@ -227,7 +228,8 @@ namespace graphics_origin {
     namespace allocation_policy {
       /**@brief Implements a linear allocator.
        *
-       * A linear allocator cannot free individual allocations. Instead, it
+       * A linear allocator operates on a contiguous memory of fixed size. It
+       * cannot free individual allocations. Instead, it
        * frees them all when calling reset. It can be useful to store all
        * the temporary values computed during a frame for example. At the end
        * of each frame, the allocator can be reset.
