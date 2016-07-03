@@ -32,3 +32,5 @@ endfunction()
 
 go_add_test( NAME memory_design_test )
 go_add_test( NAME 0_design_test )
+
+go_add_test( NAME unit_tests LIBRARIES ${GO_TOOLS_LIBRARIES} ${GO_GEOMETRY_LIBRARIES} ${GO_APPLICATION_LIBRARIES} ${GO_TEST_LIBRARIES} )

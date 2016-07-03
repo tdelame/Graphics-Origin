@@ -187,18 +187,19 @@ namespace graphics_origin {
       {
         thread_guard.enter();
           const size_t original_size = size;
-          const size_t new_size = size + bounds_checking_policy::size_front + bounds_checking_policy::size_back;
-          char* plain_memory = static_cast<char*>( allocator->allocate( new_size, alignment, bounds_checking_policy::size_front));
+          const size_t front_offset = bounds_checking_policy::size_front + allocation_policy::size_front;
+          const size_t new_size = size + front_offset + bounds_checking_policy::size_back;
+          char* plain_memory = static_cast<char*>( allocator->allocate( new_size, alignment, front_offset ));
 
           bounds_checker.guard_front( plain_memory );
-          memory_tagger.tag_allocation( plain_memory + bounds_checking_policy::size_front, original_size );
-          bounds_checker.guard_back( plain_memory + bounds_checking_policy::size_front + original_size );
+          memory_tagger.tag_allocation( plain_memory + front_offset, original_size );
+          bounds_checker.guard_back( plain_memory + front_offset + original_size );
 
           memory_tracker.track( plain_memory, new_size, alignment, file, line, function );
 
         thread_guard.leave();
 
-        return plain_memory + bounds_checking_policy::size_front;
+        return plain_memory + front_offset;
       }
 
       void deallocate( void* ptr )
@@ -225,6 +226,87 @@ namespace graphics_origin {
       memory_tagging_policy memory_tagger;
     };
 
+
+    /**@brief Gather different memory area to use in the allocators.
+     *
+     * A memory area is a memory space that is used to initialize an allocator.
+     * The interface is pretty simple:
+     * - a begin() function that returns a void* pointer to the beginning of the area
+     * - a end() function that returns a void* pointer to past the end of the area
+     * - a destructor that will destroy this area, if needed.
+     */
+    /**@addtogroup memory_area tools::memory_area
+     * @{
+     */
+    namespace memory_area {
+      /**@brief Memory area on stack.
+       *
+       * This class represents a memory area that is located on the stack. As
+       * such, it is faster to access it, but it is limited in size (since
+       * stack is quite small compared to the heap), and this size must be
+       * specified at compile time.
+       */
+      template< size_t number_of_bytes >
+      class on_stack {
+      public:
+        on_stack() :
+          internal_end{ internal + number_of_bytes }
+        {}
+
+        ~on_stack(){}
+
+        inline void* begin()
+        {
+          return internal;
+        }
+
+        inline void* end()
+        {
+          return internal_end;
+        }
+      private:
+        char internal[number_of_bytes];
+        void* internal_end;
+      };
+
+      /**@brief Memory area on heap.
+       *
+       * This class represents a memory area that is located on the heap. Its
+       * size must be specified at runtime, in the constructor. As such, it can
+       * hold much bigger space than the on_stack class.
+       */
+      class on_heap {
+      public:
+        on_heap( size_t number_of_bytes ) :
+          internal{ new char[number_of_bytes] },
+          internal_end{ internal + number_of_bytes }
+        {}
+
+        ~on_heap()
+        {
+          delete[] internal;
+          internal = nullptr;
+          internal_end = nullptr;
+        }
+
+        inline void* begin()
+        {
+          return internal;
+        }
+
+        inline void* end()
+        {
+          return internal_end;
+        }
+
+      private:
+        char* internal;
+        void* internal_end;
+      };
+
+    }
+    /**@}*/
+
     namespace allocation_policy {
       /**@brief Implements a linear allocator.
        *
@@ -249,11 +331,11 @@ namespace graphics_origin {
          *
          * Instantiate a new linear allocator on an area of contiguous memory.
          * This is not the responsibility of this allocator to free this area.
-         * @param area_begin Start of the contiguous memory area
-         * @param area_end Past the end address of the memory area */
-        linear( void* area_begin, void* area_end ) :
-          begin{reinterpret_cast<char*>(area_begin)}, current(begin),
-          end{reinterpret_cast<char*>(area_end)}
+         * @param area A memory area (such as tools::memory_area::on_stack)*/
+        template< class memory_area >
+        linear( memory_area& area ) :
+          begin{reinterpret_cast<char*>(area.begin())}, current(begin),
+          end{reinterpret_cast<char*>(area.end())}
         {}
 
         /**@brief Does nothing.
@@ -293,7 +375,8 @@ namespace graphics_origin {
         {
           /*
            * Here is the layout we want at the end of this function
-           * [...<-offset->| <-size-> ]
+           *     <-------size-------->
+           * [...<-offset->|          ]
            *     ^         ^           ^
            *     |         |           current
            *     |         aligned
@@ -302,7 +385,7 @@ namespace graphics_origin {
           const auto intptr  = reinterpret_cast<uintptr_t>(current + offset);
           const auto aligned = (intptr - 1u + alignment ) & -alignment;
           const auto user_ptr = aligned - offset;
-          current = reinterpret_cast<char*>(aligned) + size;
+          current = reinterpret_cast<char*>(user_ptr) + size;
 
           if( current > end )
             return nullptr;
@@ -340,13 +423,12 @@ namespace graphics_origin {
          *
          * Instantiate a new stack allocator on an area of contiguous memory.
          * This is not the responsibility of this allocator to free this area.
-         * @param area_begin Start of the contiguous memory area
-         * @param area_end Past the end address of the memory area */
-        stack( void* area_begin, void* area_end ) :
-          start{reinterpret_cast<char*>(area_begin)}, current(start),
-          end{reinterpret_cast<char*>(area_end)}
+         * @param area A memory area (such as tools::memory_area::on_stack)*/
+        template< class memory_area >
+        stack( memory_area& area ) :
+          start{reinterpret_cast<char*>(area.begin())}, current(start),
+          end{reinterpret_cast<char*>(area.end())}
         {}
-
         /**@brief Get the size of an allocation.
          *
          * Fetch the size of an allocation, stored 8 bytes before the allocation.
@@ -370,19 +452,22 @@ namespace graphics_origin {
          */
         void* allocate( size_t size, size_t alignment, size_t offset )
         {
-          /*Here is the layout we want at the end of this function:
-           * [..           | size | allocation_offset | <-size-> ]
-           *     ^<--------------offset-------------->^          ^
-           *     user_ptr                             aligned    current
+          /*
+           * Here is the layout we want at the end of this function
+           *     <-------size-------->
+           * [...<-offset->|          ]
+           *     ^         ^           ^
+           *     |         |           current
+           *     |         aligned
+           *     user_ptr
            */
           // The offset to the beginning of the memory area. It will be stored
           // in front of the user pointer, to be restored at deallocation.
           const uint32_t allocation_offset = static_cast<uint32_t>(current - start);
-
-          const uintptr_t intptr = reinterpret_cast<uintptr_t>(current + offset );
+          const auto intptr  = reinterpret_cast<uintptr_t>(current + offset);
           const auto aligned = (intptr - 1u + alignment ) & -alignment;
-          void* user_ptr = reinterpret_cast<void*>(aligned - offset);
-          current = reinterpret_cast<char*>(aligned) + size;
+          const auto user_ptr = aligned - offset;
+          current = reinterpret_cast<char*>(user_ptr) + size;
 
           if( current > end )
             return nullptr;
@@ -390,7 +475,7 @@ namespace graphics_origin {
           reinterpret_cast<uint32_t*>(aligned)[-1] = allocation_offset;
           reinterpret_cast<uint32_t*>(aligned)[-2] = uint32_t(size);
 
-          return user_ptr;
+          return reinterpret_cast<void*>(user_ptr);
         }
 
         /**@brief Free an allocation.
@@ -435,11 +520,11 @@ namespace graphics_origin {
          *
          * Instantiate a new stack allocator on an area of contiguous memory.
          * This is not the responsibility of this allocator to free this area.
-         * @param area_begin Start of the contiguous memory area
-         * @param area_end Past the end address of the memory area */
-        stack_with_lifo_check( void* area_begin, void* area_end ) :
-          start{reinterpret_cast<char*>(area_begin)}, current(start),
-          end{reinterpret_cast<char*>(area_end)}, id{0}
+         * @param area A memory area (such as tools::memory_area::on_stack)*/
+        template< class memory_area >
+        stack_with_lifo_check( memory_area& area ) :
+          start{reinterpret_cast<char*>(area.begin())}, current(start),
+          end{reinterpret_cast<char*>(area.end())}, id{0}
         {}
 
         /**@brief Get the size of an allocation.
@@ -465,10 +550,14 @@ namespace graphics_origin {
          */
         void* allocate( size_t size, size_t alignment, size_t offset )
         {
-          /*Here is the layout we want at the end of this function:
-           * [..           | size | allocation_offset | ID | <-size-> ]
-           *     ^<-----------------offset---------------->^          ^
-           *     user_ptr                             aligned    current
+          /*
+           * Here is the layout we want at the end of this function
+           *     <-------size-------->
+           * [...<-offset->|          ]
+           *     ^         ^           ^
+           *     |         |           current
+           *     |         aligned
+           *     user_ptr
            */
           // The offset to the beginning of the memory area. It will be stored
           // in front of the user pointer, to be restored at deallocation.
@@ -477,7 +566,7 @@ namespace graphics_origin {
           const uintptr_t intptr = reinterpret_cast<uintptr_t>(current + offset );
           const auto aligned = (intptr - 1u + alignment ) & -alignment;
           void* user_ptr = reinterpret_cast<void*>( aligned - offset );
-          current = reinterpret_cast<char*>(aligned) + size;
+          current = reinterpret_cast<char*>(user_ptr) + size;
 
           if( current > end )
             return nullptr;
@@ -527,15 +616,15 @@ namespace graphics_origin {
         static constexpr size_t size_back = size_t{0};
         inline void guard_front( void* ) const {}
         inline void guard_back( void* ) const {}
-        inline void check_front( void* ) const {}
-        inline void check_back( void* ) const {}
+        inline void check_front( const void* ) const {}
+        inline void check_back( const void* ) const {}
       };
 
       struct per_allocation {
-        static constexpr size_t size_front = size_t{4};
-        static constexpr size_t size_back = size_t{4};
         static constexpr uint32_t front_word = uint32_t{0xFEEDFACE};
         static constexpr uint32_t back_word = uint32_t{0x1BADC0DE};
+        static constexpr size_t size_front = sizeof(front_word);
+        static constexpr size_t size_back = sizeof(back_word);
         inline void guard_front( void* ptr ) const
         {
           *(static_cast<uint32_t*>(ptr)) = front_word;
@@ -544,21 +633,21 @@ namespace graphics_origin {
         {
           *(static_cast<uint32_t*>(ptr)) = back_word;
         }
-        inline void check_front( void* ptr ) const
+        inline void check_front( const void* ptr ) const
         {
-          uint32_t word = *reinterpret_cast<uint32_t*>( ptr );
+          uint32_t word = *reinterpret_cast<const uint32_t*>( ptr );
           GO_ASSERT(
             word == front_word,
-            "front guard had been overwritten")
-            (word,front_word);
+            "front guard had been overwritten (is not 0xFEEDFACE)")
+            (word);
         }
-        inline void check_back( void* ptr ) const
+        inline void check_back( const void* ptr ) const
         {
-          uint32_t word = *reinterpret_cast<uint32_t*>( ptr );
+          uint32_t word = *reinterpret_cast<const uint32_t*>( ptr );
           GO_ASSERT(
             word == back_word,
-            "back guard had been overwritten")
-            (word,back_word);
+            "back guard had been overwritten (is not 0x1BADC0DE)")
+            (word);
         }
       };
     }
