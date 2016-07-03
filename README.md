@@ -23,7 +23,7 @@ performance, support and so on), are advised to read about projects such as
 ## Configuration
 The code has been tested on a limited set of platforms, including:
 - GNU/Linux platforms, compiled with gcc 5.2, 5.3 and 6.1
-- Windows 64 bits, with Visual Studio 14
+- ~~Windows 64 bits, with Visual Studio 14~~ Need to port latest modifications
 
 ## Installation
 A documentation about installation will be added soon for both GNU/Linux and 
