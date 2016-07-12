@@ -106,9 +106,9 @@ namespace graphics_origin {
         return suite;
       }
 
-      test_suite* memory_arena_test_suite()
+      test_suite* memory_area_test_suite()
       {
-        test_suite* suite = BOOST_TEST_SUITE("memory arena");
+        test_suite* suite = BOOST_TEST_SUITE("memory area");
         ADD_TO_SUITE( on_stack_test_suite );
         ADD_TO_SUITE( on_heap_test_suite );
         return suite;

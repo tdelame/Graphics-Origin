@@ -5,6 +5,16 @@
 # include "./log.h"
 # include <new>
 
+// virtual_memory namespace
+# ifdef _WIN32
+#  include "WinBase.h"
+# elif __linux__
+#  include <sys/mman.h>
+#  include <unistd.h>
+# else
+#  error "unknown platform"
+# endif
+
 /**@file
  * @brief Memory management: allocating/deallocating memory.
  *
@@ -164,8 +174,163 @@ namespace graphics_origin {
       {
         delete_array( ptr, a, std::integral_constant<bool,std::is_pod<type>::value>());
       }
+
+      inline void* align( void* pointer, size_t alignment )
+      {
+        return reinterpret_cast<void*>((reinterpret_cast<uintptr_t>( pointer ) - 1u + alignment ) & -alignment);
+      }
     }
 
+
+    /**@brief Managing virtual memory.
+     *
+     * Virtual memory is a nice tool that can be used to build efficient
+     * applications. This namespace gather some functions to ease the use
+     * of virtual memory.
+     */
+    /**@addtogroup memory_area tools::virtual_memory
+     * @{
+     */
+    namespace virtual_memory {
+
+      inline size_t get_page_size()
+      {
+# ifdef _WIN32
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        return si.dwPageSize
+# elif __linux__
+        return sysconf(_SC_PAGESIZE);
+# endif
+      }
+
+      /**
+       *
+       *
+       */
+      inline void* allocate_address_space( size_t max_size_in_bytes )
+      {
+# ifdef _WIN32
+        return VirtualAlloc( nullptr, max_size_in_bytes, MEM_RESERVE, PAGE_NOACCESS );
+# elif __linux__
+        void* result = mmap( nullptr, max_size_in_bytes, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0 );
+        msync( result, max_size_in_bytes, MS_SYNC | MS_INVALIDATE );
+        return result;
+# endif
+      }
+
+      /**
+       * Allocate physical memory and map it into the virtual address space.
+       * This operation is also known as committing the memory, hence the name
+       * of the function.
+       */
+      inline void commit_memory( void* start, size_t size )
+      {
+# ifdef _WIN32
+        VirtualAlloc( start, size, MEM_COMMIT, PAGE_READWRITE );
+# elif __linux__
+//        mprotect( start, size, PROT_READ | PROT_READ );
+
+        mmap( start, size, PROT_READ | PROT_WRITE, MAP_FIXED | MAP_SHARED | MAP_ANON, -1, 0 );
+        msync( start, size, MS_SYNC | MS_INVALIDATE );
+//        void * ptr = mmap(addr, size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED|MAP_ANON, -1, 0);
+//         msync(addr, size, MS_SYNC|MS_INVALIDATE);
+//         return ptr;
+# endif
+      }
+
+      /**
+       * Un-map the physical memory and return it to the operating system.
+       */
+      inline void decommit_memory( void* start, size_t size_in_bytes )
+      {
+# ifdef _WIN32
+        VirtualFree( start, size_in_bytes, MEM_DECOMMIT );
+# elif __linux__
+        mmap(start, size_in_bytes, PROT_NONE, MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
+        msync(start, size_in_bytes, MS_SYNC|MS_INVALIDATE);
+# endif
+      }
+
+      inline void free_address_space( void* start, size_t size_in_bytes )
+      {
+# ifdef _WIN32
+        VirtualFree( start, 0, MEM_RELEASE );
+# elif __linux__
+        auto result = munmap( start, size_in_bytes );
+        GO_ASSERT( result >= 0, "freeing physical memory failed" )(result,start,size_in_bytes);
+# endif
+      }
+    }
+
+    /**
+     *
+     * This class is responsible for assembling all the elements of a memory
+     * management system:
+     * - the allocation policy, that performs the allocation and deallocation of
+     * the memory
+     * - the thread policy, to configure the system to be used in a single
+     * thread or in multiple threads
+     * - the bounds checking policy, used to detect an overflow, that is when
+     * something is written outside of the memory space handed to the user
+     * - the memory tracking policy, to store information about where
+     * and when an allocation is made, e.g. to correct memory leaks
+     * - the memory tagging policy, to tag the memory handed to the user
+     * at the allocation and deallocation, to check for uninitialized
+     * memory as well as using memory already freed.
+     *
+     * When an allocation of size s is requested by the user, internally
+     * the allocation will allocate the following memory space:
+     * \code{.cpp}
+     * [ allocation data | bounds checker front | user data | bounds checker back ]
+     *                                           <--- s --->
+     * \endcode
+     *
+     * Some implementations for those elements are already given. However,
+     * you can make your own implementation. Next are the required for each
+     * of the elements.
+     *
+     * For the allocation policy, the implementation is required to have:
+     * - a public constant value named \c size_front that contains the size
+     * in bytes of the allocation data stored in front of the memory handed
+     * to the user
+     * - a function <tt> void allocate( size_t size, size_t alignment, size_t offset) </tt>
+     * to perform an allocation of the requested size, with the user memory aligned with
+     * the requested alignment. The user memory starts at the specified offset, that is
+     * after any data stored there by the allocation policy and the bounds checking policy.
+     *
+     * The thread policy will add critical section to make sure the memory system
+     * can be used in different thread. To do so, an implementation must provide
+     * the following functions:
+     * - <tt> void enter() </tt> to enter in a critical section
+     * - <tt> void leave() </tt> to leave a critical section.
+     *
+     * The bounds checking policy must provide the following elements:
+     * - public constant values names \c size_front and \c size_back containing
+     * respectively the size of the data stored in front and at the back of the
+     * user memory
+     * - a function <tt> void guard_front( void* front_memory ) </tt> to write the
+     * front data (of size \c size_front)
+     * - a function <tt> void guard_back( void* back_memory ) </tt> to write the
+     * back data (of size \c size_back)
+     * - a function <tt> void check_front( void* front_memory ) </tt> to check if
+     * the front data is still the same
+     * - a function <tt> void check_back( void* back_memory ) </tt> to check if
+     * the back data is still the same.
+     *
+     * The memory tracking policy must provide the two following functions:
+     * - <tt> void track( void* allocated_memory, size_t allocation_size, size_t alignment,
+     *  const char* filename, const char* line_number, const char* function_name) </tt>
+     *  to track the origin of an allocation
+     * - <tt> void untrack( void* allocated_memory ) </tt> to forget about an allocation,
+     * after the memory had been deallocated.
+     *
+     * The memory tagging policy with the two following functions:
+     * - <tt> void tag_allocation( void* user_memory, size_t size ) </tt>
+     * to tag the memory part that will be handed to the user after an allocation.
+     * - <tt> void tag_dallocation( void* user_memory, size_t size ) </tt>
+     * to tag the memory part (that was handed to the user) after a deallocation.
+     */
     template<
       class allocation_policy,
       class thread_policy,
@@ -179,46 +344,47 @@ namespace graphics_origin {
       {}
 
       void* allocate(
-          size_t size,
+          size_t size_in_bytes,
           size_t alignment,
           const char* file,
           const char* line,
           const char* function )
       {
         thread_guard.enter();
-          const size_t original_size = size;
-          const size_t front_offset = bounds_checking_policy::size_front + allocation_policy::size_front;
-          const size_t new_size = size + front_offset + bounds_checking_policy::size_back;
-          char* plain_memory = static_cast<char*>( allocator->allocate( new_size, alignment, front_offset ));
+          const size_t allocation_size = size_in_bytes + front_offset + bounds_checking_policy::size_back;
+          char* plain_memory = static_cast<char*>( allocator->allocate( allocation_size, alignment, front_offset ));
+          char* user_memory = plain_memory + front_offset;
 
-          bounds_checker.guard_front( plain_memory );
-          memory_tagger.tag_allocation( plain_memory + front_offset, original_size );
-          bounds_checker.guard_back( plain_memory + front_offset + original_size );
+          bounds_checker.guard_front( plain_memory + allocation_policy::size_front );
+          memory_tagger.tag_allocation( user_memory, size_in_bytes );
+          bounds_checker.guard_back( user_memory + size_in_bytes );
 
-          memory_tracker.track( plain_memory, new_size, alignment, file, line, function );
+          memory_tracker.track( plain_memory, allocation_size, alignment, file, line, function );
 
         thread_guard.leave();
 
-        return plain_memory + front_offset;
+        return user_memory;
       }
 
-      void deallocate( void* ptr )
+      void deallocate( void* user_memory )
       {
         thread_guard.enter();
 
-          char* original_memory = static_cast<char*>( ptr ) - bounds_checking_policy::size_front;
-          const size_t original_size = allocator->get_allocation_size( original_memory );
+          char* plain_memory = static_cast<char*>( user_memory ) - front_offset;
+          const size_t allocation_size = allocator->get_allocation_size( plain_memory );
+          const size_t size_in_bytes = allocation_size - front_offset - bounds_checking_policy::size_back;
 
-          bounds_checker.check_front( original_memory );
-          bounds_checker.check_back( original_memory + original_size - bounds_checking_policy::size_back );
-          memory_tracker.untrack( original_memory );
-          memory_tagger.tag_deallocation( original_memory, original_size );
+          bounds_checker.check_front( plain_memory + allocation_policy::size_front );
+          bounds_checker.check_back( reinterpret_cast<char*>(user_memory) + size_in_bytes );
+          memory_tracker.untrack( plain_memory );
+          memory_tagger.tag_deallocation( user_memory, size_in_bytes );
 
-          allocator->deallocate( original_memory );
+          allocator->deallocate( plain_memory );
         thread_guard.leave();
       }
 
     private:
+      static constexpr size_t front_offset = bounds_checking_policy::size_front + allocation_policy::size_front;
       allocation_policy* allocator;
       thread_policy thread_guard;
       bounds_checking_policy bounds_checker;
@@ -363,7 +529,7 @@ namespace graphics_origin {
          * @return Size of the object allocated to this address. */
         inline size_t get_allocation_size( void* allocation ) const
         {
-          return reinterpret_cast<uint32_t*>(allocation)[-1];
+          return reinterpret_cast<uint32_t*>(allocation)[0];
         }
 
         /**@brief Allocate a new bunch of memory.
@@ -382,16 +548,15 @@ namespace graphics_origin {
            *     |         aligned
            *     user_ptr
            */
-          const auto intptr  = reinterpret_cast<uintptr_t>(current + offset);
-          const auto aligned = (intptr - 1u + alignment ) & -alignment;
-          const auto user_ptr = aligned - offset;
-          current = reinterpret_cast<char*>(user_ptr) + size;
+          char* aligned = (char*)detail::align( current + offset, alignment );
+          char* user_ptr = aligned - offset;
+          current = user_ptr + size;
 
           if( current > end )
             return nullptr;
 
           // write the size just before the aligned allocation
-          reinterpret_cast<uint32_t*>(aligned)[-1] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[0] = uint32_t(size);
 
           return reinterpret_cast<void*>(user_ptr);
         }
@@ -431,13 +596,13 @@ namespace graphics_origin {
         {}
         /**@brief Get the size of an allocation.
          *
-         * Fetch the size of an allocation, stored 8 bytes before the allocation.
+         * Fetch the size of an allocation, stored at the first 4 bytes of the allocation.
          * @param allocation A pointer to an allocation returned by allocate()
          * @return The size of the allocation.
          */
         inline size_t get_allocation_size( void* allocation ) const
         {
-          return reinterpret_cast<uint32_t*>(allocation)[-2];
+          return reinterpret_cast<uint32_t*>(allocation)[0];
         }
 
         /**@brief Allocate some memory.
@@ -464,16 +629,15 @@ namespace graphics_origin {
           // The offset to the beginning of the memory area. It will be stored
           // in front of the user pointer, to be restored at deallocation.
           const uint32_t allocation_offset = static_cast<uint32_t>(current - start);
-          const auto intptr  = reinterpret_cast<uintptr_t>(current + offset);
-          const auto aligned = (intptr - 1u + alignment ) & -alignment;
-          const auto user_ptr = aligned - offset;
-          current = reinterpret_cast<char*>(user_ptr) + size;
+          char* aligned = (char*)detail::align( current + offset, alignment );
+          char* user_ptr = aligned - offset;
+          current = user_ptr + size;
 
           if( current > end )
             return nullptr;
 
-          reinterpret_cast<uint32_t*>(aligned)[-1] = allocation_offset;
-          reinterpret_cast<uint32_t*>(aligned)[-2] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[0] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[1] = allocation_offset;
 
           return reinterpret_cast<void*>(user_ptr);
         }
@@ -488,7 +652,7 @@ namespace graphics_origin {
          */
         void deallocate( void* allocation )
         {
-          current = start + reinterpret_cast<uint32_t*>(allocation)[-1];
+          current = start + reinterpret_cast<uint32_t*>(allocation)[1];
         }
 
       private:
@@ -529,13 +693,13 @@ namespace graphics_origin {
 
         /**@brief Get the size of an allocation.
          *
-         * Fetch the size of an allocation, stored 12 bytes before the allocation.
+         * Fetch the size of an allocation, stored at the first 4 bytes of the allocation.
          * @param allocation A pointer to an allocation returned by allocate()
          * @return The size of the allocation.
          */
         inline size_t get_allocation_size( void* allocation ) const
         {
-          return reinterpret_cast<uint32_t*>(allocation)[-3];
+          return reinterpret_cast<uint32_t*>(allocation)[0];
         }
 
         /**@brief Allocate some memory.
@@ -562,20 +726,17 @@ namespace graphics_origin {
           // The offset to the beginning of the memory area. It will be stored
           // in front of the user pointer, to be restored at deallocation.
           const uint32_t allocation_offset = static_cast<uint32_t>(current - start);
-
-          const uintptr_t intptr = reinterpret_cast<uintptr_t>(current + offset );
-          const auto aligned = (intptr - 1u + alignment ) & -alignment;
-          void* user_ptr = reinterpret_cast<void*>( aligned - offset );
-          current = reinterpret_cast<char*>(user_ptr) + size;
+          char* aligned = (char*)detail::align( current + offset, alignment );
+          char* user_ptr = aligned - offset;
+          current = user_ptr + size;
 
           if( current > end )
             return nullptr;
 
-          uint32_t* data = reinterpret_cast<uint32_t*>(aligned);
           ++id;
-          data[-1] = id;
-          data[-2] = allocation_offset;
-          data[-3] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[0] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[1] = id;
+          reinterpret_cast<uint32_t*>(user_ptr)[2] = allocation_offset;
 
           return user_ptr;
         }
@@ -590,8 +751,8 @@ namespace graphics_origin {
         void deallocate( void* allocation )
         {
           uint32_t* data = reinterpret_cast<uint32_t*>(allocation);
-          GO_ASSERT( data[-1] == id, "you forgot to free some memory before this one")(data,data[-1],id);
-          current = start + data[-2];
+          GO_ASSERT( data[2] == id, "you forgot to free some memory before this one")(data,data[-1],id);
+          current = start + data[1];
           --id;
         }
 
@@ -600,6 +761,94 @@ namespace graphics_origin {
         char* current;
         char* end;
         uint32_t id;
+      };
+
+
+      class growing_stack {
+      public:
+
+        static constexpr size_t size_front = sizeof(uint32_t) + sizeof(uint32_t);
+
+        growing_stack( uint32_t max_size_in_bytes, uint32_t grow_size_in_bytes )
+          : virtual_start( (char*)virtual_memory::allocate_address_space( max_size_in_bytes ) )
+          , virtual_end( virtual_start + max_size_in_bytes )
+          , physical_current( virtual_start )
+          , physical_end( virtual_start )
+          , max_size( max_size_in_bytes )
+          , grow_size( grow_size_in_bytes )
+        {}
+
+        ~growing_stack()
+        {
+          virtual_memory::free_address_space( virtual_start, max_size );
+        }
+
+        inline size_t get_allocation_size( void* allocation ) const
+        {
+          return reinterpret_cast<uint32_t*>(allocation)[0];
+        }
+
+        void* allocate( size_t size, size_t alignment, size_t offset)
+        {
+          /*
+           * Here is the layout we want at the end of this function
+           *     <-------size-------->
+           * [...<-offset->|          ]
+           *     ^         ^           ^
+           *     |         |           physical_current
+           *     |         aligned
+           *     user_ptr
+           */
+          // The offset to the beginning of the memory area. It will be stored
+          // in front of the user pointer, to be restored at deallocation.
+          const uint32_t allocation_offset = static_cast<uint32_t>(physical_current - virtual_start );
+          char* aligned = (char*)detail::align( physical_current + offset, alignment );
+          char* user_ptr = aligned - offset;
+          physical_current = user_ptr + size;
+
+          // not enough physical memory left
+          if( physical_current > physical_end )
+            {
+              // check if we can still get physical pages from the remaining virtual memory
+              const size_t needed_physical_size = (( size + grow_size - 1 ) / grow_size ) * grow_size;
+              if( physical_end + needed_physical_size > virtual_end )
+                return nullptr;
+
+              // allocate new memory pages at the end of already allocated pages
+              virtual_memory::commit_memory( physical_end, needed_physical_size );
+              physical_end += needed_physical_size;
+            }
+
+          reinterpret_cast<uint32_t*>(user_ptr)[0] = uint32_t(size);
+          reinterpret_cast<uint32_t*>(user_ptr)[1] = allocation_offset;
+
+          return reinterpret_cast<void*>(user_ptr);
+        }
+
+        void deallocate( void* allocation )
+        {
+          physical_current = virtual_start + reinterpret_cast<uint32_t*>(allocation)[1];
+        }
+
+        void purge()
+        {
+          char* address_to_free = (char*)detail::align( physical_current, grow_size );
+          virtual_memory::decommit_memory( address_to_free, physical_end - address_to_free );
+          physical_end = address_to_free;
+        }
+
+        size_t get_committed_memory() const
+        {
+          return physical_end - virtual_start;
+        }
+
+      private:
+        char* virtual_start;
+        char* virtual_end;
+        char* physical_current;
+        char* physical_end;
+        const uint32_t max_size;
+        const uint32_t grow_size;
       };
     }
 
@@ -680,6 +929,7 @@ namespace graphics_origin {
           while( ptr < end )
             {
               *static_cast<uint8_t*>(ptr) = 0xDD;
+              ++reinterpret_cast<size_t&>(ptr);
             }
         }
         inline void tag_deallocation( void* ptr, size_t size ) const
@@ -695,6 +945,7 @@ namespace graphics_origin {
           while( ptr < end )
             {
               *static_cast<uint8_t*>(ptr) = 0xFF;
+              ++reinterpret_cast<size_t&>(ptr);
             }
         }
       };
