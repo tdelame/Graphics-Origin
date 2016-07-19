@@ -262,6 +262,7 @@ namespace graphics_origin {
 # endif
       }
     }
+    /**@}*/
 
     /**
      *
