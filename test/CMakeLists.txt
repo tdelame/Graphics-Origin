@@ -1,12 +1,3 @@
-add_executable( 4_complex_planet_libnoise
-  4_complex_planet_libnoise.cc )
-  
-  
-find_package( LibNoise REQUIRED )
-include_directories( ${LIBNOISE_INCLUDE_DIR} )  
-target_link_libraries( 4_complex_planet_libnoise ${LIBNOISE_LIBRARIES} )
-set_go_test_properties( 4_complex_planet_libnoise )
-
 # NAME name of the test
 #  There should be a NAME.cc file and a NAME/ directory in the current source directory.
 #  All sources in NAME/ and NAME.Cc are automatically taken into account.
@@ -34,3 +25,5 @@ go_add_test( NAME memory_design_test )
 go_add_test( NAME 0_design_test )
 
 go_add_test( NAME unit_tests LIBRARIES ${GO_TOOLS_LIBRARIES} ${GO_GEOMETRY_LIBRARIES} ${GO_APPLICATION_LIBRARIES} ${GO_TEST_LIBRARIES} )
+
+#go_add_test( NAME windows_cuda_thrust_bug )

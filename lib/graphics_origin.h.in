@@ -8,6 +8,12 @@
 # define REAL_MIN DBL_MIN
 # define REAL_MAX DBL_MAX
 
+# ifdef _MSC_VER
+#   define GO_PRETTY_FUNCTION __FUNCTION__
+# else
+#   define GO_PRETTY_FUNCTION __PRETTY_FUNCTION__
+# endif
+
 # ifdef _WIN32
 #  ifdef GO_EXPORTS
 #   define GO_API __declspec(dllexport)
@@ -38,8 +44,16 @@
 # define GO_JOIN_HELPER( x, y ) GO_JOIN_HELPER_HELPER( x, y )
 # define GO_PP_JOIN( x, y ) GO_JOIN_HELPER( x, y )
 
-# define GO_PP_VA_NUM_ARGS(args...)  GO_PP_VA_NUM_ARGS_HELPER(args, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+#if _MSC_VER >= 1400
+# define GO_PP_VA_NUM_ARGS_HELPER(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...)    N
+# define GO_PP_VA_NUM_ARGS_REVERSE_SEQUENCE            10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+# define GO_PP_VA_NUM_ARGS_LEFT_PARENTHESIS (
+# define GO_PP_VA_NUM_ARGS_RIGHT_PARENTHESIS )
+# define GO_PP_VA_NUM_ARGS(...)  GO_PP_VA_NUM_ARGS_HELPER GO_PP_VA_NUM_ARGS_LEFT_PARENTHESIS __VA_ARGS__, GO_PP_VA_NUM_ARGS_REVERSE_SEQUENCE GO_PP_VA_NUM_ARGS_RIGHT_PARENTHESIS
+#else
 # define GO_PP_VA_NUM_ARGS_HELPER(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, N, ...)  N
+# define GO_PP_VA_NUM_ARGS(...)  GO_PP_VA_NUM_ARGS_HELPER(__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+#endif
 
 /// stringizes a string, even macros
 #define GO_STRINGIZE_HELPER(token)   #token
@@ -70,6 +84,25 @@
   GO_PP_JOIN(GO_PP_EXPAND_ARGS_, GO_PP_VA_NUM_ARGS(__VA_ARGS__)) GO_PP_PASS_ARGS(op, __VA_ARGS__)
 
 
+/// you can use WARN("your message") to warn the user during the compilation
+# if _MSC_VER
+#   define FILE_LINE_LINK __FILE__ "(" GO_STRINGIZE(__LINE__) ") : "
+#   define WARN(msg) __pragma(message (FILE_LINE_LINK "warning: " #msg))
+# else
+#   define WARN(msg) _Pragma(message ("warning: " #msg))
+# endif
+
+/// MSVC only provides an OpenMP 2.0 implementation, and this implementation is buggy.
+/// Thus, some features are not available yet and hacks must be used instead. Those
+/// warnings alert the user about those limitations and can be used as a reminder
+/// to remove hacks once a proper OpenMP implementation is available.
+# if _MSC_VER
+#   define GO_MSVC_OMP_THRUST_BUGS WARN("MSVC's OpenMP implementation is not good enough to compile CUDA Thrust sort() function")
+#   define GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX WARN( "MSVC's OpenMP implementation does not allow unsigned index variable in OpenMP for statement" )
+#   define GO_MSVC_OMP_NO_ATOMIC_CAPTURE WARN("MSVC's OpenMP implementation does not support capture directive for an atomic construct")
+#   define GO_MSVC_OMP_NO_CUSTOM_REDUCTION WARN("MSVC's OpenMP implementation does not support custom reduction operation")
+# endif
+
 # define GO_NAMESPACE graphics_origin
 # define BEGIN_GO_NAMESPACE namespace GO_NAMESPACE {
 # define END_GO_NAMESPACE }
@@ -77,7 +110,6 @@ BEGIN_GO_NAMESPACE
 typedef double real;
 typedef float gpu_real;
 END_GO_NAMESPACE
-
 
 #cmakedefine GO_USE_OPENMP
 #cmakedefine GO_USE_OPENCL

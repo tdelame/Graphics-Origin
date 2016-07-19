@@ -64,6 +64,7 @@ namespace graphics_origin { namespace application {
         glcheck(glGenVertexArrays( 1, &m_vao ));
         glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
       }
+    LOG(debug, "will render " << m_boxes.get_size() << " boxes");
 
     int center_location = program->get_attribute_location( "center" );
     int hsides_location = program->get_attribute_location( "hsides" );
@@ -97,8 +98,6 @@ namespace graphics_origin { namespace application {
   {
     gpu_mat4 mvp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
-
-    glcheck(glLineWidth( 2.0 ));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawArrays( GL_POINTS, 0, m_boxes.get_size()));
     glcheck(glBindVertexArray( 0 ) );
