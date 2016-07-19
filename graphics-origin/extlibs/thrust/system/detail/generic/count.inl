@@ -35,6 +35,7 @@ struct count_if_transform
   __host__ __device__ 
   count_if_transform(Predicate _pred) : pred(_pred){}
 
+  __thrust_exec_check_disable__
   __host__ __device__
   CountType operator()(const InputType& val)
   {

@@ -126,8 +126,11 @@ BEGIN_GO_NAMESPACE namespace tools {
 
   void startup_init_parallel_setup()
   {
+# ifndef _WIN32
+	// MSVC support only OpenMP 2 and thus do not have access to those functions
     LOG( info, "[OpenMP] number of devices: " << omp_get_num_devices() );
     LOG( info, "[OpenMP] default device: " << omp_get_default_device() );
+# endif
     LOG( info, "[OpenMP] maximum threads to use on default device: " << omp_get_num_procs() )
     LOG( info, "[OpenMP] use OpenMP as the default parallelization setup");
     set_parallelization_setup( parallelization_setup::openmp );

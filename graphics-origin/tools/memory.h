@@ -7,7 +7,7 @@
 
 // virtual_memory namespace
 # ifdef _WIN32
-#  include "WinBase.h"
+#  include <windows.h>
 # elif __linux__
 #  include <sys/mman.h>
 #  include <unistd.h>
@@ -39,7 +39,7 @@ namespace graphics_origin {
     alignement_,                                                              \
     __FILE__,                                                                 \
     GO_STRINGIZE(__LINE__),                                                   \
-    __PRETTY_FUNCTION__)) type_
+    GO_PRETTY_FUNCTION)) type_
 
 /**@brief Allocate memory with standard alignment.
  *
@@ -198,7 +198,7 @@ namespace graphics_origin {
 # ifdef _WIN32
         SYSTEM_INFO si;
         GetSystemInfo(&si);
-        return si.dwPageSize
+		return si.dwPageSize;
 # elif __linux__
         return sysconf(_SC_PAGESIZE);
 # endif

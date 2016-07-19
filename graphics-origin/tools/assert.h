@@ -41,7 +41,7 @@ namespace graphics_origin {
 # define GO_ASSERT_IMPL_VAR(variable) .add_variable(GO_STRINGIZE(variable), variable)
 # define GO_ASSERT_EXPAND_ASSERTION( condition, format ) graphics_origin::tools::Assert(__FILE__,__LINE__,"Assertion \"" #condition "\" failed: " format )
 # define GO_ASSERT_EXPAND_VARIABLES(...) \
-  GO_PP_JOIN(GO_PP_EXPAND_ARGS_,GO_PP_VA_NUM_ARGS(__VA_ARGS__))(GO_ASSERT_IMPL_VAR,__VA_ARGS__), GO_BREAK )
+  GO_PP_EXPAND_ARGS(GO_ASSERT_IMPL_VAR,__VA_ARGS__), GO_BREAK )
 # define GO_ASSERT( condition, format ) \
   (condition) ? (void)true : ((void)GO_ASSERT_EXPAND_ASSERTION(condition,format) GO_ASSERT_EXPAND_VARIABLES
   }

@@ -110,7 +110,7 @@ option(
 option(
   GO_BUILD_DOC
   "Set to ON to build documentation."
-  ON) 
+  OFF) 
 
 #*********************
 # external libraries *
@@ -158,6 +158,7 @@ find_package( Boost
   COMPONENTS serialization filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
+set( GO_Boost_LIBRARIES ${Boost_LIBRARIES} )
 
 if( GO_BUILD_APPLICATION )
   # qt
@@ -187,8 +188,9 @@ if( GO_BUILD_APPLICATION )
   find_package( OpenGL REQUIRED QUIET )
   include_directories( ${OPENGL_INCLUDE_DIR} )
   
+  # freeImage
   find_package( FreeImage REQUIRED QUIET )
-  include_directories( ${FreeImage_INCLUDE_DIRS} )
+  include_directories( ${FREEIMAGE_INCLUDE_DIRS} )
 endif()
 
 #*************** 
@@ -205,7 +207,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
  	set( CMAKE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP -DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP" )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
     "/EHsc /openmp /D_USE_MATH_DEFINES /DGLM_FORCE_SSE2 /DGLM_FORCE_RADIANS /DBOOST_LOG_DYN_LINK /DBOOST_ALL_DYN_LINK"
@@ -216,7 +218,7 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP /DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP" )
 else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
 endif()
@@ -306,6 +308,8 @@ install( DIRECTORY graphics-origin DESTINATION include )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGraphicsOrigin.cmake DESTINATION share/cmake/modules )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindLibNoise.cmake DESTINATION share/cmake/modules )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindOpenMesh.cmake DESTINATION share/cmake/modules )
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindGLEW.cmake DESTINATION share/cmake/modules )
+install( FILES ${CMAKE_SOURCE_DIR}/cmake/modules/FindFreeImage.cmake DESTINATION share/cmake/modules )
 
 
 add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
@@ -370,7 +374,8 @@ if( ${GO_BUILD_DOC} )
         COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
   else()
-    message( ERROR "Cannot find Doxygen to build the documentation" )
+    message( SEND_ERROR "Cannot find Doxygen to build the documentation" )
+	set( GO_BUILD_DOC OFF )
   endif()
 endif()
 
@@ -388,13 +393,16 @@ message(
   "External libraries:\n"
   "* Boost\n"
   "   - include: ${Boost_INCLUDE_DIRS}\n"
-  "   - libs:    ${Boost_LIBRARIES}\n"
+  "   - libs:    ${GO_Boost_LIBRARIES}\n"
   "* OpenMesh\n"
   "   - include: ${OPENMESH_INCLUDE_DIRS}\n"
   "   - libs:    ${OPENMESH_LIBRARIES}\n"
   "* GLEW\n"
   "   - include: ${GLEW_INCLUDE_DIRS}\n"
   "   - libs:    ${GLEW_LIBRARIES}\n"
+  "* FreeImage\n"
+  "   - include: ${FREEIMAGE_INCLUDE_DIRS}\n"
+  "   - libs:    ${FREEIMAGE_LIBRARIES}\n"
   "* Libnoise\n"
   "   - include: ${LIBNOISE_INCLUDE_DIRS}\n"
   "   - libs:    ${LIBNOISE_LIBRARIES}\n"

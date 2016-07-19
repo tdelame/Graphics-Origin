@@ -609,9 +609,9 @@ BEGIN_GO_NAMESPACE namespace geometry {
   void
   mesh::compute_bounding_box( aabox& b ) const
   {
-# ifdef _WIN32
-	# pragma message("MSVC does not allow custom reduction operation for OpenMP")
-    # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+  # ifdef _MSC_VER
+    GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+    GO_MSVC_OMP_NO_CUSTOM_REDUCTION
     // custom reduction operations are not available on MSVC
 	mesh::Point minp = mesh::Point{ REAL_MAX,REAL_MAX,REAL_MAX };
 	mesh::Point maxp = mesh::Point{ -REAL_MAX,-REAL_MAX,-REAL_MAX };
@@ -676,8 +676,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
     {
       bool ok = true;
       const size_t nvertices = m.n_vertices();
-      # ifdef _WIN32
-      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+      # ifdef _MSC_VER
+      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
       #   pragma omp parallel for schedule(static)
 	  for (long i = 0; i < nvertices; ++i)
 	  # else
@@ -700,8 +700,8 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
       m_triangles.resize( m_mesh.n_faces() );
       const auto nfaces  = m_triangles.size();
-	  # ifdef _WIN32
-      #   pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
+# ifdef _MSC_VER
+      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
 	  #   pragma omp parallel for schedule(static)
 	  for (long i = 0; i < nfaces; ++i)
 	  # else

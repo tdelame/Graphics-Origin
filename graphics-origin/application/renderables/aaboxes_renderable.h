@@ -44,6 +44,7 @@ namespace graphics_origin {
       unsigned int m_boxes_vbo;
     };
 
+    GO_API
     aaboxes_renderable*
     aaboxes_renderable_from_box_bvh( shader_program_ptr program, geometry::bvh<geometry::aabox>& bvh );
   }

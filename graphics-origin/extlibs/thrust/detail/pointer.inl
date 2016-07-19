@@ -23,6 +23,7 @@ namespace thrust
 
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
+  __host__ __device__
   pointer<Element,Tag,Reference,Derived>
     ::pointer()
       : super_t(static_cast<Element*>(0))
@@ -31,6 +32,7 @@ template<typename Element, typename Tag, typename Reference, typename Derived>
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
   template<typename OtherElement>
+    __host__ __device__
     pointer<Element,Tag,Reference,Derived>
       ::pointer(OtherElement *other)
         : super_t(other)
@@ -39,6 +41,7 @@ template<typename Element, typename Tag, typename Reference, typename Derived>
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
   template<typename OtherPointer>
+    __host__ __device__
     pointer<Element,Tag,Reference,Derived>
       ::pointer(const OtherPointer &other,
                 typename thrust::detail::enable_if_pointer_is_convertible<
@@ -51,6 +54,7 @@ template<typename Element, typename Tag, typename Reference, typename Derived>
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
   template<typename OtherPointer>
+    __host__ __device__
     typename thrust::detail::enable_if_pointer_is_convertible<
       OtherPointer,
       pointer<Element,Tag,Reference,Derived>,
@@ -65,6 +69,7 @@ template<typename Element, typename Tag, typename Reference, typename Derived>
 
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
+  __host__ __device__
   typename pointer<Element,Tag,Reference,Derived>::super_t::reference
     pointer<Element,Tag,Reference,Derived>
       ::dereference() const
@@ -74,12 +79,20 @@ template<typename Element, typename Tag, typename Reference, typename Derived>
 
 
 template<typename Element, typename Tag, typename Reference, typename Derived>
+  __host__ __device__
   Element *pointer<Element,Tag,Reference,Derived>
     ::get() const
 {
   return super_t::base();
 } // end pointer::get
 
+template<typename Element, typename Tag, typename Reference, typename Derived,
+         typename charT, typename traits>
+std::basic_ostream<charT, traits> &
+operator<<(std::basic_ostream<charT, traits> &os,
+           const pointer<Element, Tag, Reference, Derived> &p) {
+  return os << p.get();
+}
 
 namespace detail
 {

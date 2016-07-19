@@ -40,7 +40,9 @@ namespace application {
     : public graphics_origin::application::renderer {
   public:
     ~transparency_gl_renderer(){}
-
+    transparency_gl_renderer() :
+      m_windows{ nullptr }
+    {}
   private:
     void do_add( graphics_origin::application::renderable* r ) override
     {
@@ -141,7 +143,7 @@ namespace application {
       auto mesh = new textured_mesh_renderable( mesh_program );
       mesh->load_mesh( mesh_directory + "Bunny.obj" );
       mesh->load_texture( texture_directory + "TexturedBunny.png" );
-      mesh->set_model_matrix( glm::rotate( gpu_real{M_PI_2}, gpu_vec3{0,0,1}) * glm::rotate( gpu_real{M_PI_2}, gpu_vec3{1,0,0}));
+      mesh->set_model_matrix( glm::rotate( gpu_real(M_PI_2), gpu_vec3{0,0,1}) * glm::rotate( gpu_real(M_PI_2), gpu_vec3{1,0,0}));
       add_renderable( mesh );
 
 
