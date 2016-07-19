@@ -1,0 +1,33 @@
+# ifndef GRAPHICS_ORIGIN_MESH_RENDERABLE_H_
+# define GRAPHICS_ORIGIN_MESH_RENDERABLE_H_
+# include "../renderable.h"
+# include "../../geometry/mesh.h"
+namespace graphics_origin {
+  namespace application {
+    class GO_API mesh_renderable
+      : public renderable {
+    public:
+      mesh_renderable(
+          shader_program_ptr program );
+      ~mesh_renderable();
+      void load( const std::string& filename );
+
+      geometry::mesh& get_geometry()
+      {
+        return m_mesh;
+      }
+
+    private:
+      void update_gpu_data() override;
+      void do_render() override;
+      void remove_gpu_data() override;
+
+      geometry::mesh m_mesh;
+
+      unsigned int m_vao;
+      enum{ POSITION_NORMAL, INDICES, NUMBER_OF_VBO };
+      unsigned int m_vbo[ NUMBER_OF_VBO ];
+    };
+  }
+}
+# endif

@@ -1,9 +1,6 @@
-/* Created on: Feb 24, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
-# include <graphics-origin/application/balls_renderable.h>
-# include <graphics-origin/application/gl_window_renderer.h>
-# include <graphics-origin/application/gl_helper.h>
+# include "../../graphics-origin/application/renderables/balls_renderable.h"
+# include "../../graphics-origin/application/renderer.h"
+# include "../../graphics-origin/application/gl_helper.h"
 
 # include <GL/glew.h>
 
@@ -43,8 +40,8 @@ namespace graphics_origin { namespace application {
     : m_balls{ expected_number_of_balls },
       m_vao{ 0 }, m_balls_vbo{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
 
   balls_renderable::balls_buffer::handle
@@ -73,8 +70,8 @@ namespace graphics_origin { namespace application {
         glcheck(glGenBuffers( 1, &m_balls_vbo ) );
       }
 
-    int ball_location  = m_program->get_attribute_location(  "ball_attribute" );
-    int color_location = m_program->get_attribute_location( "color_attribute" );
+    int ball_location  = program->get_attribute_location(  "ball_attribute" );
+    int color_location = program->get_attribute_location( "color_attribute" );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_balls_vbo ));
@@ -96,10 +93,10 @@ namespace graphics_origin { namespace application {
   void
   balls_renderable::do_render()
   {
-    gpu_mat4 temp = m_renderer->get_projection_matrix();
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr(temp)));
-    temp = m_renderer->get_view_matrix() * m_model;
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(temp)));
+    gpu_mat4 temp = renderer_ptr->get_projection_matrix();
+    glcheck(glUniformMatrix4fv( program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr(temp)));
+    temp = renderer_ptr->get_view_matrix() * model;
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(temp)));
 
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawArrays( GL_POINTS, 0, m_balls.get_size()));

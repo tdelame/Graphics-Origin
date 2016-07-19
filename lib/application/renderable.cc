@@ -1,22 +1,25 @@
-/* Created on: Feb 15, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # include <graphics-origin/application/renderable.h>
-
 BEGIN_GO_NAMESPACE
 namespace application {
 
   renderable::renderable()
-    : m_dirty{ true }, m_renderer{ nullptr }
+    : m_dirty{ true }, renderer_ptr{ nullptr }
   {}
 
   renderable::~renderable()
   {}
 
   void
-  renderable::set_renderer( gl_window_renderer* renderer )
+  renderable::set_shader_program( shader_program_ptr new_program )
   {
-    m_renderer = renderer;
+    program = new_program;
+    set_dirty();
+  }
+
+  void
+  renderable::set_dirty()
+  {
+    m_dirty = true;
   }
 
   void
@@ -32,12 +35,17 @@ namespace application {
 
   const gpu_mat4& renderable::get_model_matrix() const
   {
-    return m_model;
+    return model;
+  }
+
+  void renderable::set_model_matrix( const gpu_mat4& new_model )
+  {
+    model = new_model;
   }
 
   shader_program_ptr renderable::get_shader_program() const
   {
-    return m_program;
+    return program;
   }
 }
 END_GO_NAMESPACE

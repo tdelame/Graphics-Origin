@@ -26,13 +26,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
       typedef OpenMesh::Vec3d Point;
       typedef OpenMesh::Vec3d Normal;
       typedef OpenMesh::Vec4d Color;
+      typedef OpenMesh::Vec2f TexCoord2D;
 
       VertexAttributes   ( ( OpenMesh::Attributes::Normal
                          |   OpenMesh::Attributes::Status
-                         |   OpenMesh::Attributes::Color        ) );
+                         |   OpenMesh::Attributes::Color  ) );
       HalfedgeAttributes ( ( OpenMesh::Attributes::PrevHalfedge
                          |   OpenMesh::Attributes::Status
-                         |   OpenMesh::Attributes::Normal       ) );
+                         |   OpenMesh::Attributes::Normal
+                         |   OpenMesh::Attributes::TexCoord2D ) );
       EdgeAttributes     (   OpenMesh::Attributes::Status         ); //very, very, VERY important: if not, you can't delete a face!
       FaceAttributes     ( ( OpenMesh::Attributes::Status
                          |   OpenMesh::Attributes::Normal

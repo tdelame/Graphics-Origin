@@ -1,10 +1,7 @@
-/*  Created on: Mar 16, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-# include "../../graphics-origin/application/mesh_renderable.h"
+# include "../../graphics-origin/application/renderables/mesh_renderable.h"
 # include "../../graphics-origin/application/gl_helper.h"
 # include "../../graphics-origin/application/camera.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/geometry/mesh.h"
 # include "../../graphics-origin/tools/log.h"
 
@@ -16,8 +13,8 @@ namespace graphics_origin { namespace application {
       shader_program_ptr program )
     : m_vao{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
 
   void
@@ -71,8 +68,8 @@ namespace graphics_origin { namespace application {
         dst[ 2 ] = fvit->idx();
       }
 
-    int position_location = m_program->get_attribute_location( "position" );
-    int   normal_location = m_program->get_attribute_location( "normal"   );
+    int position_location = program->get_attribute_location( "position" );
+    int   normal_location = program->get_attribute_location( "normal"   );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbo[POSITION_NORMAL] ));
@@ -98,12 +95,14 @@ namespace graphics_origin { namespace application {
   void
   mesh_renderable::do_render()
   {
-    glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
-    glcheck(glUniform3fv( m_program->get_uniform_location( "light_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position() )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
-    glcheck(glUniformMatrix3fv( m_program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( m_model ) ) ) ) ));
+    shader_program::identifier location = program->get_uniform_location( "window_dimensions");
+    if( location != shader_program::null_identifier )
+      glcheck(glUniform2fv( location, 1, glm::value_ptr( renderer_ptr->get_window_dimensions())));
+    glcheck(glUniform3fv( program->get_uniform_location( "light_position"), 1, glm::value_ptr( renderer_ptr->get_camera_position() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( model )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_view_matrix() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix())));
+    glcheck(glUniformMatrix3fv( program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( model ) ) ) ) ));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawElements( GL_TRIANGLES, m_mesh.n_faces() * 3, GL_UNSIGNED_INT, (void*)0));
     glcheck(glBindVertexArray( 0 ) );

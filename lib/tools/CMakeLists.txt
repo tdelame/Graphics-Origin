@@ -9,7 +9,7 @@ file(
   "${GO_SOURCES_IN_DIR}/tools/*.cc")
   
 add_go_lib( tools ${SOURCE_FILES} ${HEADER_FILES} )
-set_go_lib_properties( tools ${Boost_LIBRARIES} )	
+set_go_lib_properties( tools ${Boost_LIBRARIES} ${OpenCL_LIBRARIES} )	
 
 install( TARGETS graphics_origin_tools
   CONFIGURATIONS Debug
@@ -17,8 +17,4 @@ install( TARGETS graphics_origin_tools
   
 install( TARGETS graphics_origin_tools
   CONFIGURATIONS Release
-  DESTINATION lib/release )  
-
-install( TARGETS graphics_origin_tools
-  CONFIGURATIONS RelWithDebInfo
-  DESTINATION lib/relwithdebinfo )  
+  DESTINATION lib/release )   

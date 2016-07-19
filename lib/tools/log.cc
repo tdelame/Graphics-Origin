@@ -14,9 +14,10 @@
 BEGIN_GO_NAMESPACE
 namespace tools
 {
-  BOOST_LOG_GLOBAL_LOGGER_INIT(logger, logger_mt_type ){
-    logger_mt_type lg;
-    return(lg);
+  logger::logger_type logger::construct_logger()
+  {
+    logger_mt_type log;
+    return log;
   }
 
   void init_log( const std::string& log_filename )
@@ -28,6 +29,13 @@ namespace tools
     );
     boost::log::add_common_attributes();
   }
+
+  void startup_init_log()
+  {
+    boost::log::register_simple_formatter_factory< boost::log::trivial::severity_level, char >("Severity");
+    boost::log::add_common_attributes();
+  }
+
   void
   flush_log()
   {

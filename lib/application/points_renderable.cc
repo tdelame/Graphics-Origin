@@ -1,8 +1,8 @@
 /* Created on: Mar 17, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include "../../graphics-origin/application/points_renderable.h"
-# include "../../graphics-origin/application/gl_window_renderer.h"
+# include "../../graphics-origin/application/renderables/points_renderable.h"
+# include "../../graphics-origin/application/renderer.h"
 # include "../../graphics-origin/application/gl_helper.h"
 
 # include <GL/glew.h>
@@ -43,8 +43,8 @@ namespace graphics_origin { namespace application {
     : m_points{ expected_number_of_points },
       m_vao{ 0 }, m_points_vbo{ 0 }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    this->program = program;
   }
 
   points_renderable::points_buffer::handle
@@ -73,8 +73,8 @@ namespace graphics_origin { namespace application {
         glcheck(glGenBuffers( 1, &m_points_vbo ) );
       }
 
-    int position_location = m_program->get_attribute_location( "position" );
-    int color_location = m_program->get_attribute_location( "color" );
+    int position_location = program->get_attribute_location( "position" );
+    int color_location = program->get_attribute_location( "color" );
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_points_vbo ));
@@ -96,8 +96,8 @@ namespace graphics_origin { namespace application {
   void
   points_renderable::do_render()
   {
-    gpu_mat4 temp = m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model;
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(temp)));
+    gpu_mat4 temp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(temp)));
     glcheck(glPointSize(4.0));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawArrays( GL_POINTS, 0, m_points.get_size()));

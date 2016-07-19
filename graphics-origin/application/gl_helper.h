@@ -32,6 +32,10 @@ void check_previous_gl_errors();
 GO_API
 void check_gl_error( const char* call, const char* file, const int line );
 
+/**@brief Check if a GL framebuffer is complete*/
+GO_API
+bool check_gl_framebuffer( unsigned int fbo_id, const char* fbo_name, const char* file, const int line );
+
 /**
  * @brief This macro should be used for ALL GL API calls!
  *
@@ -83,6 +87,25 @@ void check_gl_error( const char* call, const char* file, const int line );
 # else
 #   define glcheck( call ) call;
 # endif
+
+
+/**@brief Macro to check the status of a GL frame buffer.
+ *
+ * OpenGL frame buffer objects (FBO) are quite hard to setup correctly. This
+ * macro will check the status of a FBO to tell you (with the return value)
+ * if this FBO can be used. If the FBO cannot be used, you will see why in
+ * the logs. If your FBO's identifier is stored in the variable fbo_name,
+ * simply call:
+ * \code{.cpp}
+ * bool can_be_used = glcheckfbo( fbo_name );
+ * \endcode.
+ *
+ *
+ *
+ * \sa LOG()
+ */
+# define glcheckfbo( name ) \
+  graphics_origin::application::check_gl_framebuffer( name, #name, __FILE__, __LINE__ )
 
 /**
  *
