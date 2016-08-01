@@ -63,7 +63,7 @@ namespace graphics_origin {
     void
     meshes_renderable::update_gpu_data()
     {
-      std::vector< gpu_real > positions_normals;
+      std::vector< gl_real > positions_normals;
       std::vector< unsigned int > indices;
       storage* data = m_meshes.data();
       for( size_t i = 0; i < m_meshes.get_size(); ++i, ++data)
@@ -133,19 +133,19 @@ namespace graphics_origin {
 
                   glcheck(glBindVertexArray( data->vao ));
                     glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[ position_normal_vbo ] ));
-                    glcheck(glBufferData( GL_ARRAY_BUFFER, positions_normals.size() * sizeof( gpu_real ), positions_normals.data(), GL_STATIC_DRAW ));
+                    glcheck(glBufferData( GL_ARRAY_BUFFER, positions_normals.size() * sizeof( gl_real ), positions_normals.data(), GL_STATIC_DRAW ));
 
                     glcheck(glEnableVertexAttribArray( position_location ));
                     glcheck(glVertexAttribPointer( position_location,
                       3, GL_FLOAT, GL_FALSE,
-                      6 * sizeof( gpu_real ),
+                      6 * sizeof( gl_real ),
                       reinterpret_cast<void*>( 0 )));
 
                     glcheck(glEnableVertexAttribArray( normal_location ));
                     glcheck(glVertexAttribPointer( normal_location,
                       3, GL_FLOAT, GL_FALSE,
-                      6 * sizeof( gpu_real ),
-                      reinterpret_cast<void*>( 3 * sizeof( gpu_real ))));
+                      6 * sizeof( gl_real ),
+                      reinterpret_cast<void*>( 3 * sizeof( gl_real ))));
 
                     glcheck(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[ indices_vbo ]));
                     glcheck(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW ));

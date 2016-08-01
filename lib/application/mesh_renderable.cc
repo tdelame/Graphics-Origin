@@ -27,7 +27,7 @@ namespace graphics_origin { namespace application {
       }
 
     const auto nvertices = m_mesh.n_vertices();
-    std::vector< gpu_real > positions_normals( nvertices * 6 ); // fvec3 + fvec3
+    std::vector< gl_real > positions_normals( nvertices * 6 ); // fvec3 + fvec3
 # ifdef _WIN32
 # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
 # pragma omp parallel for
@@ -73,19 +73,19 @@ namespace graphics_origin { namespace application {
 
     glcheck(glBindVertexArray( m_vao ));
       glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbo[POSITION_NORMAL] ));
-      glcheck(glBufferData( GL_ARRAY_BUFFER, positions_normals.size() * sizeof( gpu_real ), positions_normals.data(), GL_STATIC_DRAW ));
+      glcheck(glBufferData( GL_ARRAY_BUFFER, positions_normals.size() * sizeof( gl_real ), positions_normals.data(), GL_STATIC_DRAW ));
 
       glcheck(glEnableVertexAttribArray( position_location ));
       glcheck(glVertexAttribPointer( position_location,
         3, GL_FLOAT, GL_FALSE,
-        6 * sizeof( gpu_real ),
+        6 * sizeof( gl_real ),
         reinterpret_cast<void*>( 0 )));
 
       glcheck(glEnableVertexAttribArray( normal_location ));
       glcheck(glVertexAttribPointer( normal_location,
         3, GL_FLOAT, GL_FALSE,
-        6 * sizeof( gpu_real ),
-        reinterpret_cast<void*>( 3 * sizeof( gpu_real ))));
+        6 * sizeof( gl_real ),
+        reinterpret_cast<void*>( 3 * sizeof( gl_real ))));
 
       glcheck(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo[INDICES]));
       glcheck(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW ));

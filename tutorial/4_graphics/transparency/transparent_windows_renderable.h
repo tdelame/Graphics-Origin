@@ -43,7 +43,7 @@ namespace graphics_origin {
         gpu_vec3 v1;
         gpu_vec3 v2;
         gpu_vec4 color;
-        gpu_real depth;
+        gl_real depth;
 
         storage( const storage& other );
         storage& operator=( const storage& other );

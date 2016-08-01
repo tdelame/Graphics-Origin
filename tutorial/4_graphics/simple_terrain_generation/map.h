@@ -33,7 +33,7 @@ namespace graphics_origin
        * @param resolution_in_m The resolution requested, in meter(s).
        */
       void
-      set_resolution( gpu_real resolution_in_m = 1.0 );
+      set_resolution( gl_real resolution_in_m = 1.0 );
 
       /** @brief Specify the height to generate an height map.
        *
@@ -54,7 +54,7 @@ namespace graphics_origin
        */
       void
       set_radius(
-        gpu_real map_radius_in_m );
+        gl_real map_radius_in_m );
 
       /**@brief Specify the maximum elevation of the map.
        *
@@ -64,7 +64,7 @@ namespace graphics_origin
        */
       void
       set_maximum_elevation(
-        gpu_real maximum_elevation_in_m );
+        gl_real maximum_elevation_in_m );
 
     private:
       void
@@ -77,9 +77,9 @@ namespace graphics_origin
       remove_gpu_data() override;
 
       std::vector< gpu_vec4 > m_normal_height_texture;
-      gpu_real m_map_radius;
-      gpu_real m_resolution;
-      gpu_real m_maximum_elevation;
+      gl_real m_map_radius;
+      gl_real m_resolution;
+      gl_real m_maximum_elevation;
       unsigned int m_texture_size;
       unsigned int m_number_of_patches;
 

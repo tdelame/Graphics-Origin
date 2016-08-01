@@ -6,7 +6,7 @@
 # include <algorithm>
 
 BEGIN_GO_NAMESPACE
-  static gpu_real LUT_Color [ 256 ][ 3 ] =
+  static gl_real LUT_Color [ 256 ][ 3 ] =
   {
           {        0,        0,   0.5156 },
           {        0,        0,   0.5313 },
@@ -274,7 +274,7 @@ BEGIN_GO_NAMESPACE
   }
 
   gpu_vec3
-  get_color ( const gpu_real& factor, const gpu_real& low, const gpu_real& high )
+  get_color ( const gl_real& factor, const gl_real& low, const gl_real& high )
   {
     float t = std::max ( low, std::min( factor, high) );
     t -= low;
@@ -291,7 +291,7 @@ BEGIN_GO_NAMESPACE
   gpu_vec3
   get_gray_scale( const gpu_vec3& color )
   {
-    gpu_real luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+    gl_real luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
     return gpu_vec3( luminance, luminance, luminance );
   }
 END_GO_NAMESPACE

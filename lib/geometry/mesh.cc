@@ -775,16 +775,16 @@ BEGIN_GO_NAMESPACE namespace geometry {
         bool overlapL = childL->bounding.intersect( inv_r, t1 ) && t1 <= distance_to_mesh;
         bool overlapR = childR->bounding.intersect( inv_r, t2 ) && t2 <= distance_to_mesh;
 
-        if( overlapL && m_bvh->is_leaf( childL ) && m_triangles[ childL->element_index ].intersect( r, t1 ) && t1 <= distance_to_mesh )
+        if( overlapL && m_bvh->is_leaf( childL ) && m_triangles[ childL->element ].intersect( r, t1 ) && t1 <= distance_to_mesh )
           {
-            closest_face_index = childL->element_index;
+            closest_face_index = childL->element;
             distance_to_mesh = t1;
             result = true;
           }
 
-        if( overlapR && m_bvh->is_leaf( childR ) && m_triangles[ childR->element_index ].intersect( r, t2 ) && t2 <= distance_to_mesh )
+        if( overlapR && m_bvh->is_leaf( childR ) && m_triangles[ childR->element ].intersect( r, t2 ) && t2 <= distance_to_mesh )
           {
-            closest_face_index = childR->element_index;
+            closest_face_index = childR->element;
             distance_to_mesh = t2;
             result = true;
           }

@@ -82,7 +82,7 @@ namespace application {
   {
     for( int i = 0; i < 3; ++ i )
       {
-        m_view[3][i] = gpu_real(0);
+        m_view[3][i] = gl_real(0);
         for( int j = 0; j < 3; ++ j )
           m_view[3][i] -= m_view[j][i] * pos[j];
       }
@@ -93,7 +93,7 @@ namespace application {
   {
     for( int i = 0; i < 3; ++ i )
       {
-        m_view[3][i] = gpu_real(0);
+        m_view[3][i] = gl_real(0);
         for( int j = 0; j < 3; ++ j )
           m_view[3][i] -= m_view[j][i] * pos[j];
       }
@@ -170,31 +170,31 @@ namespace application {
   void camera::set_fov( const qreal& v )
   {
     m_fov = v;
-    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
+    m_projection = glm::perspective( gl_real(m_fov), gl_real(m_ratio), gl_real(m_znear), gl_real(m_zfar) );
   }
 
   void camera::set_ratio( const qreal& v )
   {
     m_ratio = v;
-    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
+    m_projection = glm::perspective( gl_real(m_fov), gl_real(m_ratio), gl_real(m_znear), gl_real(m_zfar) );
   }
 
   void camera::set_zfar( const qreal& v )
   {
     m_zfar = v;
-    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
+    m_projection = glm::perspective( gl_real(m_fov), gl_real(m_ratio), gl_real(m_znear), gl_real(m_zfar) );
   }
 
   void camera::set_znear( const qreal& v )
   {
     m_znear = v;
-    m_projection = glm::perspective( gpu_real(m_fov), gpu_real(m_ratio), gpu_real(m_znear), gpu_real(m_zfar) );
+    m_projection = glm::perspective( gl_real(m_fov), gl_real(m_ratio), gl_real(m_znear), gl_real(m_zfar) );
   }
 
   void camera::arcball_rotate( qreal mouse_dx, qreal mouse_dy )
   {
-    gpu_mat4 rotation = glm::rotate( gpu_mat4( gpu_mat3( m_view ) ), gpu_real(mouse_dx), get_up() );
-    rotation = glm::rotate( rotation, gpu_real(mouse_dy), get_right() );
+    gpu_mat4 rotation = glm::rotate( gpu_mat4( gpu_mat3( m_view ) ), gl_real(mouse_dx), get_up() );
+    rotation = glm::rotate( rotation, gl_real(mouse_dy), get_right() );
 
     m_view[0] = rotation[0];
     m_view[1] = rotation[1];

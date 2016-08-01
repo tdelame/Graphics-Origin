@@ -14,6 +14,7 @@ typedef glm::tvec3<float, glm::highp> fvec3;
 typedef glm::tvec4<float, glm::highp> fvec4;
 
 typedef glm::tvec2<unsigned int, glm::highp > uivec2;
+typedef glm::tvec2<uint32_t, glm::highp > uint32_vec2;
 
 typedef glm::tvec2<real, glm::highp> vec2;
 typedef glm::tvec3<real, glm::highp> vec3;
@@ -24,9 +25,9 @@ typedef glm::tvec4<real, glm::highp> vec4;
  * double, we need to make conversions in every GLSL shader. Instead, we
  * have other vec types to transfer geometry on the GPU.
  */
-typedef glm::tvec2<gpu_real, glm::highp> gpu_vec2;
-typedef glm::tvec3<gpu_real, glm::highp> gpu_vec3;
-typedef glm::tvec4<gpu_real, glm::highp> gpu_vec4;
+typedef glm::tvec2<gl_real, glm::highp> gpu_vec2;
+typedef glm::tvec3<gl_real, glm::highp> gpu_vec3;
+typedef glm::tvec4<gl_real, glm::highp> gpu_vec4;
 
 /**
  * These using directives avoid to type glm::cross, glm::dot... every time.
@@ -72,9 +73,9 @@ sdistance( const vec2& a, const vec2& b );
 GO_API
 gpu_vec3
 get_color(
-    const gpu_real& parameter,
-    const gpu_real& low,
-    const gpu_real& high );
+    const gl_real& parameter,
+    const gl_real& low,
+    const gl_real& high );
 
 /** @brief Convert a RGB color to a gray scale color
  *

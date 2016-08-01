@@ -143,13 +143,13 @@ namespace application {
       auto mesh = new textured_mesh_renderable( mesh_program );
       mesh->load_mesh( mesh_directory + "Bunny.obj" );
       mesh->load_texture( texture_directory + "TexturedBunny.png" );
-      mesh->set_model_matrix( glm::rotate( gpu_real(M_PI_2), gpu_vec3{0,0,1}) * glm::rotate( gpu_real(M_PI_2), gpu_vec3{1,0,0}));
+      mesh->set_model_matrix( glm::rotate( gl_real(M_PI_2), gpu_vec3{0,0,1}) * glm::rotate( gl_real(M_PI_2), gpu_vec3{1,0,0}));
       add_renderable( mesh );
 
 
       const unsigned int angle_divisions = 16;
-      const gpu_real angle_step = 2.0 * M_PI / gpu_real{16};
-      gpu_real angle = 0;
+      const gl_real angle_step = 2.0 * M_PI / gl_real{16};
+      gl_real angle = 0;
 
       auto windows = new transparent_windows_renderable( transparent_program, angle_divisions );
       auto frames = new window_frames_renderable( frame_program, angle_divisions );
@@ -163,10 +163,10 @@ namespace application {
           // add a transparent window with a color based on its position
           windows->add(
             position, v1, v2,
-            gpu_vec4{0.5 + position.x / 4.0, 0.5 + position.y / 4.0, 0.5 + position.z / 4.0, 0.2 + gpu_real(i) / gpu_real(angle_divisions)*0.4} );
+            gpu_vec4{0.5 + position.x / 4.0, 0.5 + position.y / 4.0, 0.5 + position.z / 4.0, 0.2 + gl_real(i) / gl_real(angle_divisions)*0.4} );
           // add a frame around that window with a dimension that depends on its position
           frames->add(
-            position, v1, v2, 0.01 + 0.02 * gpu_real(i)/gpu_real(angle_divisions), 0.02 );
+            position, v1, v2, 0.01 + 0.02 * gl_real(i)/gl_real(angle_divisions), 0.02 );
         }
 
       add_renderable( windows );

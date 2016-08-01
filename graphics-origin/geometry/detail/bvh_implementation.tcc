@@ -63,6 +63,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
   static constexpr size_t bvh_max_number_of_elements = (1U << uint8_t(31)) - 1;
 
+
   static constexpr uint8_t  mcode_size = 64;
   static constexpr uint8_t  mcode_length = 21;
   static constexpr uint32_t mcode_offset = 1U << mcode_length;
@@ -115,7 +116,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
-          leaf.element_index = i;
+          leaf.element= i;
           elements[i].compute_bounding_box( leaf.bounding );
           const auto& p = leaf.bounding.m_center;
 
@@ -161,7 +162,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  # endif
          {
             auto& leaf = nodes[ i + number_of_internals ];
-            leaf.element_index = i;
+            leaf.element = i;
             elements[i].compute_bounding_box( leaf.bounding );
             thread_bounding.merge( leaf.bounding );
           }
@@ -240,7 +241,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
-          leaf.element_index = i;
+          leaf.element= i;
           elements[i].compute_bounding_ball( leaf.bounding );
           const auto& p = leaf.bounding;
 
@@ -291,7 +292,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  # endif
           {
             auto& leaf = nodes[ i + number_of_internals ];
-            leaf.element_index = i;
+            leaf.element = i;
             elements[i].compute_bounding_ball( leaf.bounding );
             thread_bounding.merge( leaf.bounding );
           }

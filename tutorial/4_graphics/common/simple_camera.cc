@@ -15,7 +15,7 @@ namespace graphics_origin { namespace application {
       m_mouse_dx{0}, m_mouse_dy{0}, m_translation_speed{0.5}, m_mouse_moved{ false }
   {}
 
-  void simple_camera::set_translation_speed( gpu_real speed )
+  void simple_camera::set_translation_speed( gl_real speed )
   {
     m_translation_speed = speed;
   }
@@ -23,7 +23,7 @@ namespace graphics_origin { namespace application {
   {
     m_translation_speed = speed;
   }
-  gpu_real simple_camera::get_translation_speed() const
+  gl_real simple_camera::get_translation_speed() const
   {
     return m_translation_speed;
   }
@@ -68,10 +68,10 @@ namespace graphics_origin { namespace application {
     m_direction.x = m_move.left    - m_move.right;
     m_direction.y = m_move.up      - m_move.down;
     m_direction.z = m_move.forward - m_move.backward;
-    gpu_real factor = dot( m_direction, m_direction );
+    gl_real factor = dot( m_direction, m_direction );
     if( factor > 0.01 )
       {
-        factor = gpu_real( (omp_get_wtime() - m_last_update_time) * m_translation_speed ) / std::sqrt( factor );
+        factor = gl_real( (omp_get_wtime() - m_last_update_time) * m_translation_speed ) / std::sqrt( factor );
         m_direction *= factor;
 
         m_view[3][0] += m_direction.x;

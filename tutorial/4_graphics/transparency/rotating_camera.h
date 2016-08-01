@@ -20,8 +20,8 @@ namespace graphics_origin { namespace application {
 
   private:
     void do_update() override;
-    gpu_real m_last_update_time;
-    gpu_real m_rotation_angle;
+    gl_real m_last_update_time;
+    gl_real m_rotation_angle;
   };
 }}
 # endif

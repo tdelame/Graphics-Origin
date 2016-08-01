@@ -406,5 +406,7 @@ message(
   "* Libnoise\n"
   "   - include: ${LIBNOISE_INCLUDE_DIRS}\n"
   "   - libs:    ${LIBNOISE_LIBRARIES}\n"
+  "* Test libraries\n"
+  "   - libs:    ${GO_TEST_LIBRARIES}\n"
   
 )

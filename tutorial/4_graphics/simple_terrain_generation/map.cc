@@ -53,7 +53,7 @@ namespace graphics_origin
     }
 
     void
-    simple_terrain_map::set_resolution( gpu_real resolution_in_m )
+    simple_terrain_map::set_resolution( gl_real resolution_in_m )
     {
       m_resolution = resolution_in_m;
       set_dirty();
@@ -85,7 +85,7 @@ namespace graphics_origin
             }
 
           // compute the normal for every texel of the texture
-          const gpu_real scale = gpu_real(2.0) * m_map_radius / gpu_real( m_texture_size );
+          const gl_real scale = gl_real(2.0) * m_map_radius / gl_real( m_texture_size );
           # pragma omp parallel for
           for( unsigned int j = 0; j < m_texture_size; ++ j )
             {
@@ -141,7 +141,7 @@ namespace graphics_origin
        * To have a quad of the requested resolution, we can subdivide a patch
        * max_tess_levels x max_tess_levels times. Thus, to have a minimum
        * number of patch, each patch has the following size: */
-      gpu_real patch_size = m_resolution * max_tess_levels;
+      gl_real patch_size = m_resolution * max_tess_levels;
 
       /**
        * Now, by dividing 2.0 x m_map_radius by patch_size, we have the ideal number
@@ -149,7 +149,7 @@ namespace graphics_origin
        * we have to update a little patch_size
        */
       m_number_of_patches = std::ceil( 2.0 * m_map_radius / patch_size );
-      patch_size = gpu_real(2.0) * m_map_radius / gpu_real( m_number_of_patches );
+      patch_size = gl_real(2.0) * m_map_radius / gl_real( m_number_of_patches );
 
       glcheck(glBindVertexArray( m_vao ));
         try
@@ -158,19 +158,19 @@ namespace graphics_origin
                 (m_number_of_patches + 1) * (m_number_of_patches + 1),
                 gpu_vec4( 0, 0, 0, 0 ) );
 
-            const gpu_real inv_double_radius = gpu_real(1.0) / (gpu_real(2.0) * m_map_radius );
+            const gl_real inv_double_radius = gl_real(1.0) / (gl_real(2.0) * m_map_radius );
             # pragma omp parallel for
             for( unsigned int j = 0; j <= m_number_of_patches; ++j )
               {
                 gpu_vec4* row = positions.data( ) + j * (m_number_of_patches + 1);
-                gpu_real y = -m_map_radius + j * patch_size;
-                gpu_real x = -m_map_radius;
-                gpu_real ty = y * inv_double_radius + gpu_real(0.5);
+                gl_real y = -m_map_radius + j * patch_size;
+                gl_real x = -m_map_radius;
+                gl_real ty = y * inv_double_radius + gl_real(0.5);
                 for( unsigned int i = 0; i <= m_number_of_patches; ++i, ++row, x += patch_size )
                   {
                     row->x = x;
                     row->y = y;
-                    row->z = x * inv_double_radius + gpu_real(0.5);
+                    row->z = x * inv_double_radius + gl_real(0.5);
                     row->w = ty;
                   }
               }
@@ -182,7 +182,7 @@ namespace graphics_origin
               2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), 0 ));
             glcheck(glEnableVertexAttribArray( texcoord_location ));
             glcheck(glVertexAttribPointer( texcoord_location,
-              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), reinterpret_cast<void*>( 2 * sizeof(gpu_real))));
+              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), reinterpret_cast<void*>( 2 * sizeof(gl_real))));
           }
         catch( std::bad_alloc& e )
           {
@@ -269,7 +269,7 @@ namespace graphics_origin
 
     void
     simple_terrain_map::set_radius(
-      gpu_real map_radius_in_m )
+      gl_real map_radius_in_m )
     {
       if( map_radius_in_m > 0 )
         m_map_radius = map_radius_in_m;
@@ -277,7 +277,7 @@ namespace graphics_origin
 
     void
     simple_terrain_map::set_maximum_elevation(
-      gpu_real maximum_elevation_in_m )
+      gl_real maximum_elevation_in_m )
     {
       if( maximum_elevation_in_m > 0 )
         m_maximum_elevation = maximum_elevation_in_m;

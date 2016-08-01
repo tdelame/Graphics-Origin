@@ -44,7 +44,7 @@ namespace geometry {
       uint32_t parent_index;
       union {
         uint32_t left_index;
-        uint32_t element_index;
+        uint32_t element;
       };
       uint32_t right_index;
     };

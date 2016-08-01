@@ -23,10 +23,10 @@ namespace graphics_origin { namespace application {
     Q_INVOKABLE void set_go_down( bool down );
     Q_INVOKABLE void mouse_rotation( qreal dx, qreal dy );
 
-    void set_translation_speed( gpu_real speed );
+    void set_translation_speed( gl_real speed );
     void qml_set_translation_speed( qreal speed );
 
-    gpu_real get_translation_speed() const;
+    gl_real get_translation_speed() const;
     qreal qml_get_translation_speed() const;
 
   private:
@@ -44,9 +44,9 @@ namespace graphics_origin { namespace application {
       uint8_t down    : 1;
     };
     move m_move;
-    gpu_real m_mouse_dx;
-    gpu_real m_mouse_dy;
-    gpu_real m_translation_speed;
+    gl_real m_mouse_dx;
+    gl_real m_mouse_dy;
+    gl_real m_translation_speed;
     bool m_mouse_moved;
   };
 

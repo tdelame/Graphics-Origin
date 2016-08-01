@@ -46,8 +46,8 @@ namespace graphics_origin { namespace application {
     const auto nfaces = mesh.n_faces();
     const auto nvertices = nfaces * 3;
     const auto attribute_dimension = 8; // fvec3 + fvec3 + fvec2
-    const auto attribute_size = attribute_dimension * sizeof(gpu_real);
-    std::vector< gpu_real > attributes( nvertices * attribute_dimension );
+    const auto attribute_size = attribute_dimension * sizeof(gl_real);
+    std::vector< gl_real > attributes( nvertices * attribute_dimension );
 # ifdef _WIN32
 # pragma message("MSVC does not allow unsigned index variable in OpenMP for statement")
 # pragma omp parallel for
@@ -95,13 +95,13 @@ namespace graphics_origin { namespace application {
       glcheck(glVertexAttribPointer( normal_location,
         3, GL_FLOAT, GL_FALSE,
         attribute_size,
-        reinterpret_cast<void*>( 3 * sizeof( gpu_real ))));
+        reinterpret_cast<void*>( 3 * sizeof( gl_real ))));
 
       glcheck(glEnableVertexAttribArray( texture_location ));
       glcheck(glVertexAttribPointer( texture_location,
         2, GL_FLOAT, GL_FALSE,
         attribute_size,
-        reinterpret_cast<void*>( 6 * sizeof( gpu_real ))));
+        reinterpret_cast<void*>( 6 * sizeof( gl_real ))));
 
       glcheck(glActiveTexture(GL_TEXTURE0));
       glcheck(glBindTexture(GL_TEXTURE_2D, m_texture_id));

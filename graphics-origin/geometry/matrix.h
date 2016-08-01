@@ -16,8 +16,8 @@ BEGIN_GO_NAMESPACE
 typedef glm::tmat4x4< real, glm::highp> mat4;
 typedef glm::tmat3x3< real, glm::highp> mat3;
 
-typedef glm::tmat4x4< gpu_real, glm::highp> gpu_mat4;
-typedef glm::tmat3x3< gpu_real, glm::highp> gpu_mat3;
+typedef glm::tmat4x4< gl_real, glm::highp> gpu_mat4;
+typedef glm::tmat3x3< gl_real, glm::highp> gpu_mat3;
 
 END_GO_NAMESPACE
 

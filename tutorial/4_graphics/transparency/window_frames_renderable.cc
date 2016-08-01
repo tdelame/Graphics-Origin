@@ -60,8 +60,8 @@ namespace graphics_origin {
       const gpu_vec3& center,
       const gpu_vec3& v1,
       const gpu_vec3& v2,
-      gpu_real size,
-      gpu_real depth )
+      gl_real size,
+      gl_real depth )
     {
       set_dirty();
       auto pair = m_frames.create();

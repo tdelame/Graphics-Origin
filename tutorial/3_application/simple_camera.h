@@ -37,8 +37,8 @@ namespace graphics_origin { namespace application {
       uint8_t down    : 1;
     };
     move m_move;
-    gpu_real m_mouse_dx;
-    gpu_real m_mouse_dy;
+    gl_real m_mouse_dx;
+    gl_real m_mouse_dy;
     bool m_mouse_moved;
   };
 
