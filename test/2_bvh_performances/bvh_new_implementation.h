@@ -329,144 +329,144 @@ namespace {
   };
 } // end of anonymous name space
 
-    /**
-     * The construction algorithm can be divided into two parts:
-     * - computing the tree structure of the BVH
-     * - computing bounding volumes of the internal nodes.
-     *
-     * For the first part, we need first to compute bounding volumes of
-     * leaf nodes, that is the bounding volumes of bounded elements. If
-     * necessary, we will use those bounding volumes to compute the root
-     * bounding volume. Then, we can compute Morton codes of the leaves,
-     * and order the leaves in increasing Morton codes. Those Morton codes
-     * are then used to determine the node hierarchy, i.e. set the left and
-     * right childs of each internal node. After this step, we have an almost
-     * complete BVH: all we need to compute are the bounding volumes of
-     * internal nodes. The Morton codes are no longer necessary.
-     *
-     * The second part iterates on nodes, from leaves to the root, one level
-     * at a time. The code is adapted from a previous implementation I made
-     * with CUDA: we have as much as threads as there are leaves. One of those
-     * threads works on a particular node index. When its work is over, it will
-     * set the node index to the parent of the current one. At the next iteration,
-     * two threads will have the same node index. We use then a counter for each
-     * node to determine which thread arrives first on a node. The first thread to
-     * arrive to a node will stop, only the second one will continue to work. This
-     * way we are sure that:
-     * - each node is processed once
-     * - each node is processed after both of its children.
-     */
-    template<
-       typename bounding_volume >
-    struct bvh_builder {
-      typedef uint64_t morton_code;
-      typedef typename bvh_new<bounding_volume>::node_index node_index;
-      typedef typename bvh_new<bounding_volume>::node node;
+  /**
+   * The construction algorithm can be divided into two parts:
+   * - computing the tree structure of the BVH
+   * - computing bounding volumes of the internal nodes.
+   *
+   * For the first part, we need first to compute bounding volumes of
+   * leaf nodes, that is the bounding volumes of bounded elements. If
+   * necessary, we will use those bounding volumes to compute the root
+   * bounding volume. Then, we can compute Morton codes of the leaves,
+   * and order the leaves in increasing Morton codes. Those Morton codes
+   * are then used to determine the node hierarchy, i.e. set the left and
+   * right childs of each internal node. After this step, we have an almost
+   * complete BVH: all we need to compute are the bounding volumes of
+   * internal nodes. The Morton codes are no longer necessary.
+   *
+   * The second part iterates on nodes, from leaves to the root, one level
+   * at a time. The code is adapted from a previous implementation I made
+   * with CUDA: we have as much as threads as there are leaves. One of those
+   * threads works on a particular node index. When its work is over, it will
+   * set the node index to the parent of the current one. At the next iteration,
+   * two threads will have the same node index. We use then a counter for each
+   * node to determine which thread arrives first on a node. The first thread to
+   * arrive to a node will stop, only the second one will continue to work. This
+   * way we are sure that:
+   * - each node is processed once
+   * - each node is processed after both of its children.
+   */
+  template<
+     typename bounding_volume >
+  struct bvh_builder {
+    typedef uint64_t morton_code;
+    typedef typename bvh_new<bounding_volume>::node_index node_index;
+    typedef typename bvh_new<bounding_volume>::node node;
 
-      template< typename bounded_element >
-      bvh_builder(
-          bvh_new<bounding_volume>& target,
-          const bounded_element* elements )
-      {
-        const size_t size_of_thread_variables =
-            sizeof( typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables)
-            * (target.get_number_of_leaf_nodes() );
-        const size_t size_of_counters = sizeof(uint8_t) * target.get_number_of_internal_nodes();
-        const size_t size = std::max(
-            target.get_number_of_leaf_nodes() * sizeof(uint64_t),
-            size_of_counters + size_of_thread_variables
-        );
-
-        char* raw_pointer = (char*)malloc( size );
-        std::memset( raw_pointer, 9, size );
-        bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
-        bvh_tree_structure_builder<bounding_volume>( input, elements, reinterpret_cast<morton_code*>(raw_pointer) );
-        bvh_bounding_volumes_builder<bounding_volume>(
-            input,
-            reinterpret_cast<uint8_t*>(raw_pointer),
-            reinterpret_cast<typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables*>(raw_pointer + size_of_counters )
-        );
-        free( raw_pointer );
-      }
-
-      template< typename bounded_element >
-      bvh_builder(
-          bvh_new<bounding_volume>& target,
-          const bounded_element* elements,
-          bounding_volume& root_bounding_volume )
-      {
-        const size_t size_of_thread_variables =
-            sizeof( typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables)
-            * (target.get_number_of_leaf_nodes() );
-        const size_t size_of_counters = sizeof(uint8_t) * target.get_number_of_internal_nodes();
-        const size_t size = std::max(
-            target.get_number_of_leaf_nodes() * sizeof(uint64_t),
-            size_of_counters + size_of_thread_variables
-        );
-
-        char* raw_pointer = (char*)malloc( size );
-        std::memset( raw_pointer, 9, size );
-        bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
-        bvh_tree_structure_builder<bounding_volume>(
-            input,
-            elements,
-            reinterpret_cast<morton_code*>(raw_pointer),
-            root_bounding_volume );
-        bvh_bounding_volumes_builder<bounding_volume>(
-            input,
-            reinterpret_cast<uint8_t*>(raw_pointer),
-            reinterpret_cast<typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables*>(raw_pointer + size_of_counters )
-        );
-        free( raw_pointer );
-      }
-     };
-
-    template< typename bounding_volume >
     template< typename bounded_element >
-    bvh_new<bounding_volume>::bvh_new( const bounded_element* elements, size_t number_of_elements ) :
-      number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
+    bvh_builder(
+        bvh_new<bounding_volume>& target,
+        const bounded_element* elements )
     {
-      if( number_of_elements > max_number_of_elements )
-        {
-          LOG( fatal, "internal structures cannot handle the requested number of elements." );
-          return;
-        }
+      const size_t size_of_thread_variables =
+          sizeof( typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables)
+          * (target.get_number_of_leaf_nodes() );
+      const size_t size_of_counters = sizeof(uint8_t) * target.get_number_of_internal_nodes();
+      const size_t size = std::max(
+          target.get_number_of_leaf_nodes() * sizeof(uint64_t),
+          size_of_counters + size_of_thread_variables
+      );
 
-      if( number_of_elements < 2 )
-        {
-          LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
-          return;
-        }
-
-      m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
-
-      bvh_builder<bounding_volume>( *this, elements );
+      char* raw_pointer = (char*)malloc( size );
+      std::memset( raw_pointer, 9, size );
+      bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
+      bvh_tree_structure_builder<bounding_volume>( input, elements, reinterpret_cast<morton_code*>(raw_pointer) );
+      bvh_bounding_volumes_builder<bounding_volume>(
+          input,
+          reinterpret_cast<uint8_t*>(raw_pointer),
+          reinterpret_cast<typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables*>(raw_pointer + size_of_counters )
+      );
+      free( raw_pointer );
     }
 
-    template< typename bounding_volume >
     template< typename bounded_element >
-    bvh_new<bounding_volume>::bvh_new(
+    bvh_builder(
+        bvh_new<bounding_volume>& target,
         const bounded_element* elements,
-        size_t number_of_elements,
-        bounding_volume& root_bounding_volume ) :
-      number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
+        bounding_volume& root_bounding_volume )
     {
-      if( number_of_elements > max_number_of_elements )
-        {
-          LOG( fatal, "internal structures cannot handle the requested number of elements." );
-          return;
-        }
+      const size_t size_of_thread_variables =
+          sizeof( typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables)
+          * (target.get_number_of_leaf_nodes() );
+      const size_t size_of_counters = sizeof(uint8_t) * target.get_number_of_internal_nodes();
+      const size_t size = std::max(
+          target.get_number_of_leaf_nodes() * sizeof(uint64_t),
+          size_of_counters + size_of_thread_variables
+      );
 
-      if( number_of_elements < 2 )
-        {
-          LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
-          return;
-        }
-
-      m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
-
-      bvh_builder<bounding_volume>( *this, elements, root_bounding_volume );
+      char* raw_pointer = (char*)malloc( size );
+      std::memset( raw_pointer, 9, size );
+      bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
+      bvh_tree_structure_builder<bounding_volume>(
+          input,
+          elements,
+          reinterpret_cast<morton_code*>(raw_pointer),
+          root_bounding_volume );
+      bvh_bounding_volumes_builder<bounding_volume>(
+          input,
+          reinterpret_cast<uint8_t*>(raw_pointer),
+          reinterpret_cast<typename bvh_bounding_volumes_builder<bounding_volume>::thread_variables*>(raw_pointer + size_of_counters )
+      );
+      free( raw_pointer );
     }
+   };
+
+  template< typename bounding_volume >
+  template< typename bounded_element >
+  bvh_new<bounding_volume>::bvh_new( const bounded_element* elements, size_t number_of_elements ) :
+    number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
+  {
+    if( number_of_elements > max_number_of_elements )
+      {
+        LOG( fatal, "internal structures cannot handle the requested number of elements." );
+        return;
+      }
+
+    if( number_of_elements < 2 )
+      {
+        LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
+        return;
+      }
+
+    m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
+
+    bvh_builder<bounding_volume>( *this, elements );
+  }
+
+  template< typename bounding_volume >
+  template< typename bounded_element >
+  bvh_new<bounding_volume>::bvh_new(
+      const bounded_element* elements,
+      size_t number_of_elements,
+      bounding_volume& root_bounding_volume ) :
+    number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
+  {
+    if( number_of_elements > max_number_of_elements )
+      {
+        LOG( fatal, "internal structures cannot handle the requested number of elements." );
+        return;
+      }
+
+    if( number_of_elements < 2 )
+      {
+        LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
+        return;
+      }
+
+    m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
+
+    bvh_builder<bounding_volume>( *this, elements, root_bounding_volume );
+  }
 } // end of geometry name space
 } // end of graphics_origin name space
 # endif

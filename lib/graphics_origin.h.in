@@ -19,6 +19,7 @@ namespace graphics_origin {
   
   /** Real type for any CPU computations. */
   typedef double real;
+  static const real REAL_EPSILON = DBL_EPSILON;
   /** Real type used by OpenGL internally.
    * 
    * Double precision is not always possible for gl_Position, the built-in

@@ -86,9 +86,10 @@ namespace graphics_origin {
       size_t number_of_triangles;
       bvh_results ground_truth;
       bvh_results candidate;
+      bool are_equal;
 
       test_results( const std::string& name, size_t nb_triangles ) :
-        mesh_name{name}, number_of_triangles{nb_triangles}
+        mesh_name{name}, number_of_triangles{nb_triangles}, are_equal{ false }
       {}
 
       void print()
@@ -96,6 +97,7 @@ namespace graphics_origin {
         std::cout
           << "Results for " << mesh_name << "\n"
           << "- #triangles " << number_of_triangles << "\n"
+          << "- equal " << (are_equal ? "YES\n" : "NO\n")
           << "- ground_truth\n";
         ground_truth.print();
         std::cout
@@ -144,6 +146,11 @@ namespace graphics_origin {
             results.ground_truth = bvh_results( stop - start, ground_truth );
           }
 
+          {
+            bvh_new<aabox> candidate( triangles.data(), nfaces );
+            bvh<aabox> ground_truth( triangles.data(), nfaces );
+            results.are_equal = are_equal( candidate, ground_truth );
+          }
 
 
           results.print();

@@ -28,7 +28,8 @@ namespace graphics_origin {
       if( tree.get_number_of_nodes() == 0 )
         return false;
 
-      std::vector<bool> marked( tree.get_number_of_nodes(), false );
+      size_t unreached_nodes = tree.get_number_of_nodes();
+      std::vector<bool> marked( unreached_nodes, false );
       std::list< uint32_t > front_indices;
       front_indices.push_back( 0 );
 
@@ -39,6 +40,7 @@ namespace graphics_origin {
           if( marked[ current_idx ] )
             return false;
           marked[ current_idx ] = true;
+          --unreached_nodes;
 
           if( !tree.is_leaf( current_idx ) )
             {
@@ -50,7 +52,60 @@ namespace graphics_origin {
               front_indices.push_front( node.right_index );
             }
         }
-      return true;
+
+      return !unreached_nodes;
+    }
+
+
+    bool is_null_point( const vec3& a )
+    {
+      return std::abs( a.x ) < REAL_EPSILON
+          && std::abs( a.y ) < REAL_EPSILON
+          && std::abs( a.z ) < REAL_EPSILON;
+    }
+
+    bool is_same_point( const vec3& a, const vec3& b )
+    {
+      return is_null_point( b - a );
+    }
+
+    bool is_same_box( const aabox& a, const aabox& b )
+    {
+      return is_same_point( a.m_center, b.m_center ) && is_same_point( a.m_hsides, b.m_hsides );
+    }
+
+
+    template< typename bvh1, typename bvh2 >
+    bool are_equal( bvh1& a, bvh2& b )
+    {
+      if( a.get_number_of_nodes() == b.get_number_of_nodes() )
+        {
+          const size_t nodes = a.get_number_of_nodes();
+          for( size_t i = 0; i < nodes; ++ i )
+            {
+              auto& anode = a.get_node( i );
+              auto& bnode = b.get_node( i );
+
+              if( !is_same_box( anode.bounding, bnode.bounding )
+                || anode.parent_index != bnode.parent_index
+                || anode.left_index != bnode.left_index
+                || anode.right_index != bnode.right_index )
+                return false;
+            }
+          return true;
+        }
+      return false;
+    }
+
+    template< typename bvh_type >
+    bool check_bounding_volumes( bvh_type& tree )
+    {
+      // leaves contains triangles
+
+      // internal nodes contains child boxes
+
+
+      return false;
     }
   }
 }
