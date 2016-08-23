@@ -20,7 +20,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 1 ] + fb * bb.m_hsides[ 2 ];   \
+  rad = fa * bb.hsides[ 1 ] + fb * bb.hsides[ 2 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -37,7 +37,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 1 ] + fb * bb.m_hsides[ 2 ];   \
+  rad = fa * bb.hsides[ 1 ] + fb * bb.hsides[ 2 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -55,7 +55,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 0 ] + fb * bb.m_hsides[ 2 ];   \
+  rad = fa * bb.hsides[ 0 ] + fb * bb.hsides[ 2 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -72,7 +72,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 0 ] + fb * bb.m_hsides[ 2 ];   \
+  rad = fa * bb.hsides[ 0 ] + fb * bb.hsides[ 2 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -90,7 +90,7 @@ namespace geometry {
       min = p[2];                                                        \
       max = p[1];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 0 ] + fb * bb.m_hsides[ 1 ];   \
+  rad = fa * bb.hsides[ 0 ] + fb * bb.hsides[ 1 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -107,7 +107,7 @@ namespace geometry {
       min = p[1];                                                        \
       max = p[0];                                                        \
     }                                                                    \
-  rad = fa * bb.m_hsides[ 0 ] + fb * bb.m_hsides[ 1 ];   \
+  rad = fa * bb.hsides[ 0 ] + fb * bb.hsides[ 1 ];                       \
   if( min > rad || max < -rad )                                          \
     return false;
 
@@ -146,9 +146,9 @@ namespace geometry {
   bool
   triangle::intersect( const aabox& bb ) const
   {
-    vec3 v0 = vertices[0] - bb.m_center;
-    vec3 v1 = vertices[1] - bb.m_center;
-    vec3 v2 = vertices[2] - bb.m_center;
+    vec3 v0 = vertices[0] - bb.center;
+    vec3 v1 = vertices[1] - bb.center;
+    vec3 v2 = vertices[2] - bb.center;
 
     vec3 e0 = v1 - v0;
     vec3 e1 = v2 - v1;
@@ -184,15 +184,15 @@ namespace geometry {
 
 
     FINDMINMAX(v0[0],v1[0],v2[0],min,max);
-    if(min>bb.m_hsides[0] || max<-bb.m_hsides[0]) return false;
+    if(min>bb.hsides[0] || max<-bb.hsides[0]) return false;
 
     FINDMINMAX(v0[1],v1[1],v2[1],min,max);
-    if(min>bb.m_hsides[1] || max<-bb.m_hsides[1]) return false;
+    if(min>bb.hsides[1] || max<-bb.hsides[1]) return false;
 
     FINDMINMAX(v0[2],v1[2],v2[2],min,max);
-    if(min>bb.m_hsides[2] || max<-bb.m_hsides[2]) return false;
+    if(min>bb.hsides[2] || max<-bb.hsides[2]) return false;
 
-    return plane_overlap_box( normal, vertices[0], bb.m_hsides );
+    return plane_overlap_box( normal, vertices[0], bb.hsides );
   }
 
 

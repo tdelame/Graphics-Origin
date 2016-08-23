@@ -1,7 +1,6 @@
-# ifndef BVH_NEW_H_
-# define BVH_NEW_H_
+# ifndef GRAPHICS_ORIGIN_BVH_H_
+# define GRAPHICS_ORIGIN_BVH_H_
 # include "../../graphics-origin/graphics_origin.h"
-# include "../../graphics-origin/geometry/traits.h"
 # include <vector>
 namespace graphics_origin {
   namespace geometry {
@@ -44,17 +43,17 @@ namespace graphics_origin {
             size_t number_of_elements,
             bounding_volume& root_bounding_volume );
 
-        size_t get_number_of_nodes() const
+        size_t get_number_of_nodes() const noexcept
         {
           return m_nodes.size();
         }
 
-        size_t get_number_of_internal_nodes() const
+        size_t get_number_of_internal_nodes() const noexcept
         {
           return number_of_internal_nodes;
         }
 
-        size_t get_number_of_leaf_nodes() const
+        size_t get_number_of_leaf_nodes() const noexcept
         {
           return number_of_internal_nodes + 1;
         }
@@ -64,12 +63,12 @@ namespace graphics_origin {
           return m_nodes[ index ];
         }
 
-        bool is_leaf( node_index index ) const
+        bool is_leaf( node_index index ) const noexcept
         {
           return index >= number_of_internal_nodes;
         }
 
-        bool is_leaf( const node* pnode ) const
+        bool is_leaf( const node* pnode ) const noexcept
         {
           return std::distance( m_nodes.data(), pnode ) >= number_of_internal_nodes;
         }
@@ -121,5 +120,6 @@ namespace graphics_origin {
     };
   }
 }
-# include "bvh_new_implementation.h"
+# include "details/bvh_implementation.h"
+# include "details/bvh_customization_points.h"
 # endif

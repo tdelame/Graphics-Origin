@@ -94,7 +94,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * @return The lower corner of this box. */
     inline vec3 get_min() const
     {
-      return m_center - m_hsides;
+      return center - hsides;
     }
     /**@brief Access to the uppder corner.
      *
@@ -102,11 +102,13 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * @return The upper worner of this box.*/
     inline vec3 get_max() const
     {
-      return m_center + m_hsides;
+      return center + hsides;
     }
 
-    vec3 m_center;
-    vec3 m_hsides;
+    // Center of the box.
+    vec3 center;
+    // Half length of the box sides: get_max() - center.
+    vec3 hsides;
   };
 
   template<>

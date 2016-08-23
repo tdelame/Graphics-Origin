@@ -1,49 +1,9 @@
 # include "../../graphics-origin/geometry/mesh.h"
 # include "../../graphics-origin/geometry/bvh.h"
-# include "2_bvh_performances/bvh_new.h"
 # include "2_bvh_performances/bvh_check.h"
-# include "2_bvh_performances/bvh_printer.h"
 # include "../../graphics-origin/tools/resources.h"
 # include <omp.h>
 # include <iostream>
-
-
-namespace graphics_origin {
-  namespace geometry {
-
-    template<>
-    struct bounding_volume_computer< aabox, triangle > {
-      static void compute(
-          const triangle& element,
-          aabox& volume )
-      {
-        element.compute_bounding_box( volume );
-      }
-    };
-
-    template<>
-    struct bounding_volume_analyzer<aabox> {
-      static vec3 compute_lower_corner(
-          const aabox& volume )
-      {
-        return volume.get_min();
-      }
-
-      static vec3 compute_upper_corner(
-          const aabox& volume )
-      {
-        return volume.get_max();
-      }
-
-      static vec3 compute_center(
-          const aabox& volume )
-      {
-        return volume.m_center;
-      }
-    };
-
-  }
-}
 
 namespace graphics_origin {
   namespace geometry {
@@ -130,7 +90,7 @@ namespace graphics_origin {
 
           {
             double start = omp_get_wtime();
-            bvh_new<aabox> candidate( triangles.data(), nfaces );
+            bvh<aabox> candidate( triangles.data(), nfaces );
             double stop = omp_get_wtime();
             results.candidate = bvh_results( stop - start, candidate );
           }
@@ -143,7 +103,7 @@ namespace graphics_origin {
           }
 
           {
-            bvh_new<aabox> candidate( triangles.data(), nfaces );
+            bvh<aabox> candidate( triangles.data(), nfaces );
             bvh<aabox> ground_truth( triangles.data(), nfaces );
             results.are_equal = are_equal( candidate, ground_truth );
           }

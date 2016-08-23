@@ -1,121 +1,117 @@
-/*  Created on: Jan 24, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-
 # ifndef GRAPHICS_ORIGIN_BVH_H_
 # define GRAPHICS_ORIGIN_BVH_H_
 # include "../graphics_origin.h"
-# include "concepts/bounding_box_computer.h"
-# include "traits.h"
 # include "box.h"
-# include "../tools/log.h"
-
 # include <vector>
-# include <type_traits>
+namespace graphics_origin {
+  namespace geometry {
 
-BEGIN_GO_NAMESPACE
-namespace geometry {
+    template< typename bounding_volume >
+    struct bvh_builder;
 
-  template<
-    typename bounding_object = aabox >
-  class bvh {
-  public:
-    static_assert(
-        geometric_traits<bounding_object>::is_bounding_volume_merger,
-        "The bounding objects must be bounding volume and must be able to merge themselves");
+    template<
+        typename bounding_volume = aabox >
+      class bvh {
+      public:
+        typedef uint32_t node_index;
+        typedef uint32_t element_index;
+        static constexpr size_t max_number_of_elements = (1U << uint8_t(sizeof(node_index)*8 - 1)) - 1;
 
-    /**We store indices in uint32_t. We then have 2^32 nodes in total. Those nodes
-     * are composed of n - 1 internal nodes and n leaves, for a bvh of n primitives.
-     * The maximum number of primitives is the solution of
-     * 2 n = 2^32 - 1
-     * thus n = 2^31 - 1 (since n is an integer).
-     *
-     * The node of index i is a leaf if i >= n - 1
-     */
+        static_assert(
+            std::is_default_constructible< bounding_volume >::value,
+            "Bounding volume type must be default constructible to initialize the set of nodes.");
 
-    /**@brief A unique structure to represent both internal and leaf nodes.
-     *
-     *
-     *
-     */
-    struct node {
-      node();
-      bounding_object bounding;
-      uint32_t parent_index;
-      union {
-        uint32_t left_index;
-        uint32_t element;
+        struct node {
+          bounding_volume bounding;
+          node_index parent_index;
+          union {
+            node_index left_index;
+            element_index element;
+          };
+          node_index right_index;
+        };
+
+        template< typename bounded_element >
+        bvh( const bounded_element* elements, size_t number_of_elements );
+
+        template< typename bounded_element >
+        bvh(
+            const bounded_element* elements,
+            size_t number_of_elements,
+            bounding_volume& root_bounding_volume );
+
+        size_t get_number_of_nodes() const noexcept
+        {
+          return m_nodes.size();
+        }
+
+        size_t get_number_of_internal_nodes() const noexcept
+        {
+          return number_of_internal_nodes;
+        }
+
+        size_t get_number_of_leaf_nodes() const noexcept
+        {
+          return number_of_internal_nodes + 1;
+        }
+
+        const node& get_node( node_index index ) const
+        {
+          return m_nodes[ index ];
+        }
+
+        bool is_leaf( node_index index ) const noexcept
+        {
+          return index >= number_of_internal_nodes;
+        }
+
+        bool is_leaf( const node* pnode ) const noexcept
+        {
+          return std::distance( m_nodes.data(), pnode ) >= number_of_internal_nodes;
+        }
+
+      private:
+        friend struct bvh_builder<bounding_volume>;
+        const size_t number_of_internal_nodes;
+        std::vector< node > m_nodes;
       };
-      uint32_t right_index;
+
+    /**Customization point to compute a bounding volume of a specific type for
+     * a bounded element of a specific type. */
+    template< typename bounding_volume, typename bounded_element >
+    struct bounding_volume_computer {
+      static_assert(
+         implementation_required<bounding_volume, bounded_element>::value,
+         "Please, provide an implementation of bounding_volumes_computer for those specific bounding volume and bounded element types");
+
+      static void compute( const bounded_element& element, bounding_volume& volume );
     };
 
-    template< typename bounded_element >
-    bvh( const bounded_element* elements, size_t number_of_elements );
+    /**Customization point to compute the corners of a bounding volume of a
+     * specific type as well as it center. This is necessary to compute morton
+     * codes. An implementation for balls and boxes is already given. */
+    template< typename bounding_volume >
+    struct bounding_volume_analyzer {
 
-    template< typename bounded_element >
-    bvh( const bounded_element* elements, bounding_object& root_bounding_object, size_t number_of_elements );
+      static_assert(
+          implementation_required<bounding_volume>::value,
+          "Please, provide an implementation of bounding_volume_analyzer for this specific bounding volume type");
 
-    size_t get_number_of_nodes() const
-    {
-      return m_nodes.size();
-    }
+      /**The lower corner of a bounding volume is the point l such that for
+       * every point p inside the bounding volume, l <= p. */
+      static vec3 compute_lower_corner( const bounding_volume& volume );
 
-    size_t get_number_of_internal_nodes() const
-    {
-      return m_number_of_internal_nodes;
-    }
+      /**The upper corner of a bounding volume is the point u such that for
+       * every point p inside the bounding volume, u >= p. */
+      static vec3 compute_upper_corner( const bounding_volume& volume );
 
-    size_t get_number_of_leaf_nodes() const
-    {
-      return m_number_of_internal_nodes + 1;
-    }
-
-    const node&
-    get_node( uint32_t node_index ) const
-    {
-      return m_nodes[ node_index ];
-    }
-
-    bool is_leaf( uint32_t node_index ) const
-    {
-      return node_index >= m_number_of_internal_nodes;
-    }
-
-    bool is_leaf( const node* pnode ) const
-    {
-      return std::distance( m_nodes.data(), pnode ) >= m_number_of_internal_nodes;
-    }
-
-  private:
-    const size_t m_number_of_internal_nodes;
-    std::vector< node > m_nodes;
-  };
-
-  /**@brief Create the leaf nodes of a BVH.
-   *
-   * This structure set the leaves of a BVH. It is specialized to build BVH with
-   * balls or boxes as bounding volumes. If you want to have other type of bounding
-   * volumes, have a look at the implementation and specialize this structure with
-   * the type you want.
-   */
-  template< typename bounding_object, typename bounded_element >
-  struct set_leaf_nodes {
-    set_leaf_nodes(
-      const bounded_element* elements,
-      std::vector<typename bvh<bounding_object>::node>& nodes,
-      size_t number_of_internals,
-      std::vector<uint64_t>& morton_codes);
-
-    set_leaf_nodes(
-      const bounded_element* elements,
-      bounding_object& root_bounding_object,
-      std::vector<typename bvh<bounding_object>::node>& nodes,
-      size_t number_of_internals,
-      std::vector<uint64_t>& morton_codes );
-  };
-
+      /**In order to compute the morton code of a bounded element, we use the
+       * position of its bounding volume center relatively to the lower and
+       * upper corners. */
+      static vec3 compute_center( const bounding_volume& volume );
+    };
+  }
 }
-END_GO_NAMESPACE
-
-# include "detail/bvh_implementation.tcc"
+# include "detail/bvh_implementation.h"
+# include "detail/bvh_customization_points.h"
 # endif

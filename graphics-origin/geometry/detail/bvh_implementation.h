@@ -1,5 +1,5 @@
-# ifndef BVH_NEW_IMPLEMENTATION_H_
-# define BVH_NEW_IMPLEMENTATION_H_
+# include "../../extlibs/thrust/sort.h"
+# include "../../extlibs/thrust/system/omp/execution_policy.h"
 namespace graphics_origin {
 namespace geometry {
 // Since we work with templates, the implementation must reside inside a
@@ -297,7 +297,6 @@ namespace {
         }
     }
 
-
     void kernel( thread_index tid, bool& next_iteration_required )
     {
       thread_variables& vars = variables[ tid ];
@@ -439,19 +438,11 @@ namespace {
     number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
   {
     if( number_of_elements > max_number_of_elements )
-      {
-        LOG( fatal, "internal structures cannot handle the requested number of elements." );
-        return;
-      }
-
+      throw std::runtime_error("internal structures cannot handle the requested number of elements");
     if( number_of_elements < 2 )
-      {
-        LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
-        return;
-      }
+      throw std::runtime_error("not enough elements to create a bounding volume hierarchy");
 
     m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
-
     bvh_builder<bounding_volume>( *this, elements );
   }
 
@@ -464,21 +455,11 @@ namespace {
     number_of_internal_nodes{ number_of_elements ? number_of_elements - 1 : 0 }
   {
     if( number_of_elements > max_number_of_elements )
-      {
-        LOG( fatal, "internal structures cannot handle the requested number of elements." );
-        return;
-      }
-
+      throw std::runtime_error("internal structures cannot handle the requested number of elements");
     if( number_of_elements < 2 )
-      {
-        LOG( fatal, "not enough elements to create a bounding volume hierarchy." );
-        return;
-      }
-
+      throw std::runtime_error("not enough elements to create a bounding volume hierarchy");
     m_nodes.resize( ( number_of_internal_nodes << 1 ) + 1 );
-
     bvh_builder<bounding_volume>( *this, elements, root_bounding_volume );
   }
 } // end of geometry name space
 } // end of graphics_origin name space
-# endif

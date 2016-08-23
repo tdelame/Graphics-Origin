@@ -43,8 +43,8 @@ namespace graphics_origin { namespace application {
   {
     m_dirty = true;
     auto pair = m_boxes.create();
-    pair.second.center = box.m_center;
-    pair.second.hsides = box.m_hsides;
+    pair.second.center = box.center;
+    pair.second.hsides = box.hsides;
     pair.second.color  = color;
     return pair.first;
   }

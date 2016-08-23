@@ -7,11 +7,14 @@
 # include "../../graphics-origin/geometry/triangle.h"
 # include "../../graphics-origin/geometry/ray.h"
 # include "../../graphics-origin/tools/filesystem.h"
+# include "../../graphics-origin/tools/log.h"
 
 # include <OpenMesh/Core/IO/exporter/BaseExporter.hh>
 # include <OpenMesh/Core/IO/IOManager.hh>
 
 # include "../../graphics-origin/extlibs/nanoflann.h"
+
+# include <vector>
 
 BEGIN_GO_NAMESPACE namespace geometry {
   static const std::string obj_file_extension = ".obj";
@@ -728,7 +731,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
   {
     if( !m_bvh )
       {
-        m_bvh = new bvh<aabox>( m_triangles.data(), bounding_box, m_triangles.size() );
+        m_bvh = new bvh<aabox>( m_triangles.data(), m_triangles.size(), bounding_box );
       }
   }
 

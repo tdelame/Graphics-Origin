@@ -74,7 +74,7 @@ namespace graphics_origin {
 
     bool is_same_box( const aabox& a, const aabox& b )
     {
-      return is_same_point( a.m_center, b.m_center ) && is_same_point( a.m_hsides, b.m_hsides );
+      return is_same_point( a.center, b.center ) && is_same_point( a.hsides, b.hsides );
     }
 
 

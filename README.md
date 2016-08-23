@@ -23,18 +23,13 @@ performance, support and so on), are advised to read about projects such as
 ## Configuration
 The code has been tested on a limited set of platforms, including:
 - GNU/Linux platforms, compiled with gcc 5.2, 5.3 and 6.1
-- ~~Windows 64 bits, with Visual Studio 14~~ Need to port latest modifications
+- ~~Windows 64 bits, with Visual Studio 14~~ not supported anymore. I never use
+the Windows due to the lack of OpenMP support in MSVC. Thus, I prefer to use
+my free time to work only on the Windows version, for now.
 
 ## Installation
-A documentation about installation will be added soon for both GNU/Linux and 
-Windows. In the meantime, here are the set of external libraries required:
-- required
-  - OpenMP
-  - OpenMesh (for the geometry library)
-  - Boost 
-- required for graphic applications
-  - Qt 5
-  - GLEW & OpenGL 4
+A documentation about installation is available at the following page:
+[Virtual Atom](https://virtual-atom.com/pages/projects/graphics_origin.html).
 
 ## Licensing
 This code is release under the MIT Licence. Please see the file called LICENCE.

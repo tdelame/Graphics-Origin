@@ -148,7 +148,7 @@ namespace graphics_origin {
 // template or a class template, in order to clearly tell the user that an
 // implementation is necessary:
 //   static_assert( 
-//     implemenation_required<param>::value,
+//     implementation_required<param>::value,
 //     "Please, provide an implementation of X because Y");
 // The "trick" is that the compiler has to wait for an actual instantiation
 // of the class template in order to know the value. Otherwise, if we used

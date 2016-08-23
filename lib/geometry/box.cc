@@ -11,22 +11,22 @@ BEGIN_GO_NAMESPACE
 namespace geometry {
 
 aabox::aabox()
-  : m_center{}, m_hsides{}
+  : center{}, hsides{}
 {}
 
 aabox::aabox( const vec3& min, const vec3& max )
-    : m_center{ real(0.5) * (min + max )  }, m_hsides{ max - m_center }
+    : center{ real(0.5) * (min + max )  }, hsides{ max - center }
 {}
 
 aabox::aabox( const aabox& other )
-    : m_center{ other.m_center }, m_hsides{ other.m_hsides }
+    : center{ other.center }, hsides{ other.hsides }
 {}
 
 aabox&
 aabox::operator=( const aabox& other )
 {
-  m_center = other.m_center;
-  m_hsides = other.m_hsides;
+  center = other.center;
+  hsides = other.hsides;
   return *this;
 }
 
@@ -41,17 +41,17 @@ aabox::merge( const aabox& other ) noexcept
 bool
 aabox::contain( const vec3& p ) const
 {
-  auto diff = p - m_center;
-  return std::abs (diff.x) <= m_hsides.x
-      && std::abs (diff.y) <= m_hsides.y
-      && std::abs (diff.z) <= m_hsides.z;
+  auto diff = p - center;
+  return std::abs (diff.x) <= hsides.x
+      && std::abs (diff.y) <= hsides.y
+      && std::abs (diff.z) <= hsides.z;
 }
 
 bool
 aabox::intersect( const ball& b ) const
 {
   auto ball_interiority = b.w * b.w;
-  auto diff = glm::abs(m_center - vec3{b}) - m_hsides;
+  auto diff = glm::abs(center - vec3{b}) - hsides;
   for( int i = 0; i < 3; ++ i )
     if( diff[i] > 0 )
       {
@@ -78,23 +78,23 @@ aabox::intersect( const ray_with_inv_dir& r, real& t ) const
   //note: If we represented the box with its lower and upper corners
   // this function would cost 3 addition/subtraction less than the
   // current version.
-  real t1 = m_center.x - r.m_origin.x;
-  real t2 = (t1 + m_hsides.x) * r.m_inv_direction.x;
-       t1 = (t1 - m_hsides.x) * r.m_inv_direction.x;
+  real t1 = center.x - r.m_origin.x;
+  real t2 = (t1 + hsides.x) * r.m_inv_direction.x;
+       t1 = (t1 - hsides.x) * r.m_inv_direction.x;
 
   real tmin = std::min( t1, t2 );
   real tmax = std::max( t1, t2 );
 
-  t1 = m_center.y - r.m_origin.y;
-  t2 = ( t1 + m_hsides.y ) * r.m_inv_direction.y;
-  t1 = ( t1 - m_hsides.y ) * r.m_inv_direction.y;
+  t1 = center.y - r.m_origin.y;
+  t2 = ( t1 + hsides.y ) * r.m_inv_direction.y;
+  t1 = ( t1 - hsides.y ) * r.m_inv_direction.y;
 
   tmin = std::max( tmin, std::min( t1, t2 ) );
   tmax = std::min( tmax, std::max( t1, t2 ) );
 
-  t1 = m_center.z - r.m_origin.z;
-  t2 = ( t1 + m_hsides.z ) * r.m_inv_direction.z;
-  t1 = ( t1 - m_hsides.z ) * r.m_inv_direction.z;
+  t1 = center.z - r.m_origin.z;
+  t2 = ( t1 + hsides.z ) * r.m_inv_direction.z;
+  t1 = ( t1 - hsides.z ) * r.m_inv_direction.z;
 
   t    = std::max( real(0), std::max( tmin, std::min( t1, t2 ) ) );
   tmax = std::min( tmax, std::max( t1, t2 ) );

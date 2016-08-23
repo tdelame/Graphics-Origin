@@ -51,14 +51,14 @@ namespace geometry {
 
   void ball::compute_bounding_box( aabox& b ) const
   {
-    b.m_center = vec3{*this};
-    b.m_hsides = vec3{w,w,w};
+    b.center = vec3{*this};
+    b.hsides = vec3{w,w,w};
   }
 
   bool ball::intersect( const aabox& b ) const
   {
     auto ball_interiority = w * w;
-    auto diff = glm::abs( vec3{*this} - b.m_center) - b.m_hsides;
+    auto diff = glm::abs( vec3{*this} - b.center) - b.hsides;
     for( int i = 0; i < 3; ++ i )
       if( diff[i] > 0 )
         {

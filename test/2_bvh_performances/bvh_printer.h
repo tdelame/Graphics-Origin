@@ -26,10 +26,10 @@ namespace geometry {
     typename node_printer >
   class bvh_printer {
   public:
-    typedef typename bvh_new<bounding_volume>::node node;
-    typedef typename bvh_new<bounding_volume>::node_index node_index;
+    typedef typename bvh<bounding_volume>::node node;
+    typedef typename bvh<bounding_volume>::node_index node_index;
 
-    bvh_printer( bvh_new<bounding_volume>& bvh, node_printer& printer ) :
+    bvh_printer( bvh<bounding_volume>& bvh, node_printer& printer ) :
       number_of_internals{ bvh.get_number_of_internal_nodes() },
       number_of_leaves{ bvh.get_number_of_leaf_nodes() },
       number_of_nodes{ number_of_internals + number_of_leaves },
