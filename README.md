@@ -24,8 +24,8 @@ performance, support and so on), are advised to read about projects such as
 The code has been tested on a limited set of platforms, including:
 - GNU/Linux platforms, compiled with gcc 5.2, 5.3 and 6.1
 - ~~Windows 64 bits, with Visual Studio 14~~ not supported anymore. I never use
-the Windows due to the lack of OpenMP support in MSVC. Thus, I prefer to use
-my free time to work only on the Windows version, for now.
+the Windows version due to the lack of OpenMP support in MSVC. Thus, I prefer to use
+my free time to work only on the Linux version, for now.
 
 ## Installation
 A documentation about installation is available at the following page:
