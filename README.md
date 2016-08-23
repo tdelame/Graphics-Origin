@@ -29,7 +29,7 @@ my free time to work only on the Windows version, for now.
 
 ## Installation
 A documentation about installation is available at the following page:
-[Virtual Atom](https://virtual-atom.com/pages/projects/graphics_origin.html).
+[Virtual Atom](http://www.virtual-atom.com/pages/projects/graphics_origin.html).
 
 ## Licensing
 This code is release under the MIT Licence. Please see the file called LICENCE.
