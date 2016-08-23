@@ -2,6 +2,7 @@
 # include "../../graphics-origin/geometry/bvh.h"
 # include "2_bvh_performances/bvh_new.h"
 # include "2_bvh_performances/bvh_check.h"
+# include "2_bvh_performances/bvh_printer.h"
 # include "../../graphics-origin/tools/resources.h"
 # include <omp.h>
 # include <iostream>
@@ -46,15 +47,10 @@ namespace graphics_origin {
 
 namespace graphics_origin {
   namespace geometry {
-    template<typename bvh_type>
-    extern bool check_is_tree( bvh_type& tree );
-
-    template<typename bvh_type>
-    extern bool check_one_leaf_by_object( bvh_type& tree );
-
     static const size_t number_of_input_meshes = 3;
     static const std::string mesh_names[] = {
-        "armadillo.off", "Bunny.obj", "spot_triangulated.obj" };
+        "armadillo.off", "Bunny.obj", "spot_triangulated.obj"
+    };
 
     struct bvh_results {
       double construction;
@@ -151,8 +147,6 @@ namespace graphics_origin {
             bvh<aabox> ground_truth( triangles.data(), nfaces );
             results.are_equal = are_equal( candidate, ground_truth );
           }
-
-
           results.print();
         }
       return EXIT_SUCCESS;

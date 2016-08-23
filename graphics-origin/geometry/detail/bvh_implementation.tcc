@@ -51,8 +51,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**@file
  * @todo Integrate the CUDA version with transfer functions GPU <--> CPU
  */
-
-
 # include "../box.h"
 # include "../ball.h"
 # include "../../../graphics-origin/extlibs/thrust/sort.h"
@@ -183,16 +181,16 @@ BEGIN_GO_NAMESPACE namespace geometry {
 	  #   pragma omp parallel for schedule(static)
 	  for( _int32 i = 0; i <= number_of_internals; ++ i )
 	  # else
+
       #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i <= number_of_internals; ++ i )
 	  # endif
         {
           auto& leaf = nodes[ i + number_of_internals ];
-          const auto& p = leaf.bounding.m_center;
-
-          uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
-          uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
-          uint64_t c = (uint64_t)( (p.z - lower.z) * inv_extents_times_mcode_offset.z );
+          vec3 coordinates = ( leaf.bounding.m_center - lower ) * inv_extents_times_mcode_offset;
+          uint64_t a = uint64_t( coordinates.x );
+          uint64_t b = uint64_t( coordinates.y );
+          uint64_t c = uint64_t( coordinates.z );
 
           for( unsigned int j = 0; j < mcode_length; ++ j )
             {
@@ -202,12 +200,15 @@ BEGIN_GO_NAMESPACE namespace geometry {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
+
 		# ifdef _MSC_VER
 		GO_MSVC_OMP_THRUST_BUGS
 		thrust::sort_by_key( thrust::omp::cpp, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
 		# else
 	    thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
 		# endif
+
+
     }
   };
 
@@ -421,7 +422,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     uint32_t find_split( const uivec2& range )
     {
       const uint64_t first_code = m_morton_codes[ range.x ];
-      const uint64_t  last_code = m_morton_codes[ range.y ];
+//      const uint64_t  last_code = m_morton_codes[ range.y ];
 
       // Identical Morton codes => split the range in the middle.
 //      if( first_code == last_code )
@@ -588,12 +589,10 @@ BEGIN_GO_NAMESPACE namespace geometry {
       auto& var = variables[ tid ];
       if( !var.active )
         {
-//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is inactive");
           return false;
         }
       if( !var.res )
         {
-//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is the first to arrive here");
           var.active = false;
           return false;
         }

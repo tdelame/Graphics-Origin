@@ -2,6 +2,9 @@
 # define BVH_CHECK_H_
 # include <vector>
 # include <list>
+
+//fixme: temp
+# include <iostream>
 namespace graphics_origin {
   namespace geometry {
     template< typename bvh_type >
@@ -75,6 +78,16 @@ namespace graphics_origin {
     }
 
 
+    //fixme: temp
+    void display_node( auto& node )
+    {
+      std::cout
+          << "box         : " << node.bounding.get_min() << " " << node.bounding.get_max() << "\n"
+          << "parent      : " << node.parent_index << "\n"
+          << "left/element: " << node.left_index << "\n"
+          << "right       : " << node.right_index << "\n";
+    }
+
     template< typename bvh1, typename bvh2 >
     bool are_equal( bvh1& a, bvh2& b )
     {
@@ -90,7 +103,15 @@ namespace graphics_origin {
                 || anode.parent_index != bnode.parent_index
                 || anode.left_index != bnode.left_index
                 || anode.right_index != bnode.right_index )
+                {
+                  std::cout << "nodes #" << i << " are different\n"
+                      << "- first node\n";
+                  display_node( anode );
+                  std::cout << "- second node\n";
+                  display_node( bnode );
+                  std::cout << std::flush;
                 return false;
+                }
             }
           return true;
         }

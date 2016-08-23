@@ -1,9 +1,12 @@
 # ifndef BVH_NEW_IMPLEMENTATION_H_
 # define BVH_NEW_IMPLEMENTATION_H_
-
 namespace graphics_origin {
 namespace geometry {
+// Since we work with templates, the implementation must reside inside a
+// header. We use here an anonymous namespace to make the implementation local
+// to this file and thus hide it from graphics_origin::geometry scope.
 namespace {
+
   template< typename bounding_volume >
   struct bvh_building_variables {
     bvh_building_variables(
@@ -46,7 +49,7 @@ namespace {
       input{ input },
       morton_codes{ morton_codes }
     {
-      compute_bounding_volumes( elements );
+      compute_leaves_bounding_volumes( elements );
       compute_root_bounding_volume();
       compute_morton_codes_and_leaves();
       compute_node_hierarchy();
@@ -62,13 +65,13 @@ namespace {
       root_bounding_volume{ root_bounding_volume },
       morton_codes{ morton_codes }
     {
-      compute_bounding_volumes( elements );
+      compute_leaves_bounding_volumes( elements );
       compute_morton_codes_and_leaves();
       compute_node_hierarchy();
     }
 
     template< typename bounded_element >
-    void compute_bounding_volumes(
+    void compute_leaves_bounding_volumes(
         const bounded_element* elements )
     {
        # pragma omp parallel for
@@ -112,10 +115,12 @@ namespace {
         {
           node* leaf = input.nodes + i + input.number_of_internal_nodes;
           leaf->element = i;
-          vec3 diff = bounding_volume_analyzer<bounding_volume>::compute_center( leaf->bounding ) - lower;
-          morton_code a = morton_code( diff.x * inv_extents_times_mcode_offset.x );
-          morton_code b = morton_code( diff.y * inv_extents_times_mcode_offset.y );
-          morton_code c = morton_code( diff.z * inv_extents_times_mcode_offset.z );
+          vec3 coordinates =
+              (bounding_volume_analyzer<bounding_volume>::compute_center( leaf->bounding ) - lower)
+              * inv_extents_times_mcode_offset;
+          morton_code a = morton_code( coordinates.x );
+          morton_code b = morton_code( coordinates.y );
+          morton_code c = morton_code( coordinates.z );
 
           for( uint j = 0; j < mcode_length; ++ j )
             {
@@ -125,7 +130,6 @@ namespace {
                (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
             }
         }
-
       thrust::sort_by_key(
           thrust::omp::par, morton_codes, morton_codes + input.number_of_leaf_nodes,
           input.nodes + input.number_of_internal_nodes );
@@ -158,9 +162,9 @@ namespace {
     int safe_lcp(
         const morton_code& left_code,
         node_index left,
-        node_index right )
+        int right )
     {
-      if( right > node_index{0} && right < input.number_of_leaf_nodes )
+      if( right >= int{0} && node_index(right) < input.number_of_leaf_nodes )
         return lcp( left_code, left, right );
       return -1;
     }
@@ -176,6 +180,8 @@ namespace {
       return CLZ64( left_code ^ right_code );
     }
 
+    // note: this function is only called for i in [1, number_of_internal_nodes[
+    // so calling lcp( ?, ?, i + 1 ) and lcp( ?, ?, i - 1 ) is not an issue.
     uint32_vec2 determine_range( node_index i )
     {
       const morton_code& mcodei = morton_codes[ i ];
@@ -212,7 +218,7 @@ namespace {
 
       // Use binary search to find where the next bit differs.
       // Specifically, we are looking for the highest object that
-      // shares more than commonPrefix bits with the first one.
+      // shares more than common_prefix bits with the first one.
       uint32_t split = range.x; // initial guess
       uint32_t step = range.y - range.x;
       do
@@ -261,12 +267,14 @@ namespace {
         {
           counters[ i ] = 0;
         }
+
       # pragma omp parallel for schedule(static)
       for( node_index i = 0; i < input.number_of_leaf_nodes; ++ i )
         {
           thread_variables& vars = variables[ i ];
           vars.is_active = true;
           vars.index = input.nodes[ i + input.number_of_internal_nodes ].parent_index;
+
           # pragma omp atomic capture
           {
             vars.number_of_threads_having_reached_this_node = counters[ vars.index ];
@@ -281,7 +289,6 @@ namespace {
       while (iteration_required)
         {
           iteration_required = false;
-
           # pragma omp parallel for reduction(bvbactivity_reduction: iteration_required)
           for( thread_index tid = 0; tid < input.number_of_internal_nodes; ++ tid )
             {
@@ -296,16 +303,21 @@ namespace {
       thread_variables& vars = variables[ tid ];
       if( vars.is_active )
         {
+          // The first thread to reach this node will stop to work.
           if( !vars.number_of_threads_having_reached_this_node )
             {
               vars.is_active = false;
             }
+          // The second thread to reach this node will process it.
           else
             {
+              // The bounding volume of this node is the union of the bounding
+              // volumes of its two children.
               node& n = input.nodes[ vars.index ];
               n.bounding = input.nodes[ n.left_index ].bounding;
               n.bounding.merge( input.nodes[ n.right_index ].bounding );
 
+              // Go up until the root is reached.
               if( vars.index )
                 {
                   vars.index = n.parent_index;
@@ -378,7 +390,7 @@ namespace {
       );
 
       char* raw_pointer = (char*)malloc( size );
-      std::memset( raw_pointer, 9, size );
+      std::memset( raw_pointer, 0, size );
       bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
       bvh_tree_structure_builder<bounding_volume>( input, elements, reinterpret_cast<morton_code*>(raw_pointer) );
       bvh_bounding_volumes_builder<bounding_volume>(
@@ -405,7 +417,7 @@ namespace {
       );
 
       char* raw_pointer = (char*)malloc( size );
-      std::memset( raw_pointer, 9, size );
+      std::memset( raw_pointer, 0, size );
       bvh_building_variables<bounding_volume> input( target.m_nodes.data(), target.number_of_internal_nodes, target.get_number_of_leaf_nodes() );
       bvh_tree_structure_builder<bounding_volume>(
           input,
