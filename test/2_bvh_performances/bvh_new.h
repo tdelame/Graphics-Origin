@@ -1,5 +1,5 @@
-# ifndef GRAPHICS_ORIGIN_BVH_H_
-# define GRAPHICS_ORIGIN_BVH_H_
+# ifndef GRAPHICS_ORIGIN_BVH_NEW_H_
+# define GRAPHICS_ORIGIN_BVH_NEW_H_
 # include "../../graphics-origin/graphics_origin.h"
 # include <vector>
 namespace graphics_origin {

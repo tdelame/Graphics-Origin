@@ -87,6 +87,17 @@ namespace graphics_origin {
       static void compute( const bounded_element& element, bounding_volume& volume );
     };
 
+    template< typename bounding_volume >
+    struct bounding_volume_merger {
+      static_assert(
+         implementation_required<bounding_volume>::value,
+         "Please, provide an implementation of bounding_volume_merger for this specific bounding volume type.");
+
+      // Returns the bounding volume (preferably as minimal as possible) that
+      // contains bounding volumes a and b.
+      static bounding_volume merge( const bounding_volume& a, const bounding_volume& b );
+    };
+
     /**Customization point to compute the corners of a bounding volume of a
      * specific type as well as it center. This is necessary to compute morton
      * codes. An implementation for balls and boxes is already given. */

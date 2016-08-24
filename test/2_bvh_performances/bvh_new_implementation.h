@@ -90,13 +90,13 @@ namespace {
       root_bounding_volume = input.nodes[ start ].bounding;  //had been computed previously;
 
       # pragma omp declare \
-        reduction(bvmerge: bounding_volume: omp_out.merge( omp_in )) \
+        reduction(bvmerge: bounding_volume: omp_out = bounding_volume_merger<bounding_volume>::merge( omp_in, omp_out )) \
         initializer(omp_priv = omp_orig )
 
       # pragma omp parallel for reduction(bvmerge: root_bounding_volume )
       for( node_index i = start; i < stop; ++ i )
         {
-          root_bounding_volume.merge( input.nodes[i].bounding );
+          root_bounding_volume = bounding_volume_merger<bounding_volume>::merge( root_bounding_volume, input.nodes[i].bounding );
         }
     }
 
@@ -314,8 +314,9 @@ namespace {
               // The bounding volume of this node is the union of the bounding
               // volumes of its two children.
               node& n = input.nodes[ vars.index ];
-              n.bounding = input.nodes[ n.left_index ].bounding;
-              n.bounding.merge( input.nodes[ n.right_index ].bounding );
+              n.bounding = bounding_volume_merger<bounding_volume>(
+                  input.nodes[ n.left_index ].bounding,
+                  input.nodes[ n.right_index ].bounding );
 
               // Go up until the root is reached.
               if( vars.index )

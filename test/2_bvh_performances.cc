@@ -1,6 +1,7 @@
 # include "../../graphics-origin/geometry/mesh.h"
 # include "../../graphics-origin/geometry/bvh.h"
 # include "2_bvh_performances/bvh_check.h"
+# include "2_bvh_performances/bvh_new.h"
 # include "../../graphics-origin/tools/resources.h"
 # include <omp.h>
 # include <iostream>
@@ -97,14 +98,14 @@ namespace graphics_origin {
 
           {
             double start = omp_get_wtime();
-            bvh<aabox> ground_truth( triangles.data(), nfaces );
+            bvh_new<aabox> ground_truth( triangles.data(), nfaces );
             double stop = omp_get_wtime();
             results.ground_truth = bvh_results( stop - start, ground_truth );
           }
 
           {
             bvh<aabox> candidate( triangles.data(), nfaces );
-            bvh<aabox> ground_truth( triangles.data(), nfaces );
+            bvh_new<aabox> ground_truth( triangles.data(), nfaces );
             results.are_equal = are_equal( candidate, ground_truth );
           }
           results.print();
