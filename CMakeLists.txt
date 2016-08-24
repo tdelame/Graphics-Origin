@@ -14,13 +14,22 @@
 # Finding libraries
 # -----------------
 # Set those variables to help cmake finding the libraries you want to use.
-#   LIBNOISE_DIR          where to find either noise/noise.h or include/noise/noise.h
-#   OPENMESH_DIR          where to find OpenMesh/Core/Mesh/PolyMeshT.hh
 #   BOOST_ROOT            where boost has been installed
 #   BOOST_INCLUDEDIR      Preferred include directory e.g. <prefix>/include
 #   BOOST_LIBRARYDIR      Preferred library directory e.g. <prefix>/lib
 #   Boost_NO_SYSTEM_PATHS Set to ON to disable searching in locations not specified by these hint variables. Default is OFF.
-
+#   OPENMESH_DIR          where to find OpenMesh/Core/Mesh/PolyMeshT.hh
+#   LIBNOISE_DIR          where to find either noise/noise.h or include/noise/noise.h
+#   GLEW_DIR              where to find GL/glew.h
+#   FREEIMAGE_DIR         where to find FreeImage.h
+#   CMAKE_PREFIX_PATH     use this variable to specify where to find the Qt installation root directory
+#
+# Build types
+# -----------
+# Valid values of CMAKE_BUILD_TYPE:
+# - Release
+# - RelWithDebInfo
+# - Debug
  
 #**********************
 # cmake configuration *

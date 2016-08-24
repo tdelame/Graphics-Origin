@@ -1,15 +1,26 @@
-# Note: This is the first version of the file. It has been tested on a limited set of plaforms.
-#   Proceed with caution and reports any failure/possible improvements. 
-#*
+# FindGraphicsOrigin.cmake
+# ========================
+#
 # Options
 # -------
 #   GRAPHICS_ORIGIN_WITH_APPLICATION tells if the Graphisc-Origin application library is needed
-#   GRAPHICS_ORIGIN_WITH_OPENCL      tells if OpenCL should be used
+#   GRAPHICS_ORIGIN_WITH_OPENCL      tells if OpenCL should be used (only for test branches)
+#
 #
 # Filepath
 # --------
-#   GRAPHICS_ORIGIN_DIR hint to find the Graphics-Origin installation path, i.e. where the file
-#     graphics-origin/graphics_origin.h is.
+# Set those variables to help cmake finding the libraries you want to use.
+# BOOST_ROOT            where boost has been installed
+# BOOST_INCLUDEDIR      Preferred include directory e.g. <prefix>/include
+# BOOST_LIBRARYDIR      Preferred library directory e.g. <prefix>/lib
+# Boost_NO_SYSTEM_PATHS Set to ON to disable searching in locations not specified by these hint variables. Default is OFF.
+# OPENMESH_DIR          where to find OpenMesh/Core/Mesh/PolyMeshT.hh
+# LIBNOISE_DIR          where to find either noise/noise.h or include/noise/noise.h
+# GLEW_DIR              where to find GL/glew.h
+# FREEIMAGE_DIR         where to find FreeImage.h
+# CMAKE_PREFIX_PATH     use this variable to specify where to find the Qt installation root directory
+# GRAPHICSORIGIN_DIR hint to find the Graphics-Origin installation path, i.e. where the file
+#   graphics-origin/graphics_origin.h is.
 #
 # Variables defined
 # -----------------
@@ -33,13 +44,12 @@
 # GRAPHICS_ORIGIN_LINKER_FLAGS flags to pass to the C++ linker
 
 find_path( GRAPHICS_ORIGIN_INCLUDE_DIR graphics-origin/graphics_origin.h
-  PATHS /usr/local/include /usr/include /opt/local/include ${GRAPHICS_ORIGIN_DIR}/include 
-  $ENV{GRAPHICS_ORIGIN_DIR}/include)
+  PATHS /usr/local/include /usr/include /opt/local/include ${GRAPHICSORIGIN_DIR}/include 
+  $ENV{GRAPHICSORIGIN_DIR}/include)
 
 if( GRAPHICS_ORIGIN_INCLUDE_DIR )
-	set( GRAPHICS_ORIGIN_FOUND ON )  
-	
-	set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/../share/cmake/modules )
+  set( GRAPHICS_ORIGIN_FOUND ON )  
+  set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/../share/cmake/modules )
   set( GRAPHICS_ORIGIN_LIBRARY_DIR "${GRAPHICS_ORIGIN_INCLUDE_DIR}/../lib")
   
   if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
@@ -179,5 +189,5 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	endif()	
 else()
 	message( SEND_ERROR "Cannot find Graphics-Origin installation path. "
-	  "Try to set the variable GRAPHICS_ORIGIN_DIR (currently = ${GRAPHICS_ORIGIN_DIR}" )  	
+	  "Try to set the variable GRAPHICSORIGIN_DIR (currently = ${GRAPHICSORIGIN_DIR}" )  	
 endif()        
