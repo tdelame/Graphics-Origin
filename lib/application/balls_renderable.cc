@@ -6,7 +6,7 @@
 
 namespace graphics_origin { namespace application {
 
-  balls_renderable::storage::storage( const gpu_vec4& ball, const gpu_vec4& color )
+  balls_renderable::storage::storage( const gl_vec4& ball, const gl_vec4& color )
     : ball{ ball }, color{ color }
   {}
 
@@ -40,16 +40,16 @@ namespace graphics_origin { namespace application {
     : m_balls{ expected_number_of_balls },
       m_vao{ 0 }, m_balls_vbo{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
 
   balls_renderable::balls_buffer::handle
-  balls_renderable::add( const geometry::ball& ball, const gpu_vec4& color )
+  balls_renderable::add( const geometry::ball& ball, const gl_vec4& color )
   {
     m_dirty = true;
     auto pair = m_balls.create();
-    pair.second.ball = gpu_vec4{ ball };
+    pair.second.ball = gl_vec4{ ball };
     pair.second.color  = color;
     return pair.first;
   }
@@ -93,7 +93,7 @@ namespace graphics_origin { namespace application {
   void
   balls_renderable::do_render()
   {
-    gpu_mat4 temp = renderer_ptr->get_projection_matrix();
+    gl_mat4 temp = renderer_ptr->get_projection_matrix();
     glcheck(glUniformMatrix4fv( program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr(temp)));
     temp = renderer_ptr->get_view_matrix() * model;
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(temp)));

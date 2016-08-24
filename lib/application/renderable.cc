@@ -33,12 +33,12 @@ namespace application {
     do_render();
   }
 
-  const gpu_mat4& renderable::get_model_matrix() const
+  const gl_mat4& renderable::get_model_matrix() const
   {
     return model;
   }
 
-  void renderable::set_model_matrix( const gpu_mat4& new_model )
+  void renderable::set_model_matrix( const gl_mat4& new_model )
   {
     model = new_model;
   }

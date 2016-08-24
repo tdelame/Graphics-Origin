@@ -46,7 +46,7 @@ namespace graphics_origin {
       size_t expected_number_of_frames ) :
           m_frames( expected_number_of_frames ), m_vao{ 0 }, m_vbos{ 0 }
     {
-      model = gpu_mat4(1.0);
+      model = gl_mat4(1.0);
       this->program = program;
     }
 
@@ -57,9 +57,9 @@ namespace graphics_origin {
 
     window_frames_renderable::handle
     window_frames_renderable::add(
-      const gpu_vec3& center,
-      const gpu_vec3& v1,
-      const gpu_vec3& v2,
+      const gl_vec3& center,
+      const gl_vec3& v1,
+      const gl_vec3& v2,
       gl_real size,
       gl_real depth )
     {
@@ -125,7 +125,7 @@ namespace graphics_origin {
 
     void window_frames_renderable::do_render()
     {
-      gpu_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
+      gl_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
       glcheck(glUniformMatrix4fv( program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
       glcheck(glBindVertexArray( m_vao ));
       glcheck(glDrawArrays( GL_POINTS, 0, m_frames.get_size()));

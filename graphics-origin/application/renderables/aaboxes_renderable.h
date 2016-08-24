@@ -14,10 +14,10 @@ namespace graphics_origin {
       : public renderable {
 
       struct storage {
-        gpu_vec3 center;
-        gpu_vec3 hsides;
-        gpu_vec3 color;
-        storage( const gpu_vec3& center, const gpu_vec3& hsides, const gpu_vec3& color );
+        gl_vec3 center;
+        gl_vec3 hsides;
+        gl_vec3 color;
+        storage( const gl_vec3& center, const gl_vec3& hsides, const gl_vec3& color );
 
         storage& operator=( storage && other );
         storage();
@@ -32,7 +32,7 @@ namespace graphics_origin {
           shader_program_ptr program,
           size_t expected_number_of_boxes = 0 );
       ~aaboxes_renderable();
-      boxes_buffer::handle add( const geometry::aabox& box, const gpu_vec3& color = gpu_vec3{0.1, 0.1, 0.1 } );
+      boxes_buffer::handle add( const geometry::aabox& box, const gl_vec3& color = gl_vec3{0.1, 0.1, 0.1 } );
       void remove( boxes_buffer::handle handle );
     private:
       void update_gpu_data() override;

@@ -21,13 +21,13 @@ typedef glm::tvec3<real, glm::highp> vec3;
 typedef glm::tvec4<real, glm::highp> vec4;
 
 /**
- * In OpenGL, gl_Position should have float components. Thus, if vecd uses
+ * In OpenGL, gl_Position should have float components. Thus, if vec3 uses
  * double, we need to make conversions in every GLSL shader. Instead, we
  * have other vec types to transfer geometry on the GPU.
  */
-typedef glm::tvec2<gl_real, glm::highp> gpu_vec2;
-typedef glm::tvec3<gl_real, glm::highp> gpu_vec3;
-typedef glm::tvec4<gl_real, glm::highp> gpu_vec4;
+typedef glm::tvec2<gl_real, glm::highp> gl_vec2;
+typedef glm::tvec3<gl_real, glm::highp> gl_vec3;
+typedef glm::tvec4<gl_real, glm::highp> gl_vec4;
 
 /**
  * These using directives avoid to type glm::cross, glm::dot... every time.
@@ -71,7 +71,7 @@ sdistance( const vec2& a, const vec2& b );
  * @param high The highest value for the parameters
  */
 GO_API
-gpu_vec3
+gl_vec3
 get_color(
     const gl_real& parameter,
     const gl_real& low,
@@ -83,8 +83,8 @@ get_color(
  * @param color The RGB color to convert
  */
 GO_API
-gpu_vec3
-get_gray_scale( const gpu_vec3& color );
+gl_vec3
+get_gray_scale( const gl_vec3& color );
 
 
 END_GO_NAMESPACE
@@ -101,12 +101,12 @@ namespace std {
   GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec3& obj);
   GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::vec4& obj);
 
-  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec2& obj);
-  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec3& obj);
-  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec4& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec2& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec3& obj);
+  GO_API std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec4& obj);
 
-  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec2& obj);
-  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec3& obj);
-  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec4& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec2& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec3& obj);
+  GO_API std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec4& obj);
 }
 #endif

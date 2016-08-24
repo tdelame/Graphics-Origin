@@ -33,7 +33,7 @@ namespace graphics_origin {
       r->renderer_ptr = this;
     }
 
-    gpu_vec3 renderer::get_camera_position() const
+    gl_vec3 renderer::get_camera_position() const
     {
       return gl_camera->get_position();
     }
@@ -71,19 +71,19 @@ namespace graphics_origin {
       cv.notify_all();
     }
 
-    const gpu_mat4& renderer::get_view_matrix() const
+    const gl_mat4& renderer::get_view_matrix() const
     {
       return gl_camera->get_view_matrix();
     }
 
-    const gpu_mat4& renderer::get_projection_matrix() const
+    const gl_mat4& renderer::get_projection_matrix() const
     {
       return gl_camera->get_projection_matrix();
     }
 
-    gpu_vec2 renderer::get_window_dimensions() const
+    gl_vec2 renderer::get_window_dimensions() const
     {
-      return gpu_vec2{ width, height };
+      return gl_vec2{ width, height };
     }
 
     // when the texture node is using the texture of the display FBO,

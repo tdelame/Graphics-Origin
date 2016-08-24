@@ -273,7 +273,7 @@ BEGIN_GO_NAMESPACE
     return dot( diff, diff );
   }
 
-  gpu_vec3
+  gl_vec3
   get_color ( const gl_real& factor, const gl_real& low, const gl_real& high )
   {
     float t = std::max ( low, std::min( factor, high) );
@@ -285,14 +285,14 @@ BEGIN_GO_NAMESPACE
       }
 
     size_t indiceLut=floor(t * 255);
-    return gpu_vec3 (LUT_Color[indiceLut][0],LUT_Color[indiceLut][1],LUT_Color[indiceLut][2]);
+    return gl_vec3 (LUT_Color[indiceLut][0],LUT_Color[indiceLut][1],LUT_Color[indiceLut][2]);
   }
 
-  gpu_vec3
-  get_gray_scale( const gpu_vec3& color )
+  gl_vec3
+  get_gray_scale( const gl_vec3& color )
   {
     gl_real luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
-    return gpu_vec3( luminance, luminance, luminance );
+    return gl_vec3( luminance, luminance, luminance );
   }
 END_GO_NAMESPACE
 
@@ -336,20 +336,20 @@ namespace std {
     return is;
   }
 
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec2& obj)
+  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec2& obj)
   {
     return os << '{' << obj.x << ',' << obj.y << '}';
   }
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec3& obj)
+  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec3& obj)
   {
     return os << '{' << obj.x << ',' << obj.y << ',' << obj.z << '}';
   }
-  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gpu_vec4& obj)
+  std::ostream& operator<<(std::ostream& os, const GO_NAMESPACE::gl_vec4& obj)
   {
     return os << '{' << obj.x << ',' << obj.y << ',' << obj.z << ',' << obj.w << '}';
   }
 
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec2& obj)
+  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec2& obj)
   {
     char lbracket = '\0', comma1 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> rbracket;
@@ -357,7 +357,7 @@ namespace std {
       is.setstate(std::ios_base::failbit);
     return is;
   }
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec3& obj)
+  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec3& obj)
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> rbracket;
@@ -365,7 +365,7 @@ namespace std {
       is.setstate(std::ios_base::failbit);
     return is;
   }
-  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gpu_vec4& obj)
+  std::istream& operator>>(std::istream& is, GO_NAMESPACE::gl_vec4& obj)
   {
     char lbracket = '\0', comma1 = '\0', comma2 = '\0', comma3 = '\0', rbracket = '\0';
     is >> lbracket >> obj.x >> comma1 >> obj.y >> comma2 >> obj.z >> comma3 >> obj.w >> rbracket;

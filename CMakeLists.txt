@@ -164,7 +164,7 @@ set( Boost_USE_STATIC_LIBS OFF )
 set( Boost_USE_STATIC_RUNTIME OFF )
 find_package( Boost
   REQUIRED QUIET
-  COMPONENTS serialization filesystem log log_setup locale random system )
+  COMPONENTS filesystem log log_setup locale random system )
 include_directories( ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 set( GO_Boost_LIBRARIES ${Boost_LIBRARIES} )

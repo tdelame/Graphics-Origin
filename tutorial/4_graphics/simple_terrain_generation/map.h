@@ -76,7 +76,7 @@ namespace graphics_origin
       void
       remove_gpu_data() override;
 
-      std::vector< gpu_vec4 > m_normal_height_texture;
+      std::vector< gl_vec4 > m_normal_height_texture;
       gl_real m_map_radius;
       gl_real m_resolution;
       gl_real m_maximum_elevation;

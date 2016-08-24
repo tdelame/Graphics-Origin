@@ -9,7 +9,7 @@
 
 namespace graphics_origin { namespace application {
 
-  points_renderable::storage::storage( const gpu_vec3& center, const gpu_vec3& color )
+  points_renderable::storage::storage( const gl_vec3& center, const gl_vec3& color )
     : center{ center }, color{ color }
   {}
 
@@ -43,12 +43,12 @@ namespace graphics_origin { namespace application {
     : m_points{ expected_number_of_points },
       m_vao{ 0 }, m_points_vbo{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
 
   points_renderable::points_buffer::handle
-  points_renderable::add( const gpu_vec3& center, const gpu_vec3& color )
+  points_renderable::add( const gl_vec3& center, const gl_vec3& color )
   {
     m_dirty = true;
     auto pair = m_points.create();
@@ -96,7 +96,7 @@ namespace graphics_origin { namespace application {
   void
   points_renderable::do_render()
   {
-    gpu_mat4 temp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
+    gl_mat4 temp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(temp)));
     glcheck(glPointSize(4.0));
     glcheck(glBindVertexArray( m_vao ));

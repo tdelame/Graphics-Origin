@@ -34,20 +34,20 @@ namespace application {
      * Allow a read-only access to the view matrix, i.e. where the camera looks.
      * @return The view matrix
      */
-    const gpu_mat4& get_view_matrix() const;
+    const gl_mat4& get_view_matrix() const;
     /**@brief Set the camera view matrix.
      *
      * Set the camera view matrix.
      * @param view The new view matrix
      */
-    void set_view_matrix( const gpu_mat4& view );
+    void set_view_matrix( const gl_mat4& view );
 
     /**@brief Read access to the camera world position.
      *
      * Allow a read-only access to the camera position in world coordinates.
      * @return The camera position.
      */
-    gpu_vec3 get_position() const;
+    gl_vec3 get_position() const;
     QVector3D qml_get_position() const;
 
     /**@brief Read access to the camera right direction.
@@ -58,7 +58,7 @@ namespace application {
      *
      * @return The camera right direction
      */
-    gpu_vec3 get_right() const;
+    gl_vec3 get_right() const;
     QVector3D qml_get_right() const;
 
     /**@brief Read access to the camera up direction.
@@ -69,7 +69,7 @@ namespace application {
      *
      * @return The camera up direction.
      */
-    gpu_vec3 get_up() const;
+    gl_vec3 get_up() const;
     QVector3D qml_get_up() const;
 
     /**@brief Read access to the camera forward direction.
@@ -80,7 +80,7 @@ namespace application {
      *
      * @return The camera forward direction.
      */
-    gpu_vec3 get_forward() const;
+    gl_vec3 get_forward() const;
     QVector3D qml_get_forward() const;
 
     /**@brief Set the camera world position.
@@ -88,7 +88,7 @@ namespace application {
      * Set the camera position in world coordinates.
      * @param pos New camera world position.
      */
-    void set_position( const gpu_vec3& pos );
+    void set_position( const gl_vec3& pos );
     void qml_set_position( const QVector3D& pos );
 
     /**@brief Set the camera right direction.
@@ -96,7 +96,7 @@ namespace application {
      * Set  the camera right direction in world coordinates.
      * @param right New camera right axis in world coordinates.
      */
-    void set_right( const gpu_vec3& right );
+    void set_right( const gl_vec3& right );
     void qml_set_right( const QVector3D& right );
 
     /**@brief Set the camera up direction.
@@ -104,7 +104,7 @@ namespace application {
      * Set the camera up direction in world coordinates.
      * @param up New camera up axis in world coordinates.
      */
-    void set_up( const gpu_vec3& up );
+    void set_up( const gl_vec3& up );
     void qml_set_up( const QVector3D& up );
 
     /**@brief Set the camera up direction.
@@ -112,7 +112,7 @@ namespace application {
      * Set the camera forward (-Z) direction in world coordinates.
      * @param forward New camera forward direction in world coordinates.
      */
-    void set_forward( const gpu_vec3& forward );
+    void set_forward( const gl_vec3& forward );
     void qml_set_forward( const QVector3D& forward );
 
     Q_INVOKABLE
@@ -137,7 +137,7 @@ namespace application {
      *
      * @return The projection matrix.
      */
-    const gpu_mat4& get_projection_matrix() const;
+    const gl_mat4& get_projection_matrix() const;
 
     /**@brief Get the camera field of view
      *
@@ -221,8 +221,8 @@ namespace application {
     qreal m_ratio;
     qreal m_znear;
     qreal m_zfar;
-    gpu_mat4 m_view;
-    gpu_mat4 m_projection;
+    gl_mat4 m_view;
+    gl_mat4 m_projection;
   };
 
 }

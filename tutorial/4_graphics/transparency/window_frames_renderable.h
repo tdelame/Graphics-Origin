@@ -14,9 +14,9 @@ namespace graphics_origin {
     class window_frames_renderable :
         public graphics_origin::application::renderable {
       struct storage {
-        gpu_vec3 center;
-        gpu_vec3 v1;
-        gpu_vec3 v2;
+        gl_vec3 center;
+        gl_vec3 v1;
+        gl_vec3 v2;
         gl_real size;
         gl_real depth;
 
@@ -50,7 +50,7 @@ namespace graphics_origin {
         size_t expected_number_of_frames = 0 );
       ~window_frames_renderable();
 
-      handle add( const gpu_vec3& center, const gpu_vec3& v1, const gpu_vec3& v2, gl_real size, gl_real depth );
+      handle add( const gl_vec3& center, const gl_vec3& v1, const gl_vec3& v2, gl_real size, gl_real depth );
 
     private:
       void update_gpu_data() override;

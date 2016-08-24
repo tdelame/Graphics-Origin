@@ -9,9 +9,9 @@ namespace graphics_origin {
       : public renderable {
     public:
       struct storage {
-        gpu_vec3 center;
-        gpu_vec3 color;
-        storage( const gpu_vec3& center, const gpu_vec3& color);
+        gl_vec3 center;
+        gl_vec3 color;
+        storage( const gl_vec3& center, const gl_vec3& color);
         storage( const storage& other );
         storage& operator=( storage && other );
         storage& operator=( const storage& other );
@@ -27,7 +27,7 @@ namespace graphics_origin {
           shader_program_ptr program,
           size_t expected_number_of_points = 0);
       ~points_renderable();
-      points_buffer::handle add( const gpu_vec3& center, const gpu_vec3& color = gpu_vec3{0.6, 0.2, 0.5} );
+      points_buffer::handle add( const gl_vec3& center, const gl_vec3& color = gl_vec3{0.6, 0.2, 0.5} );
       void remove( points_buffer::handle  handle );
     private:
       void update_gpu_data() override;

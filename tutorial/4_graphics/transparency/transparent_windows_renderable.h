@@ -1,6 +1,3 @@
-/* Created on: Jun 13, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef PROJECT_TRANSPARENT_WINDOWS_RENDERABLE_H_
 # define PROJECT_TRANSPARENT_WINDOWS_RENDERABLE_H_
 # include "../../../graphics-origin/application/renderable.h"
@@ -39,10 +36,10 @@ namespace graphics_origin {
       : public graphics_origin::application::renderable {
 
       struct storage {
-        gpu_vec3 center;
-        gpu_vec3 v1;
-        gpu_vec3 v2;
-        gpu_vec4 color;
+        gl_vec3 center;
+        gl_vec3 v1;
+        gl_vec3 v2;
+        gl_vec4 color;
         gl_real depth;
 
         storage( const storage& other );
@@ -57,10 +54,10 @@ namespace graphics_origin {
           22 > windows_buffer;
 
       struct storage_depth_computation {
-        storage_depth_computation( const gpu_mat4& view );
+        storage_depth_computation( const gl_mat4& view );
         void operator()( storage& s ) const;
-        const gpu_vec3 eye;
-        const gpu_vec3 forward;
+        const gl_vec3 eye;
+        const gl_vec3 forward;
       };
 
       struct storage_depth_ordering {
@@ -99,10 +96,10 @@ namespace graphics_origin {
        * @return Handle to the newly created window.
        */
       handle add(
-          const gpu_vec3& center,
-          const gpu_vec3& v1,
-          const gpu_vec3& v2,
-          const gpu_vec4& color );
+          const gl_vec3& center,
+          const gl_vec3& v1,
+          const gl_vec3& v2,
+          const gl_vec4& color );
 
       /**@brief Get an existing window.
        *

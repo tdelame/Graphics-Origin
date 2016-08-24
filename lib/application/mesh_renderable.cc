@@ -13,7 +13,7 @@ namespace graphics_origin { namespace application {
       shader_program_ptr program )
     : m_vao{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
 
@@ -102,7 +102,7 @@ namespace graphics_origin { namespace application {
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( model )));
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_view_matrix() )));
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix())));
-    glcheck(glUniformMatrix3fv( program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gpu_mat3( glm::transpose( glm::inverse( model ) ) ) ) ));
+    glcheck(glUniformMatrix3fv( program->get_uniform_location( "nit" ), 1, GL_FALSE, glm::value_ptr( gl_mat3( glm::transpose( glm::inverse( model ) ) ) ) ));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawElements( GL_TRIANGLES, m_mesh.n_faces() * 3, GL_UNSIGNED_INT, (void*)0));
     glcheck(glBindVertexArray( 0 ) );

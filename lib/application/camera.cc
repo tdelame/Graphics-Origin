@@ -9,26 +9,26 @@ namespace application {
   camera::camera( QObject* parent )
     : QObject{ parent },
       m_fov{1.04}, m_ratio{1.0}, m_znear{0.05}, m_zfar{ 15},
-      m_view{ glm::lookAt( gpu_vec3{3,0,0}, gpu_vec3{}, gpu_vec3{0,0,1})},
+      m_view{ glm::lookAt( gl_vec3{3,0,0}, gl_vec3{}, gl_vec3{0,0,1})},
       m_projection{ glm::perspective( m_fov, m_ratio, m_znear, m_zfar ) }
   {}
 
-  const gpu_mat4&
+  const gl_mat4&
   camera::get_view_matrix() const
   {
     return m_view;
   }
 
   void
-  camera::set_view_matrix( const gpu_mat4& view )
+  camera::set_view_matrix( const gl_mat4& view )
   {
     m_view = view;
   }
 
-  gpu_vec3
+  gl_vec3
   camera::get_position() const
   {
-    return -gpu_vec3( m_view[3] ) * gpu_mat3( m_view );
+    return -gl_vec3( m_view[3] ) * gl_mat3( m_view );
   }
 
   QVector3D
@@ -38,10 +38,10 @@ namespace application {
     return QVector3D( pos.x, pos.y, pos.z );
   }
 
-  gpu_vec3
+  gl_vec3
   camera::get_right() const
   {
-    return gpu_vec3{ m_view[0][0], m_view[1][0], m_view[2][0] };
+    return gl_vec3{ m_view[0][0], m_view[1][0], m_view[2][0] };
   }
 
   QVector3D
@@ -51,10 +51,10 @@ namespace application {
     return QVector3D( right.x, right.y, right.z );
   }
 
-  gpu_vec3
+  gl_vec3
   camera::get_up() const
   {
-    return gpu_vec3{ m_view[0][1], m_view[1][1], m_view[2][1] };
+    return gl_vec3{ m_view[0][1], m_view[1][1], m_view[2][1] };
   }
 
   QVector3D
@@ -64,10 +64,10 @@ namespace application {
     return QVector3D( up.x, up.y, up.z );
   }
 
-  gpu_vec3
+  gl_vec3
   camera::get_forward() const
   {
-    return gpu_vec3{ -m_view[0][2], -m_view[1][2], -m_view[2][2] };
+    return gl_vec3{ -m_view[0][2], -m_view[1][2], -m_view[2][2] };
   }
 
   QVector3D
@@ -78,7 +78,7 @@ namespace application {
   }
 
   void
-  camera::set_position( const gpu_vec3& pos )
+  camera::set_position( const gl_vec3& pos )
   {
     for( int i = 0; i < 3; ++ i )
       {
@@ -99,9 +99,9 @@ namespace application {
       }
   }
 
-  void camera::set_right( const gpu_vec3& right )
+  void camera::set_right( const gl_vec3& right )
   {
-      gpu_vec3 minus_pos = gpu_vec3( m_view[3] ) * gpu_mat3( m_view );
+      gl_vec3 minus_pos = gl_vec3( m_view[3] ) * gl_mat3( m_view );
       m_view[0][0] = right.x;
       m_view[1][0] = right.y;
       m_view[2][0] = right.z;
@@ -110,12 +110,12 @@ namespace application {
 
   void camera::qml_set_right( const QVector3D& right )
   {
-    set_right( gpu_vec3{ right[0], right[1], right[2] } );
+    set_right( gl_vec3{ right[0], right[1], right[2] } );
   }
 
-  void camera::set_up( const gpu_vec3& up )
+  void camera::set_up( const gl_vec3& up )
   {
-    gpu_vec3 minus_pos = gpu_vec3( m_view[3] ) * gpu_mat3( m_view );
+    gl_vec3 minus_pos = gl_vec3( m_view[3] ) * gl_mat3( m_view );
     m_view[0][1] = up.x;
     m_view[1][1] = up.y;
     m_view[2][1] = up.z;
@@ -124,12 +124,12 @@ namespace application {
 
   void camera::qml_set_up( const QVector3D& up )
   {
-    set_up( gpu_vec3{ up[0], up[1], up[2] } );
+    set_up( gl_vec3{ up[0], up[1], up[2] } );
   }
 
-  void camera::set_forward( const gpu_vec3& forward )
+  void camera::set_forward( const gl_vec3& forward )
   {
-    gpu_vec3 pos = -gpu_vec3( m_view[3] ) * gpu_mat3( m_view );
+    gl_vec3 pos = -gl_vec3( m_view[3] ) * gl_mat3( m_view );
     m_view[0][2] = -forward.x;
     m_view[1][2] = -forward.y;
     m_view[2][2] = -forward.z;
@@ -138,10 +138,10 @@ namespace application {
 
   void camera::qml_set_forward( const QVector3D& forward )
   {
-    set_forward( gpu_vec3{ forward[0], forward[1], forward[2] } );
+    set_forward( gl_vec3{ forward[0], forward[1], forward[2] } );
   }
 
-  const gpu_mat4&
+  const gl_mat4&
   camera::get_projection_matrix() const
   {
     return m_projection;
@@ -193,14 +193,14 @@ namespace application {
 
   void camera::arcball_rotate( qreal mouse_dx, qreal mouse_dy )
   {
-    gpu_mat4 rotation = glm::rotate( gpu_mat4( gpu_mat3( m_view ) ), gl_real(mouse_dx), get_up() );
+    gl_mat4 rotation = glm::rotate( gl_mat4( gl_mat3( m_view ) ), gl_real(mouse_dx), get_up() );
     rotation = glm::rotate( rotation, gl_real(mouse_dy), get_right() );
 
     m_view[0] = rotation[0];
     m_view[1] = rotation[1];
     m_view[2] = rotation[2];
 
-    set_position( - gpu_vec3( m_view[3] ) * gpu_mat3( rotation ) );
+    set_position( - gl_vec3( m_view[3] ) * gl_mat3( rotation ) );
 
     emit position_changed();
     emit forward_changed();
@@ -215,8 +215,8 @@ namespace application {
     const auto cy = std::cos( mouse_dy );
     const auto sy = std::sin( mouse_dy );
 
-    gpu_mat3 rotation = gpu_mat3( m_view );
-    gpu_vec3 minus_pos = gpu_vec3( m_view[3] ) * rotation;
+    gl_mat3 rotation = gl_mat3( m_view );
+    gl_vec3 minus_pos = gl_vec3( m_view[3] ) * rotation;
 
 //    if( std::isnan( minus_pos.x ) || std::isnan( minus_pos.y ) || std::isnan( minus_pos.z ) )
 //      {

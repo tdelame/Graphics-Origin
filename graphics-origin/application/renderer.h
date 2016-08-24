@@ -50,10 +50,10 @@ namespace graphics_origin {
        * They are accessible thanks to the field \c renderer inside the renderable
        * class.
        * @{*/
-      gpu_vec2 get_window_dimensions() const;
-      const gpu_mat4& get_view_matrix() const;
-      const gpu_mat4& get_projection_matrix() const;
-      gpu_vec3 get_camera_position() const;
+      gl_vec2 get_window_dimensions() const;
+      const gl_mat4& get_view_matrix() const;
+      const gl_mat4& get_projection_matrix() const;
+      gl_vec3 get_camera_position() const;
       ///@}
 
     public slots:

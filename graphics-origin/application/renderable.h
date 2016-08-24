@@ -57,7 +57,7 @@ namespace application {
      * local coordinates to world coordinates.
      * @return The model matrix.
      */
-    const gpu_mat4& get_model_matrix() const;
+    const gl_mat4& get_model_matrix() const;
 
     /**@brief Set the model matrix of this renderable.
      *
@@ -65,7 +65,7 @@ namespace application {
      * model matrix, you might be unable to see the renderable on the screen.
      * @param new_model The new model matrix.
      */
-    void set_model_matrix( const gpu_mat4& new_model );
+    void set_model_matrix( const gl_mat4& new_model );
 
     /**@brief Notify a modification in data used for the rendering.
      *
@@ -106,7 +106,7 @@ namespace application {
      * This matrix store the transformation to go from the local coordinates
      * to the world coordinates.
      */
-    gpu_mat4 model;
+    gl_mat4 model;
     /**@brief Shader program to render the instance.
      *
      * This shader program specify the graphics operations that will take place

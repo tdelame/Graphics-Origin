@@ -40,8 +40,8 @@ namespace graphics_origin {
     : depth{0}
   {}
 
-  transparent_windows_renderable::storage_depth_computation::storage_depth_computation( const gpu_mat4& view )
-    : eye{ -gpu_vec3( view[3] ) * gpu_mat3( view ) }, forward{ -view[0][2], -view[1][2], -view[2][2] }
+  transparent_windows_renderable::storage_depth_computation::storage_depth_computation( const gl_mat4& view )
+    : eye{ -gl_vec3( view[3] ) * gl_mat3( view ) }, forward{ -view[0][2], -view[1][2], -view[2][2] }
   {}
 
   void transparent_windows_renderable::storage_depth_computation::operator()( storage& s ) const
@@ -60,7 +60,7 @@ namespace graphics_origin {
     : m_windows{ expected_number_of_windows },
       m_vao{0}, m_vbos{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
   transparent_windows_renderable::~transparent_windows_renderable()
@@ -70,10 +70,10 @@ namespace graphics_origin {
 
   transparent_windows_renderable::handle
   transparent_windows_renderable::add(
-      const gpu_vec3& center,
-      const gpu_vec3& v1,
-      const gpu_vec3& v2,
-      const gpu_vec4& color )
+      const gl_vec3& center,
+      const gl_vec3& v1,
+      const gl_vec3& v2,
+      const gl_vec4& color )
   {
     m_dirty = true;
     auto pair = m_windows.create();
@@ -152,7 +152,7 @@ namespace graphics_origin {
       // their color with opaque objects as well as with already drawn windows. Note that
       // this function update the data on the gpu so we do not have to care about it here.
       sort();
-      gpu_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
+      gl_mat4 vp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix();
       glcheck(glUniformMatrix4fv( program->get_uniform_location( "vp"), 1, GL_FALSE, glm::value_ptr(vp)));
       glcheck(glBindVertexArray( m_vao ));
       glcheck(glDrawArrays( GL_POINTS, 0, m_windows.get_size()));

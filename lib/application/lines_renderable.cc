@@ -39,14 +39,14 @@ namespace graphics_origin { namespace application {
     : m_lines{ expected_number_of_lines },
       m_vao{ 0 }, m_lines_vbo{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
 
   lines_renderable::lines_buffer::handle
   lines_renderable::add(
-      const gpu_vec3& p1, const gpu_vec3& color1,
-      const gpu_vec3& p2, const gpu_vec3& color2 )
+      const gl_vec3& p1, const gl_vec3& color1,
+      const gl_vec3& p2, const gl_vec3& color2 )
   {
     m_dirty = true;
     auto pair = m_lines.create();
@@ -96,7 +96,7 @@ namespace graphics_origin { namespace application {
   void
   lines_renderable::do_render()
   {
-    gpu_mat4 temp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
+    gl_mat4 temp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(temp)));
     glcheck(glLineWidth(2.5));
     glcheck(glBindVertexArray( m_vao ));

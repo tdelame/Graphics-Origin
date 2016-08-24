@@ -11,7 +11,7 @@
 
 namespace graphics_origin { namespace application {
 
-  aaboxes_renderable::storage::storage( const gpu_vec3& center, const gpu_vec3& hsides, const gpu_vec3& color )
+  aaboxes_renderable::storage::storage( const gl_vec3& center, const gl_vec3& hsides, const gl_vec3& color )
     : center{ center }, hsides{ hsides }, color{ color }
   {}
 
@@ -34,12 +34,12 @@ namespace graphics_origin { namespace application {
     : m_boxes{ expected_number_of_boxes },
       m_vao{ 0 }, m_boxes_vbo{ 0 }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     this->program = program;
   }
 
   aaboxes_renderable::boxes_buffer::handle
-  aaboxes_renderable::add( const geometry::aabox& box, const gpu_vec3& color )
+  aaboxes_renderable::add( const geometry::aabox& box, const gl_vec3& color )
   {
     m_dirty = true;
     auto pair = m_boxes.create();
@@ -96,7 +96,7 @@ namespace graphics_origin { namespace application {
   void
   aaboxes_renderable::do_render()
   {
-    gpu_mat4 mvp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
+    gl_mat4 mvp = renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model;
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "mvp"), 1, GL_FALSE, glm::value_ptr(mvp)));
     glcheck(glBindVertexArray( m_vao ));
     glcheck(glDrawArrays( GL_POINTS, 0, m_boxes.get_size()));

@@ -25,7 +25,7 @@ namespace graphics_origin { namespace application {
   private:
     void do_update() override;
 
-    gpu_vec3 m_direction;
+    gl_vec3 m_direction;
     real m_last_update_time;
     struct move {
       move();

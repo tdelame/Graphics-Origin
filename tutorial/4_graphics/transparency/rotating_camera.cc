@@ -6,9 +6,9 @@
 
 namespace graphics_origin { namespace application {
 
-  static const gpu_vec3 initial_position = gpu_vec3{4,0,0};
+  static const gl_vec3 initial_position = gl_vec3{4,0,0};
   static const gl_real rotation_speed = 2.0 * M_PI / 8.0;
-  static const gpu_mat4 initial_view = glm::lookAt( initial_position, gpu_vec3{}, gpu_vec3{0,0,1});
+  static const gl_mat4 initial_view = glm::lookAt( initial_position, gl_vec3{}, gl_vec3{0,0,1});
 
   rotating_camera::rotating_camera( QObject* parent )
     : graphics_origin::application::camera{ parent },
@@ -29,8 +29,8 @@ namespace graphics_origin { namespace application {
     m_rotation_angle += (time - m_last_update_time) * rotation_speed;
     m_last_update_time = time;
 
-    m_view = glm::rotate( initial_view, m_rotation_angle, gpu_vec3{0,0,1});
-    set_position( - gpu_vec3( m_view[3] ) * gpu_mat3(m_view) );
+    m_view = glm::rotate( initial_view, m_rotation_angle, gl_vec3{0,0,1});
+    set_position( - gl_vec3( m_view[3] ) * gl_mat3(m_view) );
     emit position_changed();
     emit forward_changed();
     emit right_changed();

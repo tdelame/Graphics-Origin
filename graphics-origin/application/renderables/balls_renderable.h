@@ -10,9 +10,9 @@ namespace graphics_origin {
       : public renderable {
     public:
       struct storage {
-        gpu_vec4 ball;
-        gpu_vec4 color;
-        storage( const gpu_vec4& ball, const gpu_vec4& color );
+        gl_vec4 ball;
+        gl_vec4 color;
+        storage( const gl_vec4& ball, const gl_vec4& color );
         storage( const storage& other );
 
         storage& operator=( storage && other );
@@ -30,7 +30,7 @@ namespace graphics_origin {
           shader_program_ptr program,
           size_t expected_number_of_balls = 0 );
       ~balls_renderable();
-      balls_buffer::handle add( const geometry::ball& ball, const gpu_vec4& color = gpu_vec4{0.1, 0.9, 0.1, 1.0 } );
+      balls_buffer::handle add( const geometry::ball& ball, const gl_vec4& color = gl_vec4{0.1, 0.9, 0.1, 1.0 } );
       void remove( balls_buffer::handle handle );
 
     private:

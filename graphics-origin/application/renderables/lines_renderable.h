@@ -9,10 +9,10 @@ namespace graphics_origin {
       : public renderable {
     public:
       struct storage {
-        gpu_vec3 p1;
-        gpu_vec3 color1;
-        gpu_vec3 p2;
-        gpu_vec3 color2;
+        gl_vec3 p1;
+        gl_vec3 color1;
+        gl_vec3 p2;
+        gl_vec3 color2;
         storage( const storage& other );
         storage& operator=( storage && other );
         storage& operator=( const storage& other );
@@ -30,8 +30,8 @@ namespace graphics_origin {
           size_t expected_number_of_lines = 0);
       ~lines_renderable();
       lines_buffer::handle add(
-          const gpu_vec3& p1, const gpu_vec3& color1,
-          const gpu_vec3& p2, const gpu_vec3& color2 );
+          const gl_vec3& p1, const gl_vec3& color1,
+          const gl_vec3& p2, const gl_vec3& color2 );
       void remove( lines_buffer::handle  handle );
     private:
       void update_gpu_data() override;

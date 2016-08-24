@@ -49,7 +49,7 @@ namespace graphics_origin
         m_texture_size{ 2048 }, m_number_of_patches{0},
         m_vao{0}, m_vbos{ 0, 0 }, m_texture_id{0}
     {
-      model = gpu_mat4(1.0);
+      model = gl_mat4(1.0);
     }
 
     void
@@ -67,7 +67,7 @@ namespace graphics_origin
       try
         {
           m_texture_size = texture_size;
-          m_normal_height_texture.resize( m_texture_size * m_texture_size, gpu_vec4{} );
+          m_normal_height_texture.resize( m_texture_size * m_texture_size, gl_vec4{} );
           const float extent = m_map_radius * 2.0f ;
           const float step = extent / float( m_texture_size );
 
@@ -77,7 +77,7 @@ namespace graphics_origin
             {
               float y = -m_map_radius + j * step;
               float x = -m_map_radius           ;
-              gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
+              gl_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
               for( unsigned int i = 0; i < m_texture_size; ++ i, x += step, ++ dest )
                 {
                   dest->a = land_generator.GetValue( x, y, 0 );
@@ -89,7 +89,7 @@ namespace graphics_origin
           # pragma omp parallel for
           for( unsigned int j = 0; j < m_texture_size; ++ j )
             {
-              gpu_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
+              gl_vec4* dest = m_normal_height_texture.data() + j * m_texture_size;
               for( unsigned int i = 0; i < m_texture_size; ++ i, ++ dest )
                 {
                   float nc = dest->a;
@@ -154,15 +154,15 @@ namespace graphics_origin
       glcheck(glBindVertexArray( m_vao ));
         try
           {
-            std::vector< gpu_vec4 > positions(
+            std::vector< gl_vec4 > positions(
                 (m_number_of_patches + 1) * (m_number_of_patches + 1),
-                gpu_vec4( 0, 0, 0, 0 ) );
+                gl_vec4( 0, 0, 0, 0 ) );
 
             const gl_real inv_double_radius = gl_real(1.0) / (gl_real(2.0) * m_map_radius );
             # pragma omp parallel for
             for( unsigned int j = 0; j <= m_number_of_patches; ++j )
               {
-                gpu_vec4* row = positions.data( ) + j * (m_number_of_patches + 1);
+                gl_vec4* row = positions.data( ) + j * (m_number_of_patches + 1);
                 gl_real y = -m_map_radius + j * patch_size;
                 gl_real x = -m_map_radius;
                 gl_real ty = y * inv_double_radius + gl_real(0.5);
@@ -176,13 +176,13 @@ namespace graphics_origin
               }
 
             glcheck(glBindBuffer( GL_ARRAY_BUFFER, m_vbos[ positions_texcoords_vbo_id ] ));
-            glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec4) * positions.size(), positions.data(), GL_STATIC_DRAW ));
+            glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gl_vec4) * positions.size(), positions.data(), GL_STATIC_DRAW ));
             glcheck(glEnableVertexAttribArray( position_location ));
             glcheck(glVertexAttribPointer( position_location,
-              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), 0 ));
+              2, GL_FLOAT, GL_FALSE, sizeof(gl_vec4), 0 ));
             glcheck(glEnableVertexAttribArray( texcoord_location ));
             glcheck(glVertexAttribPointer( texcoord_location,
-              2, GL_FLOAT, GL_FALSE, sizeof(gpu_vec4), reinterpret_cast<void*>( 2 * sizeof(gl_real))));
+              2, GL_FLOAT, GL_FALSE, sizeof(gl_vec4), reinterpret_cast<void*>( 2 * sizeof(gl_real))));
           }
         catch( std::bad_alloc& e )
           {
