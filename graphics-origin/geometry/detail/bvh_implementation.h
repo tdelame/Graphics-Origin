@@ -4,10 +4,7 @@
 # ifndef GRAPHICS_ORIGIN_BVH_IMPLEMENTATION_TCC_
 # define GRAPHICS_ORIGIN_BVH_IMPLEMENTATION_TCC_
 
-/*  Created on: Jan 24, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- *
- * The implementation is based on a CUDA version I made in an another project.
+/* The implementation is based on a CUDA version I made in an another project.
  * I found it easier to have sensibly the same code for both the GPU and the CPU
  * versions. It might be a little sub-efficient for the CPU, but it does the job.
  * This CUDA version was itself based on:
@@ -48,18 +45,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**@file
- * @todo Integrate the CUDA version with transfer functions GPU <--> CPU
- */
-
-
 # include "../box.h"
 # include "../ball.h"
 # include "../../../graphics-origin/extlibs/thrust/sort.h"
 # include "../../../graphics-origin/extlibs/thrust/system/omp/execution_policy.h"
 # include "../../../graphics-origin/extlibs/thrust/system/cpp/execution_policy.h"
 
-BEGIN_GO_NAMESPACE namespace geometry {
+namespace graphics_origin { namespace geometry {
 
   static constexpr size_t bvh_max_number_of_elements = (1U << uint8_t(31)) - 1;
 
@@ -87,11 +79,11 @@ BEGIN_GO_NAMESPACE namespace geometry {
         "The elements bounded by bounding boxes in the BVH must be able to compute a bounding box");
 
     set_leaf_nodes(
-        const bounded_element* elements,
-        aabox& root_bounding_object,
-        std::vector<typename bvh<aabox>::node>& nodes,
-        size_t number_of_internals,
-        std::vector<uint64_t>& morton_codes )
+      const bounded_element* elements,
+      aabox& root_bounding_object,
+      std::vector<typename bvh<aabox>::node>& nodes,
+      size_t number_of_internals,
+      std::vector<uint64_t>& morton_codes)
     {
       auto lower = root_bounding_object.get_min();
       auto inv_extents_times_mcode_offset = vec3{
@@ -105,35 +97,36 @@ BEGIN_GO_NAMESPACE namespace geometry {
        * Leaves are then between indices n - 1 and n - 1 + n - 1
        *
        */
-	  # ifdef _MSC_VER
-	  GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
-	  #   pragma omp parallel for schedule(static)
-	  for( _int32 i = 0; i <= number_of_internals; ++ i )
-	  # else
-      #   pragma omp parallel for schedule(static)
-      for( uint32_t i = 0; i <= number_of_internals; ++ i )
-	  # endif
+# ifdef _MSC_VER
+      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+#   pragma omp parallel for schedule(static)
+        for (_int32 i = 0; i <= number_of_internals; ++i)
+# else
+#   pragma omp parallel for schedule(static)
+      for (uint32_t i = 0; i <= number_of_internals; ++i)
+# endif
+      {
+        auto& leaf = nodes[i + number_of_internals];
+        leaf.element_index = i;
+        elements[i].compute_bounding_box(leaf.bounding);
+        const auto& p = leaf.bounding.m_center;
+
+        uint64_t a = (uint64_t)((p.x - lower.x) * inv_extents_times_mcode_offset.x);
+        uint64_t b = (uint64_t)((p.y - lower.y) * inv_extents_times_mcode_offset.y);
+        uint64_t c = (uint64_t)((p.z - lower.z) * inv_extents_times_mcode_offset.z);
+
+        for (uint j = 0; j < mcode_length; ++j)
         {
-          auto& leaf = nodes[ i + number_of_internals ];
-          leaf.element_index = i;
-          elements[i].compute_bounding_box( leaf.bounding );
-          const auto& p = leaf.bounding.m_center;
-
-          uint64_t a = (uint64_t)( (p.x - lower.x) * inv_extents_times_mcode_offset.x );
-          uint64_t b = (uint64_t)( (p.y - lower.y) * inv_extents_times_mcode_offset.y );
-          uint64_t c = (uint64_t)( (p.z - lower.z) * inv_extents_times_mcode_offset.z );
-
-          for( uint j = 0; j < mcode_length; ++ j )
-            {
-              morton_codes[i] |=
-              ((((a >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 1)) |
-               (((b >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 2)) |
-               (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)) );
-            }
+          morton_codes[i] |=
+            ((((a >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 1)) |
+              (((b >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 2)) |
+              (((c >> (mcode_length - 1 - j)) & 1) << ((mcode_length - j) * 3 - 3)));
         }
-		# ifdef _MSC_VER
-		GO_MSVC_OMP_THRUST_BUGS
-		thrust::sort_by_key( thrust::cpp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
+      }
+# ifdef _MSC_VER
+
+      GO_MSVC_OMP_THRUST_BUGS
+        thrust::sort_by_key(thrust::cpp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals);
 		# else
 	    thrust::sort_by_key( thrust::omp::par, morton_codes.begin(), morton_codes.end(), nodes.data() + number_of_internals );
 		# endif
@@ -151,14 +144,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
       # pragma omp parallel
       {
         aabox thread_bounding = bounding;
-	  # ifdef _MSC_VER
-	  GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
-	  #   pragma omp parallel for schedule(static)
-	  for( _int32 i = 0; i <= number_of_internals; ++ i )
-	  # else
-      #   pragma omp parallel for schedule(static)
-      for( uint32_t i = 0; i <= number_of_internals; ++ i )
-	  # endif
+	      # ifdef _MSC_VER
+	      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+	      #   pragma omp for schedule(static)
+	      for( _int32 i = 0; i <= number_of_internals; ++ i )
+	      # else
+        #   pragma omp for schedule(static)
+        for( uint32_t i = 0; i <= number_of_internals; ++ i )
+	      # endif
          {
             auto& leaf = nodes[ i + number_of_internals ];
             leaf.element_index = i;
@@ -379,7 +372,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     uivec2 determine_range( uint32_t i )
     {
 //      const auto& mcodei_minus = m_morton_codes[i-1];
-      const auto& mcodei       = m_morton_codes[i  ];
+      const uint64_t& mcodei       = m_morton_codes[i  ];
 //      const auto& mcodei_plus  = m_morton_codes[i+1];
 //
 //      // this case happen when there are duplicate morton codes
@@ -480,6 +473,10 @@ BEGIN_GO_NAMESPACE namespace geometry {
         {
           auto& intern = m_nodes[ i ];
           uivec2 range = determine_range( i );
+# pragma omp critical
+          // MSVC really want this semi-colon to compile the code. 
+          // So please, do not remove it :-}.
+          ;
           uint32_t split = find_split( range );
           uint32_t child_index = ( split == range.x ? split + number_of_internals : split );
           m_nodes[ child_index ].parent_index = i;
@@ -520,14 +517,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
       while( activity )
         {
           activity = false;
-      # ifdef _MSC_VER
-      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
-      #   pragma omp parallel for schedule(static)
-	  for (_int32 i = 0; i < m_number_of_internals; ++i)
-	  # else
-	  #   pragma omp parallel for schedule(static)
-	  for (uint32_t i = 0; i < m_number_of_internals; ++ i )
-	  # endif
+          # ifdef _MSC_VER
+          GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+          #   pragma omp parallel for schedule(static)
+	        for (_int32 i = 0; i < m_number_of_internals; ++i)
+	        # else
+	        #   pragma omp parallel for schedule(static)
+	        for (uint32_t i = 0; i < m_number_of_internals; ++ i )
+	        # endif
             {
               if( emulate_one_thread_loop( i ) )
                 activity = true;
@@ -537,14 +534,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_counters()
     {
-	  # ifdef _MSC_VER
-	  GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
-	  #   pragma omp parallel for schedule(static)
-	  for( _int32 i = 0; i < m_number_of_internals; ++ i )
-	  # else
+	    # ifdef _MSC_VER
+	    GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+	    #   pragma omp parallel for schedule(static)
+	    for( _int32 i = 0; i < m_number_of_internals; ++ i )
+	    # else
       #   pragma omp parallel for schedule(static)
       for( uint32_t i = 0; i < m_number_of_internals; ++ i )
-	  # endif
+	    # endif
         {
           m_counters[ i ] = 0;
         }
@@ -552,34 +549,32 @@ BEGIN_GO_NAMESPACE namespace geometry {
 
     void init_threads()
     {
-	  # ifdef _MSC_VER
-	  GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
-	  #   pragma omp parallel for schedule(static)
-	  for( _int32 i = 0; i <= m_number_of_internals; ++ i )
-	  # else
-      #   pragma omp parallel for schedule(static)
-      for( uint32_t i = 0; i <= m_number_of_internals; ++ i )
-	  # endif
-        {
-          auto& var = variables[ i ];
-          var.active = true;
-          var.index = m_nodes[ i + m_number_of_internals ].parent_index;
-		  # ifdef _MSC_VER
-	      GO_MSVC_OMP_NO_ATOMIC_CAPTURE
-		  # pragma omp critical
-		  {
-            var.res = m_counters[ var.index ];
-            ++m_counters[ var.index ];
+	    # ifdef _MSC_VER
+	      GO_MSVC_OMP_NO_UNSIGNED_FOR_INDEX
+        GO_MSVC_OMP_NO_ATOMIC_CAPTURE
+	      # pragma omp parallel for schedule(static)
+        for (_int32 i = 0; i <= m_number_of_internals; ++i)
+          {
+            auto& var = variables[i];
+            var.active = true;
+            var.index = m_nodes[i + m_number_of_internals].parent_index;
+            var.res = m_counters[var.index];
+            ++m_counters[var.index];
           }
-		  # else
-          # pragma omp atomic capture
-		  {
-            var.res = m_counters[ var.index ];
-            ++m_counters[ var.index ];
-          }
-		  # endif
-
+	    # else
+        # pragma omp parallel for schedule(static)
+        for( uint32_t i = 0; i <= m_number_of_internals; ++ i )
+	       {
+            auto& var = variables[ i ];
+            var.active = true;
+            var.index = m_nodes[ i + m_number_of_internals ].parent_index;
+            # pragma omp atomic capture
+	      	  {
+              var.res = m_counters[ var.index ];
+              ++m_counters[ var.index ];
+            }
         }
+      # endif
     }
 
     bool emulate_one_thread_loop( uint32_t tid )
@@ -587,12 +582,10 @@ BEGIN_GO_NAMESPACE namespace geometry {
       auto& var = variables[ tid ];
       if( !var.active )
         {
-//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is inactive");
           return false;
         }
       if( !var.res )
         {
-//          LOG( debug, "node #" << var.index << " was rejected because tid " << tid << " is the first to arrive here");
           var.active = false;
           return false;
         }
@@ -601,9 +594,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       node.bounding = m_nodes[ node.left_index ].bounding;
       node.bounding.merge( m_nodes[ node.right_index ].bounding );
 
-//      LOG( debug, "node #" << var.index << " just got initialized to {" << node.bounding.get_min() << " , " << node.bounding.get_max() << "} by tid " << tid );
-
-      if( var.index == 0 )
+     if( var.index == 0 )
         {
           var.active = false;
           return false;

@@ -26,4 +26,6 @@ go_add_test( NAME 0_design_test )
 
 go_add_test( NAME unit_tests LIBRARIES ${GO_TOOLS_LIBRARIES} ${GO_GEOMETRY_LIBRARIES} ${GO_APPLICATION_LIBRARIES} ${GO_TEST_LIBRARIES} )
 
-#go_add_test( NAME windows_cuda_thrust_bug )
+go_add_test( NAME windows_cuda_thrust_bug )
+
+go_add_test( NAME windows_cuda_thrust_cpp_sort )

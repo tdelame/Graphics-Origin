@@ -117,5 +117,5 @@ namespace geometry {
 }
 END_GO_NAMESPACE
 
-# include "detail/bvh_implementation.tcc"
+# include "detail/bvh_implementation.h"
 # endif

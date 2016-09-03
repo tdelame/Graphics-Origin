@@ -64,7 +64,6 @@ namespace graphics_origin { namespace application {
         glcheck(glGenVertexArrays( 1, &m_vao ));
         glcheck(glGenBuffers( 1, &m_boxes_vbo ) );
       }
-    LOG(debug, "will render " << m_boxes.get_size() << " boxes");
 
     int center_location = program->get_attribute_location( "center" );
     int hsides_location = program->get_attribute_location( "hsides" );
@@ -141,6 +140,7 @@ namespace graphics_origin { namespace application {
               indexes.push_back( std::make_pair( node.right_index, current_index.second + 1));
             }
         }
+      LOG(debug, "max level = " << max_level);
     }
 
 
