@@ -42,7 +42,3 @@ go_add_test( NAME unit_tests
 
 #go_add_test( NAME windows_cuda_thrust_bug )
 
-go_add_test( NAME 2_bvh_performances
-  LIBRARIES ${GO_TOOLS_LIBRARIES} ${GO_GEOMETRY_LIBRARIES}
-  MESHES ${GO_MESHES_DIR}/armadillo.off ${GO_MESHES_DIR}/Bunny.obj ${GO_MESHES_DIR}/spot_triangulated.obj
-)
