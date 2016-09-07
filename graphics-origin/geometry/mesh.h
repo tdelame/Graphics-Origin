@@ -7,15 +7,8 @@
 # include "triangle.h"
 # include "traits.h"
 # include "box.h"
+# include "../extlibs/nanoflann.h"
 # include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-
-namespace nanoflann {
-  template <typename Distance, class DatasetAdaptor,int DIM, typename IndexType>
-  class KDTreeSingleIndexAdaptor;
-
-  template<class T, class DataSource, typename _DistanceType>
-  struct L2_Simple_Adaptor;
-}
 
 BEGIN_GO_NAMESPACE namespace geometry {
 
@@ -98,6 +91,171 @@ BEGIN_GO_NAMESPACE namespace geometry {
   };
 
 
+  /**@brief Kdtree of a mesh vertices.
+   *
+   * This class allows efficient radius and nearest search of mesh vertices
+   * thanks to a kdtree of such vertices. This kdtree is built only once,
+   * at the construction of an instance. Thus, be sure to create an instance
+   * once the mesh is fully built and cleaned. Also, for memory and speed
+   * efficiency, vertices are not copied into this class. So, an instance
+   * should not be used anymore once the mesh used to build it is destroyed.
+   *
+   * If you need more than radius and nearest search, have a look to the
+   * class mesh_spatial_optimization.
+   */
+  class GO_API mesh_vertices_kdtree {
+  public:
+    typedef uint32_t vertex_index;
+    /**@brief Life cycle management.
+     * @{*/
+    /**@brief Build a kdtree of the vertices of a mesh.
+     *
+     * Build a new kdtree with the vertices of a mesh. This mesh needs to be
+     * fully built and cleaned, and not change during the use of the new
+     * instance (in particular, the mesh should not be destroyed).
+     * @param input The mesh to consider.
+     * @param max_leaf_size The maximum number of vertices that a leaf in
+     * the kdtree can have. */
+    mesh_vertices_kdtree( const mesh& input, size_t max_leaf_size = 32  );
+    /**@brief Destroy an instance.
+     *
+     * Destroy the kdtree of mesh vertices.*/
+    ~mesh_vertices_kdtree();
+    mesh_vertices_kdtree() = delete;
+    mesh_vertices_kdtree( const mesh_vertices_kdtree& other ) = delete;
+    mesh_vertices_kdtree( mesh_vertices_kdtree&& other ) = delete;
+    mesh_vertices_kdtree& operator=( const mesh_vertices_kdtree& other ) = delete;
+    mesh_vertices_kdtree& operator=( mesh_vertices_kdtree&& other ) = delete;
+    /**@}*/
+
+    /**@brief Optimized search function.
+     * @{
+     */
+
+    /**@brief Perform a KNN on the vertices.
+     *
+     * Look for a given number of nearest vertices.
+     * @param location The location of interest.
+     * @param k The number of neighbors to find.
+     * @param indices Pointer to an array with enough place to store the indices of the nearest vertices.
+     * @param squared_distances Point to an array with enough place to store the squared distances between
+     * the nearest vertices and the location of interest. */
+    void k_nearest_vertices( const vec3& location, uint32_t k, vertex_index* indices, real* squared_distances ) const;
+
+    /**@brief Perform a radius search on vertices.
+     *
+     * Look for any vertices that are in a particular ball.
+     * @param location The center of the search ball.
+     * @param radius The radius of the search ball.
+     * @param indices_sdistances A vector of pair containing the index of a
+     * vertex inside the search ball and its squared distance to the ball
+     * center. Those pairs are ordered by increasing distances. It is
+     * advised to reused the same vector over and over, and/or to
+     * reserve enough space if you have a guess about how many vertices
+     * are in the search ball. */
+    void radius_search( const vec3& location, real radius, std::vector< std::pair< vertex_index, real> >& indices_sdistances ) const;
+    /**@}*/
+
+    /**@brief Nanoflann functions.
+     *
+     * Those functions are required by the nanoflann library to build a kdtree
+     * on custom geometric data.
+     * @{
+     */
+    /**@brief Get the number of points inside the kdtree.
+     *
+     * This function is required by the nanoflann library to build a kdtree
+     * on custom geometric data. It simply returns the number of vertices to
+     * store in the ktree, i.e. the number of mesh vertices.
+     * @return The number of vertices in the mesh. */
+    inline size_t kdtree_get_point_count() const
+    {
+      return nbpoints;
+    }
+
+    /**@brief Get the kdtree distance between two points.
+     *
+     * This function is required by the nanoflann library to build a kdtree
+     * on custom geometric data. It computes the distance between a given point
+     * and a point stored in the kdtree.
+     * @param a Pointer to three consecutive real values representing the first point.
+     * @param idx The index of the second point in the kdtree.
+     * @param size The dimension of points in the kdtree (3 here).
+     * @return The squared distance between the two given points. */
+    inline real kdtree_distance(const real* a, const size_t b_idx, size_t size) const
+    {
+      (void)size;
+      const real* b = get_point( b_idx );
+      real result = a[0] - b[0];
+      result *= result;
+      real temp = a[1] - b[1];
+      temp *= temp;
+      result += temp;
+      temp = a[2] - b[2];
+      temp *= temp;
+      result += temp;
+      return result;
+    }
+
+    /**@brief Get the bounding box the mesh.
+     *
+     * This function is required by the nanoflann library to build a kdtree
+     * on custom geometric data. It asks for the bounding box of the underlying
+     * data. If no bounding box is found (return value is false), the nanoflann
+     * library will compute the bounding box.
+     * @param bb The bounding box requested.
+     * @return True if the bounding box is set by this function. */
+    template <class BBOX>
+    bool kdtree_get_bbox(BBOX& bb) const
+    {
+      auto low  = bounding_box.get_min();
+      auto high = bounding_box.get_max();
+      for( uint32_t d = 0; d < 3; ++ d )
+       {
+          bb[ d ].low  =  low[d];
+          bb[ d ].high = high[d];
+       }
+      return true;
+    }
+
+    /**@brief Get the component of a point stored in the kdtree.
+     *
+     * This function is required by the nanoflann library to build a kdtree
+     * on custom geometric data. It fetches the component of a point stored
+     * in the kdtree, which is here the position of a mesh vertex.
+     * @param idx Index of the point to fetch.
+     * @param component Component index to fetch, i.e. 0 for X, 1 for Y and
+     * 2 for Z.
+     * @return The component-th component of the vertex of index idx. */
+    inline const real& kdtree_get_pt(const size_t idx, int component) const
+    {
+      return points[ idx * 3 + component ];
+    }
+
+    /**@brief Utilities functions.
+     * @{
+     */
+    /**@brief Access to a vertex position thanks to its index.
+     *
+     * Get the position of a vertex.
+     * @param idx Index of the vertex.
+     * @return A pointer to an array of three real values representing the
+     * position of the vertex. */
+    inline const real* get_point( const vertex_index idx ) const
+    {
+      return points + idx * 3;
+    }
+
+  private:
+    aabox bounding_box;
+    const real* points;
+    const size_t nbpoints;
+    nanoflann::KDTreeSingleIndexAdaptor<
+     nanoflann::L2_Simple_Adaptor< real, mesh_vertices_kdtree, real >,
+     mesh_vertices_kdtree, 3, vertex_index
+     > kdtree;
+  };
+
 
   template<
     typename bounding_object >
@@ -109,13 +267,17 @@ BEGIN_GO_NAMESPACE namespace geometry {
    * hierarchies: one kdtree for the indices and one bvh for the faces.
    * Currently, those optimization structures are not recomputed when the mesh
    * changes. So be sure to build an instance of this class once the mesh is
-   * fully built (and cleaned).
+   * fully built (and cleaned). Also, mesh vertices and normals are not copied
+   * into this class. Thus, do not destroy (or modify) the mesh if you intend
+   * to use this class after.
    *
    * The optimized mesh should be a manifold surface, i.e. it should represent
    * the surface of a solid object. If such condition is not met, an exception
    * is thrown at the construction. */
   class GO_API mesh_spatial_optimization {
   public:
+    typedef uint32_t vertex_index;
+
     /**@brief Build a spatial optimization of a mesh.
      *
      * Build a new spatial optimization for the given mesh.
@@ -152,7 +314,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * @param vertex_index Will contain the index of the closest vertex after the call.
      * @param squared_distance_to_vertex Will contain the squared distance to the closest vertex after the call.
      */
-    void get_closest_vertex( const vec3& location, size_t& vertex_index, real& squared_distance_to_vertex ) const;
+    void get_closest_vertex( const vec3& location, vertex_index& vertex_index, real& squared_distance_to_vertex ) const;
 
     /**@brief Check if a ray intersects the mesh.
      *
@@ -186,15 +348,28 @@ BEGIN_GO_NAMESPACE namespace geometry {
     bool contain( const vec3& p ) const;
     /**@brief Perform a KNN on the vertices.
      *
-     * Look for a given number of nearest vertices. This functions uses only the kdtree.
+     * Look for a given number of nearest vertices. This function uses only the kdtree.
      * @param location The location of interest.
      * @param k The number of neighbors to find.
      * @param indices Pointer to an array with enough place to store the indices of the nearest vertices.
      * @param squared_distances Point to an array with enough place to store the squared distances between
      * the nearest vertices and the location of interest. */
-    void k_nearest_vertices( const vec3& location, uint32_t k, size_t* indices, real* squared_distances );
+    void k_nearest_vertices( const vec3& location, uint32_t k, vertex_index* indices, real* squared_distances );
+    /**@brief Perform a radius search on vertices.
+     *
+     * Look for any vertices that are in a particular ball. This function uses only the kdtree.
+     * @param location The center of the search ball.
+     * @param radius The radius of the search ball.
+     * @param indices_sdistances A vector of pair containing the index of a
+     * vertex inside the search ball and its squared distance to the ball
+     * center. Those pairs are ordered by increasing distances. It is
+     * advised to reused the same vector over and over, and/or to
+     * reserve enough space if you have a guess about how many vertices
+     * are in the search ball. */
+    void radius_search( const vec3& location, real radius, std::vector< std::pair< vertex_index, real> >& indices_sdistances ) const;
+    /**@}*/
 
-    /**@brief Optimized functions.
+    /**@brief Nanoflann functions.
      *
      * Those functions are required by the nanoflann library to build a kdtree
      * on custom geometric data.
@@ -259,7 +434,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * @param idx Index of the vertex.
      * @return A pointer to an array of three real values representing the
      * position of the vertex. */
-    inline const real* get_point( const uint32_t idx ) const
+    inline const real* get_point( const vertex_index idx ) const
     {
       return m_points + idx * 3;
     }
@@ -270,7 +445,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * @param idx Index of the vertex.
      * @return A pointer to an array of three real values representing the
      * normal of the vertex. */
-    inline const real* get_normal( const uint32_t idx ) const
+    inline const real* get_normal( const vertex_index idx ) const
     {
       return m_normals + idx * 3;
     }
@@ -347,9 +522,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
     mesh& m_mesh;
     nanoflann::KDTreeSingleIndexAdaptor<
      nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization, real >,
-     mesh_spatial_optimization,
-     3, size_t
-     >* m_kdtree;
+     mesh_spatial_optimization, 3, vertex_index >* m_kdtree;
     bvh<aabox>* m_bvh;
   };
 

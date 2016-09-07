@@ -12,8 +12,6 @@
 # include <OpenMesh/Core/IO/exporter/BaseExporter.hh>
 # include <OpenMesh/Core/IO/IOManager.hh>
 
-# include "../../graphics-origin/extlibs/nanoflann.h"
-
 # include <vector>
 
 BEGIN_GO_NAMESPACE namespace geometry {
@@ -664,6 +662,30 @@ BEGIN_GO_NAMESPACE namespace geometry {
         || ext == ply_file_extension;
   }
 
+  mesh_vertices_kdtree::mesh_vertices_kdtree( const mesh& input, size_t max_leaf_size )
+    : points{ &input.point( mesh::VertexHandle(0) )[0] },
+      nbpoints{ input.n_vertices() },
+      kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{ max_leaf_size } }
+  {
+    input.compute_bounding_box( bounding_box );
+  }
+
+  mesh_vertices_kdtree::~mesh_vertices_kdtree()
+  {}
+
+  void mesh_vertices_kdtree::k_nearest_vertices(
+      const vec3& location, uint32_t k, uint32_t* indices, real* squared_distances ) const
+  {
+    kdtree.knnSearch( &location.x, k, indices, squared_distances );
+  }
+
+  void mesh_vertices_kdtree::radius_search( const vec3& location, real radius,
+      std::vector< std::pair< uint32_t, real >>& indices_sdistances ) const
+  {
+    kdtree.radiusSearch( &location.x, radius, indices_sdistances, nanoflann::SearchParams{} );
+  }
+
+
   mesh_spatial_optimization::~mesh_spatial_optimization()
   {
     delete m_bvh;
@@ -742,7 +764,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
         m_kdtree = new nanoflann::KDTreeSingleIndexAdaptor<
             nanoflann::L2_Simple_Adaptor< real, mesh_spatial_optimization, real >,
             mesh_spatial_optimization,
-            3, size_t >{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} };
+            3, uint32_t >{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{32} };
         m_kdtree->buildIndex();
       }
   }
@@ -817,16 +839,22 @@ BEGIN_GO_NAMESPACE namespace geometry {
   }
 
   void
-  mesh_spatial_optimization::get_closest_vertex( const vec3& location, size_t& vertex_index, real& squared_distance_to_vertex ) const
+  mesh_spatial_optimization::get_closest_vertex( const vec3& location, uint32_t& vertex_index, real& squared_distance_to_vertex ) const
   {
     m_kdtree->knnSearch( &location.x, 1, &vertex_index, &squared_distance_to_vertex );
   }
 
   void
   mesh_spatial_optimization::k_nearest_vertices(
-      const vec3& location, uint32_t k, size_t* indices, real* squared_distances )
+      const vec3& location, uint32_t k, uint32_t* indices, real* squared_distances )
   {
     m_kdtree->knnSearch( &location.x, k, indices, squared_distances );
+  }
+
+  void mesh_spatial_optimization::radius_search( const vec3& location, real radius,
+      std::vector< std::pair< uint32_t, real >>& indices_sdistances ) const
+  {
+    m_kdtree->radiusSearch( &location.x, radius, indices_sdistances, nanoflann::SearchParams{} );
   }
 
   bool
@@ -850,7 +878,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
      * By doing so, we cast a ray in a direction that is unlikely to hit another face.
      */
     real distance_to_mesh = 0;
-    size_t closest_vertex_index = 0;
+    uint32_t closest_vertex_index = 0;
     get_closest_vertex( p, closest_vertex_index, distance_to_mesh );
 
     auto vh = mesh::VertexHandle( closest_vertex_index );
