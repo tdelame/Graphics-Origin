@@ -205,9 +205,11 @@ endif()
 #*************** 
 # global flags *
 #*******************************************************************************
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS 
-    "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+    "${CMAKE_CXX_FLAGS} -frounding-math -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
     CACHE STRING "GNU C++ compiler flags" FORCE )
   set( CMAKE_CXX_FLAGS_RELEASE 
     "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DNO_DEBUG -DCGAL_NDEBUG" 
