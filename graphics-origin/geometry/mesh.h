@@ -246,6 +246,14 @@ BEGIN_GO_NAMESPACE namespace geometry {
       return points + idx * 3;
     }
 
+    /**@brief Access to the bounding box of vertices.
+     *
+     * Get the bounding box of mesh vertices. */
+    inline const aabox& get_bounding_box() const noexcept
+    {
+      return bounding_box;
+    }
+
   private:
     aabox bounding_box;
     const real* points;

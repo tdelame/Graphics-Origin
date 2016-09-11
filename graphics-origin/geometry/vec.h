@@ -40,6 +40,43 @@ using glm::normalize;
 using glm::max;
 using glm::min;
 
+template< typename T >
+T min( const glm::tvec2< T, glm::highp >& x  )
+{
+  return min( x.x, x.y );
+}
+
+template< typename T >
+T min( const glm::tvec3< T, glm::highp >& x )
+{
+  return min( x.x, min( x.y, x.z ));
+}
+
+template< typename T >
+T min( const glm::tvec4< T, glm::highp >& x )
+{
+  return min( min(x.x, x.y), min(x.z, x.w ));
+}
+
+template< typename T >
+T max( const glm::tvec2< T, glm::highp >& x  )
+{
+  return max( x.x, x.y );
+}
+
+template< typename T >
+T max( const glm::tvec3< T, glm::highp >& x )
+{
+  return max( x.x, max(x.y, x.z ));
+}
+
+template< typename T >
+T max( const glm::tvec4< T, glm::highp >& x )
+{
+  return max( max(x.x, x.y), max(x.z, x.w) );
+}
+
+
 /** @brief Compute the square distance between two vec3
  *
  * This function computes the squared euclidean distance between two
