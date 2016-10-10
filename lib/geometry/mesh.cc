@@ -668,6 +668,7 @@ BEGIN_GO_NAMESPACE namespace geometry {
       kdtree{ 3, *this, nanoflann::KDTreeSingleIndexAdaptorParams{ max_leaf_size } }
   {
     input.compute_bounding_box( bounding_box );
+    kdtree.buildIndex();
   }
 
   mesh_vertices_kdtree::~mesh_vertices_kdtree()

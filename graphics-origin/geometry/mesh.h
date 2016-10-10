@@ -66,6 +66,65 @@ BEGIN_GO_NAMESPACE namespace geometry {
     void compute_bounding_box( aabox& b ) const;
   };
 
+  /**@brief Convert mesh points to other types.
+   *
+   * The mesh class is based on the OpenMesh mesh representation. Thus,
+   * points may have a different type than the one expected, such
+   * as vec3 for instance. In that case, you just have to do as follow:
+   * \code{.cpp}
+   * mesh_point_converter<vec3> converter;
+   * vec3 result = converter( mesh.point( vertex_handle ) );
+   * \endcode
+   *
+   * For now, only conversion to glm::tvec3 are implemented. If you want
+   * another type, you will have to specialize the following template.
+   */
+  template< typename T >
+  struct GO_API mesh_point_converter {
+    static_assert(
+        implementation_required<T>::value,
+        "Please, provide an implementation to convert a mesh point to this type.");
+    T operator()( const mesh::Point& p ) const;
+  };
+
+  template< typename T, glm::precision P >
+  struct GO_API mesh_point_converter< glm::tvec3< T, P > > {
+
+    glm::tvec3< T, P > operator()( const mesh::Point& p ) const {
+      return glm::tvec3< T, P >{ p[0], p[1], p[2] };
+    }
+  };
+
+  /**@brief Convert mesh normals to other types.
+   *
+   * The mesh class is based on the OpenMesh mesh representation. Thus,
+   * normals may have a different type than the one expected, such
+   * as vec3 for instance. In that case, you just have to do as follow:
+   * \code{.cpp}
+   * mesh_normal_converter<vec3> converter;
+   * vec3 result = converter( mesh.normal( vertex_handle ) );
+   * \endcode
+   *
+   * For now, only conversion to glm::tvec3 are implemented. If you want
+   * another type, you will have to specialize the following template.
+   */
+  template< typename T >
+  struct GO_API mesh_normal_converter {
+    static_assert(
+        implementation_required<T>::value,
+        "Please, provide an implementation to convert a mesh normal to this type.");
+    T operator()( const mesh::Normal& p ) const;
+  };
+
+  template< typename T, glm::precision P >
+  struct GO_API mesh_normal_converter< glm::tvec3< T, P > > {
+
+    glm::tvec3< T, P > operator()( const mesh::Normal& p ) const {
+      return glm::tvec3< T, P >{ p[0], p[1], p[2] };
+    }
+  };
+
+
   /**@brief Check if a filename has a mesh file format extension.
    *
    * Check if a given filename has an extension of a known mesh file format. In
